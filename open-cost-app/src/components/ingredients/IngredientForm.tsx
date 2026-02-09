@@ -1,0 +1,219 @@
+import { useState, useMemo, useEffect } from "react"
+import { Button } from "@/components/ui/Button"
+import { Input } from "@/components/ui/Input"
+import { Select } from "@/components/ui/Select"
+import { Database } from "@/types/database.types"
+import { Info } from "lucide-react"
+
+type IngredientInsert = Database["public"]["Tables"]["ingredients"]["Insert"]
+type IngredientRow = Database["public"]["Tables"]["ingredients"]["Row"]
+
+interface IngredientFormProps {
+    initialData?: IngredientRow
+    onSubmit: (data: IngredientInsert) => Promise<void>
+    onCancel: () => void
+}
+
+const UNITS = [
+    { value: "g", label: "g (그램)" },
+    { value: "kg", label: "kg (킬로그램)" },
+    { value: "ml", label: "ml (밀리리터)" },
+    { value: "l", label: "L (리터)" },
+    { value: "ea", label: "ea (개)" },
+    { value: "box", label: "box (박스 - 환산 필요)" },
+    { value: "can", label: "can (캔 - 환산 필요)" },
+]
+
+export function IngredientForm({ initialData, onSubmit, onCancel }: IngredientFormProps) {
+    const [loading, setLoading] = useState(false)
+    const [formData, setFormData] = useState<Partial<IngredientInsert>>(initialData ? {
+        name: initialData.name,
+        purchase_price: initialData.purchase_price,
+        purchase_unit: initialData.purchase_unit,
+        usage_unit: initialData.usage_unit,
+        conversion_factor: initialData.conversion_factor,
+        loss_rate: initialData.loss_rate,
+        category_id: initialData.category_id,
+        current_stock: initialData.current_stock || 0,
+        safety_stock: initialData.safety_stock || 0,
+    } : {
+        name: "",
+        purchase_price: 0,
+        purchase_unit: "kg",
+        usage_unit: "g",
+        conversion_factor: 1000,
+        loss_rate: 0,
+        category_id: null,
+        current_stock: 0,
+        safety_stock: 0,
+    })
+
+    // 자동 환산 로직 (Auto-Calcultor)
+    // 구매 단위와 사용 단위가 변경될 때마다 적절한 환산 비율을 제안
+    useEffect(() => {
+        const { purchase_unit, usage_unit } = formData
+
+        // 단순 무게 변환
+        if (purchase_unit === "kg" && usage_unit === "g") {
+            setFormData(prev => ({ ...prev, conversion_factor: 1000 }))
+        } else if (purchase_unit === "g" && usage_unit === "kg") {
+            setFormData(prev => ({ ...prev, conversion_factor: 0.001 }))
+        }
+        // 단순 부피 변환
+        else if (purchase_unit === "l" && usage_unit === "ml") {
+            setFormData(prev => ({ ...prev, conversion_factor: 1000 }))
+        }
+        // 동일 단위
+        else if (purchase_unit === usage_unit) {
+            setFormData(prev => ({ ...prev, conversion_factor: 1 }))
+        }
+    }, [formData.purchase_unit, formData.usage_unit])
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!formData.name || !formData.purchase_price) return
+
+        setLoading(true)
+        try {
+            await onSubmit(formData as IngredientInsert)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // 예측 실질 단가 (1 사용단위 당 가격)
+    // (구매가 / 변환비율) / (1 - 로스율)
+    const estimatedCost = useMemo(() => {
+        const price = Number(formData.purchase_price) || 0
+        const factor = Number(formData.conversion_factor) || 1
+        const loss = Number(formData.loss_rate) || 0
+
+        // 유효성 검사 (0으로 나누기 방지)
+        if (factor === 0) return 0
+        if (loss >= 1) return 999999999 // 로스율 100% 이상은 불가능
+
+        return (price / factor) / (1 - loss)
+    }, [formData.purchase_price, formData.conversion_factor, formData.loss_rate])
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+                <label className="text-sm font-medium">재료명</label>
+                <Input
+                    required
+                    placeholder="예: 양파, 밀가루"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">구매 가격 (원)</label>
+                    <Input
+                        required
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.purchase_price || ""}
+                        onChange={(e) => setFormData({ ...formData, purchase_price: Number(e.target.value) })}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">로스율 (0~0.99)</label>
+                    <Input
+                        type="number"
+                        min="0"
+                        max="0.99"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={formData.loss_rate || ""}
+                        onChange={(e) => setFormData({ ...formData, loss_rate: Number(e.target.value) })}
+                    />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">구매 단위</label>
+                    <Select
+                        value={formData.purchase_unit}
+                        onChange={(e) => setFormData({ ...formData, purchase_unit: e.target.value })}
+                    >
+                        {UNITS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">사용 단위 (레시피용)</label>
+                    <Select
+                        value={formData.usage_unit}
+                        onChange={(e) => setFormData({ ...formData, usage_unit: e.target.value })}
+                    >
+                        {UNITS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+                    </Select>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 border-t pt-4 mt-2">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">현재 재고 ({formData.purchase_unit})</label>
+                    <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={formData.current_stock || ""}
+                        onChange={(e) => setFormData({ ...formData, current_stock: Number(e.target.value) })}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">안전 재고 ({formData.purchase_unit})</label>
+                    <Input
+                        type="number"
+                        min="0"
+                        placeholder="알림 기준"
+                        value={formData.safety_stock || ""}
+                        onChange={(e) => setFormData({ ...formData, safety_stock: Number(e.target.value) })}
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-2 rounded-md bg-muted p-3">
+                <div className="flex items-center gap-2 mb-2">
+                    <label className="text-sm font-medium">단위 환산 비율</label>
+                    <div className="group relative">
+                        <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                        <div className="absolute hidden group-hover:block w-48 p-2 bg-black text-white text-xs rounded z-50 -top-8 left-6">
+                            1 {formData.purchase_unit} = {formData.conversion_factor} {formData.usage_unit}
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">1 {formData.purchase_unit} = </span>
+                    <Input
+                        type="number"
+                        className="w-24 h-8"
+                        value={formData.conversion_factor || ""}
+                        onChange={(e) => setFormData({ ...formData, conversion_factor: Number(e.target.value) })}
+                    />
+                    <span className="text-sm text-muted-foreground">{formData.usage_unit}</span>
+                </div>
+            </div>
+
+            <div className="flex items-center justify-between rounded-md border p-3 bg-secondary/20">
+                <span className="text-sm font-medium">예상 실질 단가 (1 {formData.usage_unit})</span>
+                <span className="text-lg font-bold text-primary">
+                    {estimatedCost.toLocaleString(undefined, { maximumFractionDigits: 2 })} 원
+                </span>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>
+                    취소
+                </Button>
+                <Button type="submit" disabled={loading}>
+                    {loading ? "저장 중..." : "저장하기"}
+                </Button>
+            </div>
+        </form>
+    )
+}
