@@ -6,7 +6,7 @@ import { AppLayout } from "@/components/layout/AppLayout"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
-import { Settings, User, LogOut, Banknote, TrendingUp, Loader2, Trash2, Database, Coins } from "lucide-react"
+import { Settings, User, LogOut, Banknote, TrendingUp, Loader2, Trash2, Database, Coins, Key } from "lucide-react"
 
 export default function SettingsPage() {
     const [fixedCost, setFixedCost] = useState("")
@@ -15,9 +15,14 @@ export default function SettingsPage() {
     const [settingsLoading, setSettingsLoading] = useState(false)
     const [seedLoading, setSeedLoading] = useState(false)
     const [isSyncing, setIsSyncing] = useState(false)
+    const [kamisKey, setKamisKey] = useState("")
+    const [kamisId, setKamisId] = useState("")
 
     useEffect(() => {
         loadSettings()
+        // Load KAMIS from local storage
+        setKamisKey(localStorage.getItem("KAMIS_API_KEY") || "")
+        setKamisId(localStorage.getItem("KAMIS_USER_ID") || "")
     }, [])
 
     const loadSettings = async () => {
@@ -50,6 +55,12 @@ export default function SettingsPage() {
         } catch (error) {
             console.error("Settings load error:", error)
         }
+    }
+
+    const saveKamisSettings = () => {
+        localStorage.setItem("KAMIS_API_KEY", kamisKey)
+        localStorage.setItem("KAMIS_USER_ID", kamisId)
+        alert("KAMIS API 설정이 저장되었습니다. 이제 식재료 매핑 시 시세를 확인할 수 있습니다.")
     }
 
     const handleSyncWithExpenses = () => {
@@ -188,6 +199,45 @@ export default function SettingsPage() {
                                 <Button onClick={saveSettings} disabled={settingsLoading}>
                                     {settingsLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     설정 저장
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* KAMIS API Settings */}
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-2">
+                                <Key className="h-5 w-5 text-indigo-500" />
+                                <CardTitle>KAMIS 시장 시세 설정</CardTitle>
+                            </div>
+                            <CardDescription>
+                                농수산물 유통정보(KAMIS) 오픈 API를 연동하여 전국 평균 시세를 실시간으로 비교합니다.
+                                <a href="https://www.kamis.or.kr/service/price/xml.do?action=interfaceGuide" target="_blank" className="text-indigo-500 hover:underline ml-1">발급 안내</a>
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">KAMIS API Key (인증키)</label>
+                                    <Input
+                                        placeholder="인증키를 입력하세요"
+                                        value={kamisKey}
+                                        onChange={(e) => setKamisKey(e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">KAMIS User ID (요청자 ID)</label>
+                                    <Input
+                                        placeholder="사용자 ID를 입력하세요"
+                                        value={kamisId}
+                                        onChange={(e) => setKamisId(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-end">
+                                <Button onClick={saveKamisSettings} variant="outline" className="border-indigo-500 text-indigo-500 hover:bg-indigo-500/10">
+                                    API 설정 저장
                                 </Button>
                             </div>
                         </CardContent>

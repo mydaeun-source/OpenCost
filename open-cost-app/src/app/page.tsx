@@ -55,11 +55,11 @@ export default function DashboardPage() {
           trends={(summary as any).trends}
         />
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          <div className="col-span-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 xl:grid-cols-12">
+          <div className="col-span-4 lg:col-span-4 xl:col-span-8">
             <MonthlyProfitChart data={chartData} />
           </div>
-          <div className="col-span-3 space-y-4">
+          <div className="col-span-3 lg:col-span-3 xl:col-span-4 space-y-4">
             <StockAlertCard />
             <HighMarginMenus menus={topMenus} />
             <RecentIngredients ingredients={recentIngredients} />

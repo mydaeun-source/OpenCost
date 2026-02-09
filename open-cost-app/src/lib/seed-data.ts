@@ -41,23 +41,24 @@ export const generateTestData = async () => {
 
         // 3. Create Ingredients (Kkwabaegi Shop Theme - Enhanced)
         const ingredients = [
-            { name: "밀가루 (강력분, 20kg)", category: "기본 재료 (Base)", purchase_price: 25000, purchase_unit: "박스", usage_unit: "g", conversion_factor: 20000, loss_rate: 0.02, current_stock: 3, safety_stock: 5 },
-            { name: "백설탕 (15kg)", category: "기본 재료 (Base)", purchase_price: 18000, purchase_unit: "박스", usage_unit: "g", conversion_factor: 15000, loss_rate: 0.01, current_stock: 10, safety_stock: 2 },
-            { name: "찹쌀가루 (10kg)", category: "기본 재료 (Base)", purchase_price: 45000, purchase_unit: "박스", usage_unit: "g", conversion_factor: 10000, loss_rate: 0.0, current_stock: 8, safety_stock: 3 },
-            { name: "이스트 (생, 500g)", category: "기본 재료 (Base)", purchase_price: 3500, purchase_unit: "개", usage_unit: "g", conversion_factor: 500, loss_rate: 0.0, current_stock: 20, safety_stock: 5 },
-            { name: "식용유 (대두유, 18L)", category: "기본 재료 (Base)", purchase_price: 38000, purchase_unit: "캔", usage_unit: "ml", conversion_factor: 18000, loss_rate: 0.05, current_stock: 2, safety_stock: 4 },
-            { name: "국산 팥앙금 (5kg)", category: "기본 재료 (Base)", purchase_price: 32000, purchase_unit: "박스", usage_unit: "g", conversion_factor: 5000, loss_rate: 0.03, current_stock: 15, safety_stock: 5 },
-            { name: "슈크림 (커스터드, 2kg)", category: "기본 재료 (Base)", purchase_price: 12000, purchase_unit: "팩", usage_unit: "g", conversion_factor: 2000, loss_rate: 0.05, current_stock: 4, safety_stock: 5 },
-            { name: "소시지 (점보, 1kg)", category: "육류/가공 (Meat)", purchase_price: 15000, purchase_unit: "팩", usage_unit: "g", conversion_factor: 1000, loss_rate: 0.0, current_stock: 30, safety_stock: 10 },
-            { name: "모짜렐라 치즈 (2.5kg)", category: "육류/가공 (Meat)", purchase_price: 28000, purchase_unit: "박스", usage_unit: "g", conversion_factor: 2500, loss_rate: 0.02, current_stock: 12, safety_stock: 5 },
-            { name: "체다 치즈 (100매)", category: "육류/가공 (Meat)", purchase_price: 24000, purchase_unit: "박스", usage_unit: "매", conversion_factor: 100, loss_rate: 0.0, current_stock: 5, safety_stock: 2 },
-            { name: "케첩 (업소용, 3kg)", category: "소스/양념 (Sauce)", purchase_price: 3500, purchase_unit: "개", usage_unit: "g", conversion_factor: 3000, loss_rate: 0.05, current_stock: 50, safety_stock: 10 },
-            { name: "머스타드 (2kg)", category: "소스/양념 (Sauce)", purchase_price: 4500, purchase_unit: "개", usage_unit: "g", conversion_factor: 2000, loss_rate: 0.05, current_stock: 20, safety_stock: 5 },
-            { name: "우유 (1000ml)", category: "음료 (Beverage)", purchase_price: 2800, purchase_unit: "개", usage_unit: "ml", conversion_factor: 1000, loss_rate: 0.0, current_stock: 2, safety_stock: 5 },
-            { name: "오렌지 주스 (1.5L)", category: "음료 (Beverage)", purchase_price: 3500, purchase_unit: "개", usage_unit: "ml", conversion_factor: 1500, loss_rate: 0.0, current_stock: 10, safety_stock: 3 },
-            { name: "종이 봉투 (소, 100매)", category: "포장재 (Package)", purchase_price: 2500, purchase_unit: "팩", usage_unit: "ea", conversion_factor: 100, loss_rate: 0.0, current_stock: 50, safety_stock: 20 },
-            { name: "박스 (대, 50개)", category: "포장재 (Package)", purchase_price: 15000, purchase_unit: "팩", usage_unit: "ea", conversion_factor: 50, loss_rate: 0.0, current_stock: 100, safety_stock: 20 },
-            { name: "세트용 선물 박스 (50개)", category: "포장재 (Package)", purchase_price: 35000, purchase_unit: "팩", usage_unit: "ea", conversion_factor: 50, loss_rate: 0.0, current_stock: 15, safety_stock: 10 },
+            { name: "밀가루 (강력분)", category: "기본 재료 (Base)", purchase_price: 25000, purchase_unit: "박스(20kg)", usage_unit: "g", conversion_factor: 20000, loss_rate: 0.02, current_stock: 3, safety_stock: 5 },
+            { name: "백설탕", category: "기본 재료 (Base)", purchase_price: 18000, purchase_unit: "박스(15kg)", usage_unit: "g", conversion_factor: 15000, loss_rate: 0.01, current_stock: 10, safety_stock: 2 },
+            { name: "찹쌀가루", category: "기본 재료 (Base)", purchase_price: 45000, purchase_unit: "박스(10kg)", usage_unit: "g", conversion_factor: 10000, loss_rate: 0.0, current_stock: 8, safety_stock: 3 },
+            { name: "이스트 (생)", category: "기본 재료 (Base)", purchase_price: 3500, purchase_unit: "개(500g)", usage_unit: "g", conversion_factor: 500, loss_rate: 0.0, current_stock: 20, safety_stock: 5 },
+            { name: "식용유 (대두유)", category: "기본 재료 (Base)", purchase_price: 38000, purchase_unit: "캔(18L)", usage_unit: "ml", conversion_factor: 18000, loss_rate: 0.05, current_stock: 2, safety_stock: 4 },
+            { name: "국산 팥앙금", category: "기본 재료 (Base)", purchase_price: 32000, purchase_unit: "박스(5kg)", usage_unit: "g", conversion_factor: 5000, loss_rate: 0.03, current_stock: 15, safety_stock: 5 },
+            { name: "슈크림 (커스터드)", category: "기본 재료 (Base)", purchase_price: 12000, purchase_unit: "팩(2kg)", usage_unit: "g", conversion_factor: 2000, loss_rate: 0.05, current_stock: 4, safety_stock: 5 },
+            { name: "소시지 (점보)", category: "육류/가공 (Meat)", purchase_price: 15000, purchase_unit: "팩(1kg)", usage_unit: "g", conversion_factor: 1000, loss_rate: 0.0, current_stock: 30, safety_stock: 10 },
+            { name: "모짜렐라 치즈", category: "육류/가공 (Meat)", purchase_price: 28000, purchase_unit: "박스(2.5kg)", usage_unit: "g", conversion_factor: 2500, loss_rate: 0.02, current_stock: 12, safety_stock: 5 },
+            { name: "체다 치즈", category: "육류/가공 (Meat)", purchase_price: 24000, purchase_unit: "박스(100매)", usage_unit: "매", conversion_factor: 100, loss_rate: 0.0, current_stock: 5, safety_stock: 2 },
+            { name: "감자 다이스", category: "채소 (Veg)", purchase_price: 8500, purchase_unit: "팩(2kg)", usage_unit: "g", conversion_factor: 2000, loss_rate: 0.0, current_stock: 10, safety_stock: 5 },
+            { name: "케첩 (업소용)", category: "소스/양념 (Sauce)", purchase_price: 3500, purchase_unit: "개(3kg)", usage_unit: "g", conversion_factor: 3000, loss_rate: 0.05, current_stock: 50, safety_stock: 10 },
+            { name: "머스타드", category: "소스/양념 (Sauce)", purchase_price: 4500, purchase_unit: "개(2kg)", usage_unit: "g", conversion_factor: 2000, loss_rate: 0.05, current_stock: 20, safety_stock: 5 },
+            { name: "우유", category: "음료 (Beverage)", purchase_price: 2800, purchase_unit: "개(1L)", usage_unit: "ml", conversion_factor: 1000, loss_rate: 0.0, current_stock: 2, safety_stock: 5 },
+            { name: "오렌지 주스", category: "음료 (Beverage)", purchase_price: 3500, purchase_unit: "개(1.5L)", usage_unit: "ml", conversion_factor: 1500, loss_rate: 0.0, current_stock: 10, safety_stock: 3 },
+            { name: "종이 봉투 (소)", category: "포장재 (Package)", purchase_price: 2500, purchase_unit: "팩(100매)", usage_unit: "ea", conversion_factor: 100, loss_rate: 0.0, current_stock: 50, safety_stock: 20 },
+            { name: "박스 (대)", category: "포장재 (Package)", purchase_price: 15000, purchase_unit: "팩(50개)", usage_unit: "ea", conversion_factor: 50, loss_rate: 0.0, current_stock: 100, safety_stock: 20 },
+            { name: "세트용 선물 박스", category: "포장재 (Package)", purchase_price: 35000, purchase_unit: "팩(50개)", usage_unit: "ea", conversion_factor: 50, loss_rate: 0.0, current_stock: 15, safety_stock: 10 },
         ]
 
         const ingMap = new Map<string, string>() // Name -> ID
@@ -185,6 +186,32 @@ export const generateTestData = async () => {
                 ]
             },
             {
+                name: "모짜렐라 핫도그",
+                selling_price: 3000,
+                description: "치즈와 소시지가 반반! 인기 만점 핫도그",
+                items: [
+                    { name: "꽈배기 반죽 (5kg)", quantity: 80, type: 'prep' },
+                    { name: "소시지 (점보)", quantity: 30, type: 'ingredient' },
+                    { name: "모짜렐라 치즈", quantity: 30, type: 'ingredient' },
+                    { name: "식용유 (대두유)", quantity: 12, type: 'ingredient' },
+                    { name: "케첩 (업소용)", quantity: 10, type: 'ingredient' },
+                    { name: "종이 봉투 (소)", quantity: 1, type: 'ingredient' }
+                ]
+            },
+            {
+                name: "감자 핫도그",
+                selling_price: 3500,
+                description: "고소한 감자 토핑이 붙은 바삭한 핫도그",
+                items: [
+                    { name: "꽈배기 반죽 (5kg)", quantity: 80, type: 'prep' },
+                    { name: "소시지 (점보)", quantity: 60, type: 'ingredient' },
+                    { name: "감자 다이스", quantity: 40, type: 'ingredient' },
+                    { name: "식용유 (대두유)", quantity: 15, type: 'ingredient' },
+                    { name: "케첩 (업소용)", quantity: 10, type: 'ingredient' },
+                    { name: "종이 봉투 (소)", quantity: 1, type: 'ingredient' }
+                ]
+            },
+            {
                 name: "치즈 볼 (3개입)",
                 selling_price: 3000,
                 description: "쭉 늘어나는 모짜렐라 치즈볼",
@@ -285,7 +312,7 @@ export const generateTestData = async () => {
                 description: "아이들이 좋아하는 꽈배기와 우유",
                 items: [
                     { name: "경성 찹쌀 꽈배기", quantity: 2, type: 'menu' },
-                    { name: "우유 (1000ml)", quantity: 1, type: 'ingredient' },
+                    { name: "우유", quantity: 1, type: 'ingredient' },
                     { name: "종이 봉투 (소)", quantity: 1, type: 'ingredient' }
                 ]
             },
@@ -297,7 +324,7 @@ export const generateTestData = async () => {
                     { name: "경성 찹쌀 꽈배기", quantity: 10, type: 'menu' },
                     { name: "팥 씨앗 도너츠", quantity: 5, type: 'menu' },
                     { name: "점보 핫도그", quantity: 4, type: 'menu' },
-                    { name: "오렌지 주스 (1.5L)", quantity: 1, type: 'ingredient' },
+                    { name: "오렌지 주스", quantity: 1, type: 'ingredient' },
                     { name: "세트용 선물 박스", quantity: 2, type: 'ingredient' }
                 ]
             }

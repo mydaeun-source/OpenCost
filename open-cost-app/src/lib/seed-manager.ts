@@ -105,55 +105,61 @@ export const seedPurchases = async (userId: string) => {
 }
 
 export const seedDetailedOrders = async (userId: string) => {
-    console.log("Seeding detailed order logs (last 30 days)...")
+    console.log("Seeding detailed order logs (last 6 months)...")
     const { data: recipes } = await supabase.from("recipes").select("*").eq("user_id", userId).eq("type", "menu")
     if (!recipes || recipes.length === 0) return
 
     const today = new Date()
 
-    // Seed 30 days of detailed orders for granular analytics
-    // 1. Fetch all ingredient impacts for recipes to avoid N+1 inside loops
-    const { data: ingredients } = await supabase.from("ingredients").select("*").eq("user_id", userId)
-    if (!ingredients) return
-
-    for (let d = 0; d < 30; d++) {
+    // Seed 180 days (6 months) of detailed orders
+    for (let d = 0; d < 180; d++) {
         const orderDate = subDays(today, d)
         const dayOfWeek = orderDate.getDay()
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 5 || dayOfWeek === 6
-        const orderCount = (isWeekend ? 25 : 12) + Math.floor(Math.random() * 10)
+        const orderCount = (isWeekend ? 20 : 10) + Math.floor(Math.random() * 8)
 
+        // Bulk insert orders for the day to be faster
+        const dayOrders: any[] = []
         for (let o = 0; o < orderCount; o++) {
             const recipe = recipes[Math.floor(Math.random() * recipes.length)]
-            const qty = 1 + (Math.random() > 0.85 ? 1 : 0)
+            const qty = 1 + (Math.random() > 0.9 ? 1 : 0)
             const totalAmount = Number(recipe.selling_price) * qty
 
             const orderTime = new Date(orderDate)
-            orderTime.setHours(11 + Math.floor(Math.random() * 10), Math.floor(Math.random() * 60))
+            orderTime.setHours(10 + Math.floor(Math.random() * 11), Math.floor(Math.random() * 60))
 
-            const { data: order } = await supabase.from("orders").insert({
+            dayOrders.push({
                 user_id: userId,
                 total_amount: totalAmount,
                 total_cost: 0,
                 status: 'completed',
                 created_at: orderTime.toISOString()
-            }).select().single()
+            })
+        }
 
-            if (order) {
-                await supabase.from("order_items").insert({
+        const { data: insertedOrders } = await supabase.from("orders").insert(dayOrders).select()
+
+        if (insertedOrders) {
+            const dayItems: any[] = []
+            insertedOrders.forEach((order, idx) => {
+                // Find matching recipe by price/index or just pick random if count mismatch (should match)
+                const recipe = recipes.find(r => r.selling_price === (dayOrders[idx].total_amount / (dayOrders[idx].total_amount > 5000 ? 2 : 1))) || recipes[Math.floor(Math.random() * recipes.length)]
+                const qty = dayOrders[idx].total_amount / Number(recipe.selling_price)
+
+                dayItems.push({
                     order_id: order.id,
                     menu_id: recipe.id,
-                    quantity: qty,
+                    quantity: Math.max(1, Math.round(qty)),
                     price: recipe.selling_price,
                     created_at: order.created_at
                 })
-
-                // STOCK SYNC: Calculate consumption (Recursive)
-                // This logic is simplified for seeding to avoid heavy DB calls per order
-                // In a real scenario, we'd use a cached 'recipe_impact' map
-            }
+            })
+            await supabase.from("order_items").insert(dayItems)
         }
+
+        if (d % 30 === 0) console.log(`Seeded ${d} days...`)
     }
-    console.log("Detailed orders seeded. Note: Stock consumption for sample orders is handled via bulk correction in runUnifiedSeed for performance.")
+    console.log("Detailed orders (6 months) seeded.")
 }
 
 /**
@@ -161,56 +167,37 @@ export const seedDetailedOrders = async (userId: string) => {
  * Decoupled from individual order insertion for performance
  */
 export const syncSeededStock = async (userId: string) => {
-    console.log("Synchronizing stock levels with seeded history...")
+    console.log("Synchronizing stock levels with seeded history (Optimized)...")
 
-    // 1. Get all orders for the last 30 days
-    const { data: orders } = await supabase.from("order_items")
-        .select(`
-            quantity,
-            menu_id,
-            recipe:recipes (
-                id,
-                name,
-                recipe_ingredients (
-                    item_id,
-                    item_type,
-                    quantity
-                )
-            )
-        `)
+    // 1. Fetch all necessary data once
+    const { data: orderItems } = await supabase.from("order_items").select("quantity, menu_id")
+    const { data: allRecipeIngredients } = await supabase.from("recipe_ingredients").select("*")
+    const { data: ingredients } = await supabase.from("ingredients").select("*").eq("user_id", userId)
 
-    if (!orders) return
+    if (!orderItems || !allRecipeIngredients || !ingredients) return
 
-    // 2. Aggregate Consumption
+    // 2. Aggregate Consumption in-memory
     const consumptionMap: Record<string, number> = {} // ing_id -> total_usage_unit
 
-    // Recursive helper (local)
-    const resolveUsage = async (recipeId: string, multiplier: number) => {
-        const { data: components } = await supabase.from("recipe_ingredients")
-            .select("*")
-            .eq("recipe_id", recipeId)
-
-        if (!components) return
-
+    const resolveUsageInMem = (recipeId: string, multiplier: number) => {
+        const components = allRecipeIngredients.filter(ri => ri.recipe_id === recipeId)
         for (const comp of components) {
             if (comp.item_type === 'ingredient') {
                 consumptionMap[comp.item_id] = (consumptionMap[comp.item_id] || 0) + (comp.quantity * multiplier)
             } else {
-                // Nested Recipe (Prep or Menu)
-                await resolveUsage(comp.item_id, comp.quantity * multiplier)
+                resolveUsageInMem(comp.item_id, comp.quantity * multiplier)
             }
         }
     }
 
-    for (const item of orders) {
+    console.log("Processing consumption logic...")
+    for (const item of orderItems) {
         if (!item.menu_id) continue
-        await resolveUsage(item.menu_id, item.quantity)
+        resolveUsageInMem(item.menu_id, item.quantity)
     }
 
     // 3. Apply to Ingredients
-    const { data: ingredients } = await supabase.from("ingredients").select("*").eq("user_id", userId)
-    if (!ingredients) return
-
+    console.log("Updating ingredient stock levels...")
     for (const ing of ingredients) {
         const usageAmount = consumptionMap[ing.id] || 0
         if (usageAmount > 0) {
@@ -230,6 +217,7 @@ export const syncSeededStock = async (userId: string) => {
             })
         }
     }
+    console.log("Stock levels synchronized.")
 }
 
 export const runUnifiedSeed = async () => {

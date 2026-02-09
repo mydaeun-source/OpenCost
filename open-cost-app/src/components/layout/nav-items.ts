@@ -1,4 +1,4 @@
-import { LayoutDashboard, Scale, ChefHat, Settings, TrendingUp, Receipt, ShoppingCart, ShoppingBag, Repeat, BarChart3 } from "lucide-react"
+import { LayoutDashboard, Scale, ChefHat, Settings, TrendingUp, Receipt, ShoppingCart, ShoppingBag, Repeat, BarChart3, PieChart } from "lucide-react"
 
 export const NAV_ITEMS = [
     {
@@ -45,6 +45,11 @@ export const NAV_ITEMS = [
         label: "순이익 분석",
         href: "/analysis/profit",
         icon: BarChart3,
+    },
+    {
+        label: "메뉴 엔지니어링",
+        href: "/analysis/menu",
+        icon: PieChart,
     },
     {
         label: "설정",

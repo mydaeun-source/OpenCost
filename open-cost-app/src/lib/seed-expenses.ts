@@ -16,6 +16,7 @@ export const seedExpenses = async (supabase: SupabaseClient, userId: string) => 
         { name: '배달앱 광고비', default_amount: 330000, is_fixed: true },
         { name: '세금/공과금', default_amount: null, is_fixed: false },
         { name: '소모품/잡비', default_amount: null, is_fixed: false },
+        { name: '매입 (식자재)', default_amount: null, is_fixed: false },
     ]
 
     const { data: categories, error: catError } = await supabase

@@ -7,9 +7,11 @@ import { createProductionRecord } from "@/lib/api/inventory-analytics"
 import { Button } from "@/components/ui/Button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
 import { Input } from "@/components/ui/Input"
-import { Repeat, Loader2, CheckCircle2, AlertCircle, Plus, Minus, ChefHat, ChevronDown } from "lucide-react"
+import { Repeat, Loader2, CheckCircle2, AlertCircle, Plus, Minus, ChefHat, ChevronDown, History as HistoryIcon, Clock } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { supabase } from "@/lib/supabase"
+import { format } from "date-fns"
 
 export default function ProductionPage() {
     const { recipes, loading: recipesLoading, fetchRecipes } = useRecipes()
@@ -17,11 +19,37 @@ export default function ProductionPage() {
     const [productionQty, setProductionQty] = useState<Record<string, number>>({})
     const [isSubmitting, setIsSubmitting] = useState<string | null>(null)
     const [expandedBOM, setExpandedBOM] = useState<Record<string, boolean>>({})
+    const [history, setHistory] = useState<any[]>([])
+    const [historyLoading, setHistoryLoading] = useState(false)
     const { toast } = useToast()
 
     useEffect(() => {
         fetchRecipes()
+        fetchHistory()
     }, [fetchRecipes])
+
+    const fetchHistory = async () => {
+        try {
+            setHistoryLoading(true)
+            const thirtyDaysAgo = new Date()
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+            const { data, error } = await supabase
+                .from("stock_adjustment_logs")
+                .select("*, ingredients(name, purchase_unit)")
+                .eq("adjustment_type", "correction")
+                .ilike("reason", "[배치 생산]%")
+                .gte("created_at", thirtyDaysAgo.toISOString())
+                .order("created_at", { ascending: false })
+
+            if (error) throw error
+            setHistory(data || [])
+        } catch (error) {
+            console.error("Fetch History Error:", error)
+        } finally {
+            setHistoryLoading(false)
+        }
+    }
 
     const prepRecipes = recipes.filter(r => r.type === 'prep')
 
@@ -32,7 +60,7 @@ export default function ProductionPage() {
             map[ing.id] = { name: ing.name, unit: ing.usage_unit }
         })
         recipes.forEach(rec => {
-            map[rec.id] = { name: rec.name, unit: '개' } // Recipes usually in units
+            map[rec.id] = { name: rec.name, unit: '개' }
         })
         return map
     }, [ingredients, recipes])
@@ -70,6 +98,7 @@ export default function ProductionPage() {
             })
 
             setProductionQty(prev => ({ ...prev, [recipeId]: 0 }))
+            fetchHistory()
         } catch (error: any) {
             console.error("Production Error:", error)
             toast({
@@ -83,56 +112,55 @@ export default function ProductionPage() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 pb-24">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+                    <h1 className="text-3xl font-black tracking-tight text-white flex items-center gap-3">
                         <Repeat className="h-8 w-8 text-indigo-500" />
                         배치 생산 관리
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium">
+                    <p className="text-slate-400 font-medium">
                         반제품(소스, 육수 등)의 대량 생산을 기록하고 재료 소진을 자동 반영합니다.
                     </p>
                 </div>
             </div>
 
             <div className="grid gap-6">
-                {recipesLoading || ingredientsLoading ? (
+                {(recipesLoading || ingredientsLoading) ? (
                     <div className="flex flex-col items-center justify-center py-20 animate-pulse">
                         <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
                         <p className="text-slate-400 font-bold uppercase tracking-widest text-sm">로딩 중...</p>
                     </div>
                 ) : prepRecipes.length === 0 ? (
-                    <Card className="border-2 border-dashed border-slate-200 dark:border-slate-800 bg-transparent">
+                    <Card className="border-2 border-dashed border-slate-800 bg-transparent">
                         <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                            <AlertCircle className="h-12 w-12 text-slate-300 mb-4" />
-                            <p className="text-xl font-bold text-slate-400">등록된 반제품(Prep) 레시피가 없습니다.</p>
-                            <p className="text-sm text-slate-500 mt-2">메뉴 관리에서 타입을 'Prep'으로 설정하여 레시피를 만들어보세요.</p>
-                            <Button variant="outline" className="mt-6 border-2" asChild>
+                            <AlertCircle className="h-12 w-12 text-slate-700 mb-4" />
+                            <p className="text-xl font-bold text-slate-500">등록된 반제품(Prep) 레시피가 없습니다.</p>
+                            <p className="text-sm text-slate-600 mt-2">메뉴 관리에서 타입을 'Prep'으로 설정하여 레시피를 만들어보세요.</p>
+                            <Button variant="outline" className="mt-6 border-2 border-indigo-500/50 text-indigo-400" asChild>
                                 <a href="/recipes">레시피 만들러 가기</a>
                             </Button>
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                         {prepRecipes.map(recipe => (
-                            <Card key={recipe.id} className="overflow-hidden border-2 border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl transition-all hover:border-indigo-500/30 group">
+                            <Card key={recipe.id} className="overflow-hidden border border-white/5 bg-slate-900/40 backdrop-blur-xl transition-all hover:border-indigo-500/30 group">
                                 <CardHeader className="pb-4">
                                     <div className="flex justify-between items-start mb-2">
-                                        <div className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 text-[10px] font-black uppercase">Semi-Finished</div>
+                                        <div className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase">Semi-Finished</div>
                                         <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500">
                                             <Repeat className="h-4 w-4" />
                                         </div>
                                     </div>
-                                    <CardTitle className="text-lg font-black">{recipe.name}</CardTitle>
+                                    <CardTitle className="text-lg font-black text-white">{recipe.name}</CardTitle>
                                     <CardDescription className="text-xs line-clamp-1">{recipe.description || "대량 생산용 반제품 레시피입니다."}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4 pt-0">
-                                    {/* BOM Section (Expandable) */}
-                                    <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+                                    <div className="bg-slate-950/50 rounded-xl border border-white/5 overflow-hidden">
                                         <button
                                             onClick={() => toggleBOM(recipe.id)}
-                                            className="w-full flex items-center justify-between p-3 text-xs font-black text-slate-500 hover:text-indigo-500 transition-colors"
+                                            className="w-full flex items-center justify-between p-3 text-xs font-black text-slate-500 hover:text-indigo-400 transition-colors"
                                         >
                                             <span className="flex items-center gap-2">
                                                 <ChefHat className="h-3.5 w-3.5" />
@@ -144,74 +172,119 @@ export default function ProductionPage() {
                                         </button>
 
                                         {expandedBOM[recipe.id] && (
-                                            <div className="px-3 pb-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                            <div className="px-3 pb-3 space-y-2 animate-in fade-in slide-in-from-top-1">
                                                 {(recipe as any).recipe_ingredients?.map((ri: any) => {
                                                     const detail = itemLookup[ri.item_id] || { name: "알 수 없는 항목", unit: "" }
                                                     return (
-                                                        <div key={ri.id} className="flex justify-between items-center text-[10px] font-bold py-1 border-b border-slate-200/50 dark:border-slate-700/50 last:border-0">
-                                                            <span className="text-slate-700 dark:text-slate-300">{detail.name}</span>
-                                                            <span className="text-indigo-500">{ri.quantity.toLocaleString()}{detail.unit}</span>
+                                                        <div key={ri.id} className="flex justify-between items-center text-[10px] font-bold py-1 border-b border-white/5 last:border-0">
+                                                            <span className="text-slate-400">{detail.name}</span>
+                                                            <span className="text-indigo-400">{ri.quantity.toLocaleString()}{detail.unit}</span>
                                                         </div>
                                                     )
                                                 })}
-                                                {(!(recipe as any).recipe_ingredients || (recipe as any).recipe_ingredients.length === 0) && (
-                                                    <p className="text-[10px] text-slate-400 text-center py-2 font-medium">구성 재료가 없습니다.</p>
-                                                )}
                                             </div>
                                         )}
                                     </div>
 
-                                    <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border-2 border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-white/5">
                                         <button
                                             onClick={() => handleQtyChange(recipe.id, (productionQty[recipe.id] || 0) - 1)}
-                                            className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                            className="p-2 hover:bg-white/5 rounded-lg transition-colors"
                                         >
-                                            <Minus className="h-4 w-4 text-slate-400" />
+                                            <Minus className="h-4 w-4 text-slate-500" />
                                         </button>
                                         <div className="flex-1 text-center">
                                             <Input
                                                 type="number"
                                                 value={productionQty[recipe.id] || ""}
                                                 onChange={(e) => handleQtyChange(recipe.id, parseFloat(e.target.value) || 0)}
-                                                className="border-none bg-transparent text-center text-xl font-black text-slate-800 dark:text-white focus-visible:ring-0"
+                                                className="border-none bg-transparent text-center text-xl font-black text-white focus-visible:ring-0"
                                                 placeholder="0"
                                             />
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">생산 수량</p>
+                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">생산 수량</p>
                                         </div>
                                         <button
                                             onClick={() => handleQtyChange(recipe.id, (productionQty[recipe.id] || 0) + 1)}
-                                            className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                            className="p-2 hover:bg-white/5 rounded-lg transition-colors"
                                         >
-                                            <Plus className="h-4 w-4 text-slate-400" />
+                                            <Plus className="h-4 w-4 text-slate-500" />
                                         </button>
                                     </div>
 
                                     <Button
-                                        className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-lg shadow-indigo-600/20 gap-2 overflow-hidden relative"
+                                        className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-lg shadow-indigo-600/20 gap-2"
                                         onClick={() => handleProduce(recipe.id)}
                                         disabled={isSubmitting === recipe.id}
                                     >
-                                        {isSubmitting === recipe.id ? (
-                                            <Loader2 className="h-5 w-5 animate-spin" />
-                                        ) : (
-                                            <>
-                                                <CheckCircle2 className="h-5 w-5" />
-                                                현 시간 생산 기록
-                                            </>
-                                        )}
-                                        {isSubmitting === recipe.id && (
-                                            <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 animate-pulse" />
-                                        )}
+                                        {isSubmitting === recipe.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <><CheckCircle2 className="h-5 w-5" />현 시간 생산 기록</>}
                                     </Button>
-
-                                    <p className="text-[10px] text-center text-slate-500 font-bold leading-relaxed">
-                                        기록 시 포함된 모든 하위 재료 재고가<br />즉시 차감됩니다.
-                                    </p>
                                 </CardContent>
                             </Card>
                         ))}
                     </div>
                 )}
+            </div>
+
+            {/* Production History Log */}
+            <div className="pt-10 border-t border-white/5">
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 className="text-xl font-black text-white flex items-center gap-2">
+                            <HistoryIcon className="h-5 w-5 text-indigo-400" />
+                            최근 배치 생산 내역
+                        </h2>
+                        <p className="text-xs text-slate-500 font-medium mt-1">최근 30일간의 반제품 생산 및 재고 소진 기록입니다.</p>
+                    </div>
+                    {historyLoading && <Loader2 className="h-4 w-4 text-indigo-500 animate-spin" />}
+                </div>
+
+                <div className="rounded-xl border border-white/5 overflow-hidden bg-slate-900/20">
+                    <table className="w-full text-xs text-left">
+                        <thead className="bg-slate-950 text-slate-500 font-black uppercase tracking-widest border-b border-white/5">
+                            <tr>
+                                <th className="p-4 pl-6">시간</th>
+                                <th className="p-4">생산 내용 (BOM 소진 상세)</th>
+                                <th className="p-4 text-right">소모량</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                            {history.length === 0 && !historyLoading ? (
+                                <tr>
+                                    <td colSpan={3} className="p-10 text-center text-slate-600 font-bold">생산 내역이 없습니다.</td>
+                                </tr>
+                            ) : (
+                                history.map((log) => {
+                                    // Parse reason like: [배치 생산] 소금빵 10단위 생산 소진 (500g 소모)
+                                    const match = log.reason?.match(/\[배치 생산\] (.*?) (.*?) 생산 소진 \((.*?) 소모\)/)
+                                    const prodName = match ? match[1] : "기록"
+                                    const prodQty = match ? match[2] : ""
+
+                                    return (
+                                        <tr key={log.id} className="hover:bg-white/5 transition-colors">
+                                            <td className="p-4 pl-6 text-slate-500 font-medium">
+                                                <div className="flex items-center gap-2">
+                                                    <Clock className="h-3 w-3" />
+                                                    {format(new Date(log.created_at), "MM/dd HH:mm")}
+                                                </div>
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-white font-black">{prodName}</span>
+                                                    <span className="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 text-[9px] font-black uppercase">{prodQty} 생산</span>
+                                                    <span className="text-slate-500 font-medium">→</span>
+                                                    <span className="text-slate-400 font-bold">{log.ingredients?.name}</span>
+                                                </div>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <span className="text-rose-400 font-black">-{Math.abs(log.quantity).toLocaleString()}{log.ingredients?.purchase_unit}</span>
+                                            </td>
+                                        </tr>
+                                    )
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     )

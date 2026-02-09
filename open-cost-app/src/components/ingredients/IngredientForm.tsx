@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { Select } from "@/components/ui/Select"
 import { Database } from "@/types/database.types"
-import { Info } from "lucide-react"
+import { Info, TrendingUp } from "lucide-react"
+import { KAMIS_ITEMS } from "@/lib/api/kamis"
 
 type IngredientInsert = Database["public"]["Tables"]["ingredients"]["Insert"]
 type IngredientRow = Database["public"]["Tables"]["ingredients"]["Row"]
@@ -26,6 +27,11 @@ const UNITS = [
 
 export function IngredientForm({ initialData, onSubmit, onCancel }: IngredientFormProps) {
     const [loading, setLoading] = useState(false)
+    const [kamisMapping, setKamisMapping] = useState<{ code: string, category: string } | null>(() => {
+        if (typeof window === "undefined") return null
+        const saved = initialData ? localStorage.getItem(`kamis_mapping_${initialData.id}`) : null
+        return saved ? JSON.parse(saved) : null
+    })
     const [formData, setFormData] = useState<Partial<IngredientInsert>>(initialData ? {
         name: initialData.name,
         purchase_price: initialData.purchase_price,
@@ -175,6 +181,30 @@ export function IngredientForm({ initialData, onSubmit, onCancel }: IngredientFo
                         {UNITS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
                     </Select>
                 </div>
+            </div>
+
+            <div className="space-y-2 rounded-md bg-indigo-500/5 border border-indigo-500/20 p-3">
+                <label className="text-sm font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" /> KAMIS 시장 시세 매핑
+                </label>
+                <div className="flex gap-2">
+                    <Select
+                        className="flex-1"
+                        value={kamisMapping?.code || ""}
+                        onChange={(e) => {
+                            const item = KAMIS_ITEMS.find(it => it.code === e.target.value)
+                            setKamisMapping(item ? { code: item.code, category: item.category } : null)
+                        }}
+                    >
+                        <option value="">품목 선택 안 함</option>
+                        {KAMIS_ITEMS.map(it => (
+                            <option key={it.code} value={it.code}>{it.name} (코드: {it.code})</option>
+                        ))}
+                    </Select>
+                </div>
+                <p className="text-[10px] text-slate-500 italic mt-1 font-medium">
+                    매핑이 완료되면 재고 관리 및 상세 페이지에서 전국 평균 시세와 비교할 수 있습니다.
+                </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 border-t pt-4 mt-2">
