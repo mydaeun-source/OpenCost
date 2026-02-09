@@ -14,13 +14,27 @@ export interface ChartData {
     profit: number
 }
 
+import { createPurchase, getPriceSpikes } from "@/lib/api/procurement"
+import { getInventoryLossReport, getPredictiveDepletion, getSourcingOptimization, InventoryLossReport } from "@/lib/api/inventory-analytics"
+
+export interface Insight {
+    type: 'warning' | 'info' | 'success'
+    title: string
+    description: string
+    value?: string
+}
+
 export interface DashboardSummary {
     ingredientCount: number
     recipeCount: number
     avgMarginRate: number
-    totalExpenses: number // New
-    targetRevenue: number // New
-    estimatedProfit: number // New
+    totalExpenses: number
+    targetRevenue: number
+    estimatedProfit: number
+    insights: Insight[]
+    lossReport: InventoryLossReport[]
+    depletionPredictions: any[]
+    sourcingOpportunities: any[]
 }
 
 export function useDashboard() {
@@ -31,6 +45,10 @@ export function useDashboard() {
         totalExpenses: 0,
         targetRevenue: 0,
         estimatedProfit: 0,
+        insights: [],
+        lossReport: [],
+        depletionPredictions: [],
+        sourcingOpportunities: []
     })
     const [recentIngredients, setRecentIngredients] = useState<Ingredient[]>([])
     const [topMenus, setTopMenus] = useState<Recipe[]>([])
@@ -103,7 +121,6 @@ export function useDashboard() {
                     .lte("expense_date", endStr),
                 supabase
                     .from("sales_records")
-                    .select("daily_revenue, sales_date")
                     .select("daily_revenue, daily_cogs, sales_date")
                     .eq("user_id", user.id)
                     .gte("sales_date", start6Months)
@@ -114,8 +131,10 @@ export function useDashboard() {
             const pastSales = salesResult.data || []
 
             const chartData = []
-            let currentMonthRevenue = 0 // Track for summary
-            let currentMonthCogs = 0 // Track for summary
+            let currentMonthRevenue = 0
+            let currentMonthCogs = 0
+            let previousMonthRevenue = 0
+            let previousMonthProfit = 0
 
             for (let i = 5; i >= 0; i--) {
                 const date = subMonths(now, i)
@@ -132,14 +151,16 @@ export function useDashboard() {
                 const monthSales = monthSalesData.reduce((sum, r) => sum + Number(r.daily_revenue), 0)
                 const monthCogs = monthSalesData.reduce((sum, r) => sum + Number(r.daily_cogs || 0), 0)
 
-                // If it's current month, store it
+                // Profit = Revenue - COGS - Expenses
+                const monthProfit = monthSales - monthCogs - monthExp
+
                 if (i === 0) {
                     currentMonthRevenue = monthSales
                     currentMonthCogs = monthCogs
+                } else if (i === 1) {
+                    previousMonthRevenue = monthSales
+                    previousMonthProfit = monthProfit
                 }
-
-                // Profit = Revenue - COGS - Expenses
-                const monthProfit = monthSales - monthCogs - monthExp
 
                 chartData.push({
                     month: monthLabel,
@@ -157,24 +178,68 @@ export function useDashboard() {
                 .order("created_at", { ascending: false })
                 .limit(5)
 
-            // Summary Calculation
-            // If current month revenue > 0, use it. Else use Target.
-            const displayRevenue = currentMonthRevenue > 0 ? currentMonthRevenue : targetRevenue
-            const displayCogs = currentMonthCogs > 0 ? currentMonthCogs : (displayRevenue * 0.35) // Fallback to 35% COGS if no data
-            const estimatedProfit = (displayRevenue - displayCogs) - totalExpenses
+            // 6. Insights & Analytics
+            const priceSpikes = await getPriceSpikes()
+            const insights: Insight[] = []
 
+            if (priceSpikes.length > 0) {
+                const topSpike = priceSpikes[0]
+                insights.push({
+                    type: 'warning',
+                    title: '식자재 가격 가파른 상승',
+                    description: `[${topSpike.name}]의 매입가가 이전 평균보다 ${topSpike.percentIncrease}% 상승했습니다.`,
+                    value: `${topSpike.latestPrice.toLocaleString()}원`
+                })
+            }
+
+            // Margin Trend Insight (Refined)
+            if (chartData.length >= 2) {
+                const currentProfit = chartData[chartData.length - 1].profit
+                const prevProfit = chartData[chartData.length - 2].profit
+                if (currentProfit > prevProfit && currentProfit > 0) {
+                    insights.push({
+                        type: 'success',
+                        title: '수익성 개선 포착',
+                        description: '지난달 대비 실질 마진율과 영업이익이 개선되었습니다.',
+                        value: 'Good'
+                    })
+                }
+            }
+
+            // Summary Calculation
+            const displayRevenue = currentMonthRevenue > 0 ? currentMonthRevenue : targetRevenue
+            const displayCogs = currentMonthCogs > 0 ? currentMonthCogs : (displayRevenue * 0.35)
+            const estimatedProfit = (displayRevenue - displayCogs) - totalExpenses
             const realMarginRate = displayRevenue > 0 ? ((displayRevenue - displayCogs) / displayRevenue) * 100 : 65
 
-            console.log("[useDashboard] Loaded chartData (Real Sales & COGS):", chartData)
+            // Period-over-Period Trends
+            const profitTrend = previousMonthProfit !== 0 ? ((estimatedProfit - previousMonthProfit) / Math.abs(previousMonthProfit)) * 100 : 0
+            const revenueTrend = previousMonthRevenue !== 0 ? ((displayRevenue - previousMonthRevenue) / previousMonthRevenue) * 100 : 0
+
+            // 7. Inventory & Sourcing Analytics
+            const [lossReport, depletionPredictions, sourcingOpportunities] = await Promise.all([
+                getInventoryLossReport(30),
+                getPredictiveDepletion(),
+                getSourcingOptimization()
+            ])
 
             setSummary({
                 ingredientCount,
                 recipeCount,
                 avgMarginRate: Math.round(realMarginRate),
                 totalExpenses,
-                targetRevenue, // Still needed for benchmark
-                estimatedProfit // Based on actual if available, else target
-            })
+                targetRevenue,
+                estimatedProfit,
+                insights,
+                lossReport,
+                depletionPredictions,
+                sourcingOpportunities,
+                trends: {
+                    profit: Math.round(profitTrend),
+                    revenue: Math.round(revenueTrend)
+                }
+            } as any)
+
             setRecentIngredients(recentIngs)
             setTopMenus(latestRecipes || [])
             setChartData(chartData)

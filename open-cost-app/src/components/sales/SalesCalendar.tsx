@@ -77,9 +77,11 @@ export function SalesCalendar() {
                         <ChevronRight className="h-4 w-4" />
                     </Button>
                 </div>
-                <div className="text-right">
-                    <p className="text-sm text-muted-foreground">월 총 매출</p>
-                    <p className="text-2xl font-bold text-primary">₩{totalRevenue.toLocaleString()}</p>
+                <div className="text-right mb-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">월 매출 합계</p>
+                    <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400 italic tracking-tighter">
+                        {totalRevenue.toLocaleString()}<span className="text-xs font-normal ml-0.5 opacity-50">원</span>
+                    </p>
                 </div>
             </CardHeader>
             <CardContent className="flex-1 p-0">

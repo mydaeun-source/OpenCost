@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
-import { Plus, Trash2, Search, Save, X, ShoppingCart, ChevronRight } from "lucide-react"
+import { Plus, Trash2, Search, Save, X, ShoppingCart, ChevronRight, User, Calendar, PlusCircle, Camera, Loader2 } from "lucide-react"
 import { useIngredients } from "@/hooks/useIngredients"
 import { cn } from "@/lib/utils"
 
-import { createPurchase } from "@/lib/api/procurement"
+import { createPurchase, getSuppliers } from "@/lib/api/procurement"
 import { useToast } from "@/hooks/use-toast"
+import { processReceiptImage } from "@/lib/ocr-service"
 
 interface PurchaseFormProps {
     onSuccess?: () => void
@@ -25,8 +26,29 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
     const [loading, setLoading] = useState(false)
     const [keepOpen, setKeepOpen] = useState(false)
 
+    const [suppliers, setSuppliers] = useState<string[]>([])
+    const [supplierSearchQuery, setSupplierSearchQuery] = useState("")
+    const [showSupplierSuggestions, setShowSupplierSuggestions] = useState(false)
     const searchInputRef = useRef<HTMLInputElement>(null)
     const [activeIndex, setActiveIndex] = useState(-1)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [ocrLoading, setOcrLoading] = useState(false)
+
+    useEffect(() => {
+        const fetchSuppliers = async () => {
+            try {
+                const data = await getSuppliers()
+                setSuppliers(data)
+            } catch (err) {
+                console.error("Failed to fetch suppliers:", err)
+            }
+        }
+        fetchSuppliers()
+    }, [])
+
+    const filteredSuppliers = suppliers.filter(s =>
+        s.toLowerCase().includes(supplierName.toLowerCase())
+    ).slice(0, 5)
 
     const addItem = (ing: any) => {
         if (selectedItems.find(item => item.ingredientId === ing.id)) return
@@ -59,6 +81,71 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
 
     const removeItem = (id: string) => {
         setSelectedItems(prev => prev.filter(item => item.ingredientId !== id))
+    }
+
+    const handleReceiptScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        try {
+            setOcrLoading(true)
+            const result = await processReceiptImage(file)
+
+            if (result.supplierName) setSupplierName(result.supplierName)
+            if (result.purchaseDate) setPurchaseDate(result.purchaseDate)
+
+            // Dynamic Ingredient Matching
+            if (result.potentialItems.length > 0) {
+                const newItems: { ingredientId: string, quantity: number, price: number }[] = []
+
+                result.potentialItems.forEach(pItem => {
+                    const match = ingredients.find(ing =>
+                        ing.name.toLowerCase().includes(pItem.name.toLowerCase()) ||
+                        pItem.name.toLowerCase().includes(ing.name.toLowerCase())
+                    )
+
+                    if (match) {
+                        // Check if already in selectedItems to avoid duplicates
+                        const isDuplicate = selectedItems.some(i => i.ingredientId === match.id)
+                        if (!isDuplicate) {
+                            newItems.push({
+                                ingredientId: match.id,
+                                quantity: pItem.quantity,
+                                price: pItem.price
+                            })
+                        }
+                    }
+                })
+
+                if (newItems.length > 0) {
+                    setSelectedItems(prev => [...prev, ...newItems])
+                    toast({
+                        title: "영수증 품목 인식 성공",
+                        description: `${newItems.length}개의 재료가 자동으로 목록에 추가되었습니다.`,
+                        type: "success"
+                    })
+                } else {
+                    toast({
+                        title: "영수증 정보 추출 완료",
+                        description: "매입처와 일자가 입력되었습니다. 품목 매칭 결과는 없습니다.",
+                    })
+                }
+            } else {
+                toast({
+                    title: "영수증 정보 추출 완료",
+                    description: "매입처와 일자가 자동으로 입력되었습니다.",
+                })
+            }
+        } catch (err) {
+            console.error("OCR Error:", err)
+            toast({
+                title: "영수증 인식 실패",
+                description: "이미지에서 텍스트를 추출하지 못했습니다.",
+                type: "destructive"
+            })
+        } finally {
+            setOcrLoading(false)
+        }
     }
 
     const updateItem = (id: string, field: 'quantity' | 'price', value: number) => {
@@ -99,75 +186,135 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl border-2 border-slate-100 dark:border-slate-800 shadow-sm">
-                <div className="space-y-2">
-                    <label className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">공급처 (Supplier)</label>
-                    <Input
-                        placeholder="예: 마트, 도매시장, 식자재몰 등"
-                        value={supplierName}
-                        onChange={e => setSupplierName(e.target.value)}
-                        required
-                        className="border-slate-300 dark:border-slate-600 rounded-2xl h-12 text-lg font-bold"
-                    />
+        <form onSubmit={handleSubmit} className="space-y-6 pt-2 pb-4">
+            {/* Receipt Scan Header */}
+            <div className="flex items-center justify-between pb-2 mb-2 border-b-2 border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/20">
+                        <Camera className="h-4 w-4" />
+                    </div>
+                    <div>
+                        <h2 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">영수증 자동 등록</h2>
+                        <p className="text-[10px] font-bold text-slate-400">OCR 기술로 빠르고 정확하게</p>
+                    </div>
+                </div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 rounded-lg border-2 border-amber-500/30 font-black text-[10px] text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/10 gap-2"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={ocrLoading}
+                >
+                    {ocrLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+                    {ocrLoading ? "분석 중..." : "영수증 사진 올리기"}
+                </Button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleReceiptScan}
+                />
+            </div>
+
+            {/* Header: Supplier & Date */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 relative">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 ml-1">
+                        <User className="h-3 w-3" /> 공급처 (Supplier)
+                    </label>
+                    <div className="relative">
+                        <Input
+                            placeholder="공급처 입력 또는 선택..."
+                            value={supplierName}
+                            onChange={e => {
+                                setSupplierName(e.target.value)
+                                setShowSupplierSuggestions(true)
+                            }}
+                            onFocus={() => setShowSupplierSuggestions(true)}
+                            onBlur={() => setTimeout(() => setShowSupplierSuggestions(false), 200)}
+                            required
+                            className="border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl h-12 text-base font-bold transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                        />
+                        {showSupplierSuggestions && filteredSuppliers.length > 0 && (
+                            <div className="absolute left-0 right-0 top-14 z-[110] bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1">
+                                {filteredSuppliers.map((s, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="p-3 text-sm font-bold cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 border-b last:border-0 border-slate-50 dark:border-slate-700 transition-colors"
+                                        onClick={() => {
+                                            setSupplierName(s)
+                                            setShowSupplierSuggestions(false)
+                                        }}
+                                    >
+                                        {s}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="space-y-2">
-                    <label className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">매입 일자</label>
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 ml-1">
+                        <Calendar className="h-3 w-3" /> 매입 일자
+                    </label>
                     <Input
                         type="date"
                         value={purchaseDate}
                         onChange={e => setPurchaseDate(e.target.value)}
                         required
-                        className="border-slate-300 dark:border-slate-600 rounded-2xl h-12 text-lg font-bold"
+                        className="border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl h-12 text-base font-bold transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
                     />
                 </div>
             </div>
 
-            <div className="space-y-4">
-                <div className="flex items-center justify-between px-2">
-                    <h3 className="text-xs font-black text-indigo-900 dark:text-indigo-400 uppercase tracking-widest">Purchase Line Items</h3>
-                    <div className="bg-indigo-600 text-white px-3 py-1 rounded-full text-[10px] font-black">{selectedItems.length} 품목</div>
+            {/* Main Item Selection Area */}
+            <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight flex items-center gap-2">
+                        <PlusCircle className="h-4 w-4 text-indigo-500" /> 매입 품목 추가
+                    </h3>
+                    <div className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-2.5 py-0.5 rounded-full text-[10px] font-black">{selectedItems.length} ITEMS</div>
                 </div>
 
-                <div className="border-2 border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden bg-white dark:bg-slate-900 shadow-xl transition-all focus-within:ring-4 focus-within:ring-indigo-100 dark:focus-within:ring-indigo-900/20">
-                    <div className="p-4 border-b-2 border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                <div className="border-2 border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
+                    {/* Search Bar */}
+                    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                         <div className="relative">
-                            <Search className="absolute left-4 top-3.5 h-6 w-6 text-slate-500" />
+                            <Search className="absolute left-3.5 top-2.5 h-5 w-5 text-slate-400" />
                             <Input
                                 ref={searchInputRef}
-                                placeholder="재료 이름을 입력하여 검색하세요 (Enter로 추가)..."
+                                placeholder="재료 이름을 검색하세요..."
                                 value={searchQuery}
                                 onChange={e => { setSearchQuery(e.target.value); setActiveIndex(-1); }}
                                 onKeyDown={handleKeyDown}
-                                className="pl-12 h-14 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus-visible:ring-indigo-500 rounded-2xl text-lg font-bold shadow-inner"
+                                className="pl-11 h-10 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700/50 focus-visible:ring-indigo-500 rounded-lg text-sm font-bold"
                             />
                             {searchQuery && (
-                                <div className="absolute left-0 right-0 top-16 z-[100] bg-white dark:bg-slate-800 border-2 border-indigo-100 dark:border-slate-700 rounded-2xl shadow-2xl max-h-72 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="absolute left-0 right-0 top-11 z-[100] bg-white dark:bg-slate-800 border-2 border-indigo-100 dark:border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
                                     {filteredIngredients.length === 0 ? (
-                                        <div className="p-10 text-base font-black text-slate-200 text-center italic">검색 결과가 없습니다.</div>
+                                        <div className="p-8 text-sm font-bold text-slate-400 text-center italic">결과가 없습니다.</div>
                                     ) : (
                                         filteredIngredients.map((ing, idx) => (
                                             <div
                                                 key={ing.id}
                                                 className={cn(
-                                                    "p-4 cursor-pointer flex justify-between items-center transition-colors border-b border-slate-50 dark:border-slate-700 last:border-0",
-                                                    activeIndex === idx ? "bg-indigo-50 dark:bg-indigo-900/50" : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                                                    "p-3 cursor-pointer flex justify-between items-center transition-all border-b border-slate-50 dark:border-slate-700 last:border-0",
+                                                    activeIndex === idx ? "bg-indigo-50 dark:bg-indigo-900/50 pl-5" : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
                                                 )}
                                                 onClick={() => addItem(ing)}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="h-10 w-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                                                        <Plus className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                                                    <div className="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                                                        <Plus className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                                                     </div>
                                                     <div>
-                                                        <span className="text-base font-black block text-slate-900 dark:text-slate-100">{ing.name}</span>
-                                                        <span className="text-xs text-slate-200 font-black tracking-wider uppercase bg-slate-800 px-1.5 py-0.5 rounded">최근 매입가: {Number(ing.purchase_price).toLocaleString()}원</span>
+                                                        <span className="text-sm font-black block text-slate-900 dark:text-slate-100">{ing.name}</span>
+                                                        <span className="text-[10px] text-slate-400 font-bold uppercase">{ing.purchase_unit} 당 {(Number(ing.purchase_price) || 0).toLocaleString()}원</span>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] px-2 py-1 rounded-lg font-black uppercase">{ing.purchase_unit}</div>
-                                                    <ChevronRight className="h-5 w-5 text-slate-300" />
-                                                </div>
+                                                <ChevronRight className="h-4 w-4 text-slate-300" />
                                             </div>
                                         ))
                                     )}
@@ -176,55 +323,59 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                         </div>
                     </div>
 
-                    <div className="max-h-80 overflow-y-auto divide-y dark:divide-slate-800 bg-white dark:bg-slate-900 shadow-inner">
+                    {/* Selected List */}
+                    <div className="divide-y dark:divide-slate-800 bg-white dark:bg-slate-900 overflow-y-auto max-h-[350px]">
                         {selectedItems.length === 0 ? (
-                            <div className="p-16 text-center text-slate-400 italic text-sm space-y-4">
-                                <div className="h-20 w-20 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mx-auto">
-                                    <ShoppingCart className="h-10 w-10 opacity-20" />
-                                </div>
-                                <p>품목을 검색하여 추가해주세요.<br />구매한 재료의 수량과 단가를 입력하세요.</p>
+                            <div className="p-12 text-center text-slate-400 flex flex-col items-center">
+                                <ShoppingCart className="h-10 w-10 mb-3 opacity-10" />
+                                <p className="text-xs font-bold leading-relaxed opacity-60">추가된 품목이 없습니다.<br />위 검색창에서 재료를 찾아 추가하세요.</p>
                             </div>
                         ) : (
                             selectedItems.map(item => {
                                 const ing = ingredients.find(i => i.id === item.ingredientId)
                                 return (
-                                    <div key={item.ingredientId} className="p-4 flex flex-wrap md:flex-nowrap items-center gap-5 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                        <div className="flex-1 min-w-[150px]">
-                                            <p className="text-base font-black truncate text-slate-900 dark:text-slate-100">{ing?.name}</p>
-                                            <p className="text-xs text-indigo-400 font-black uppercase tracking-widest">{ing?.purchase_unit} 단위</p>
+                                    <div key={item.ingredientId} className="p-3 flex items-center gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-black truncate text-slate-900 dark:text-slate-100">{ing?.name}</p>
+                                            <p className="text-[10px] text-slate-400 font-bold flex items-center gap-1 uppercase tracking-tight">
+                                                <span className="bg-slate-100 dark:bg-slate-800 px-1 rounded">{ing?.purchase_unit}</span> 단위
+                                            </p>
                                         </div>
-                                        <div className="w-24">
-                                            <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 mb-1.5 block uppercase">수량</label>
-                                            <Input
-                                                type="number"
-                                                className="h-10 text-base font-black border-slate-200 dark:border-slate-700 dark:bg-slate-800"
-                                                value={item.quantity}
-                                                onChange={e => updateItem(item.ingredientId, 'quantity', Number(e.target.value))}
-                                                min="0.01"
-                                                step="0.01"
-                                            />
+
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-20">
+                                                <label className="text-[9px] font-black text-slate-400 mb-1 block uppercase text-center">수량</label>
+                                                <Input
+                                                    type="number"
+                                                    className="h-9 px-2 text-center text-sm font-black border-2 border-slate-100 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-indigo-500/10"
+                                                    value={item.quantity}
+                                                    onChange={e => updateItem(item.ingredientId, 'quantity', Number(e.target.value))}
+                                                    min="0.01"
+                                                    step="0.01"
+                                                />
+                                            </div>
+                                            <div className="w-32">
+                                                <label className="text-[9px] font-black text-slate-400 mb-1 block uppercase text-center">단가 (원)</label>
+                                                <Input
+                                                    type="number"
+                                                    className="h-9 px-2 text-center text-sm font-black border-2 border-slate-100 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-indigo-500/10"
+                                                    value={item.price}
+                                                    onChange={e => updateItem(item.ingredientId, 'price', Number(e.target.value))}
+                                                />
+                                            </div>
+                                            <div className="w-24 text-right pr-1">
+                                                <label className="text-[9px] font-black text-slate-400 mb-1 block uppercase">합계</label>
+                                                <p className="text-sm font-black text-indigo-500">{(item.quantity * item.price).toLocaleString()}<span className="text-[10px] ml-0.5">원</span></p>
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                onClick={() => removeItem(item.ingredientId)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
                                         </div>
-                                        <div className="w-32">
-                                            <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 mb-1.5 block uppercase">매입 단가 (원)</label>
-                                            <Input
-                                                type="number"
-                                                className="h-10 text-base font-black border-slate-200 dark:border-slate-700 dark:bg-slate-800"
-                                                value={item.price}
-                                                onChange={e => updateItem(item.ingredientId, 'price', Number(e.target.value))}
-                                            />
-                                        </div>
-                                        <div className="w-28 text-right">
-                                            <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 mb-1.5 block uppercase">합계</label>
-                                            <p className="text-lg font-black text-indigo-600 dark:text-indigo-400">{(item.quantity * item.price).toLocaleString()}원</p>
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-10 w-10 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                            onClick={() => removeItem(item.ingredientId)}
-                                        >
-                                            <Trash2 className="h-5 w-5" />
-                                        </Button>
                                     </div>
                                 )
                             })
@@ -233,31 +384,36 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                 </div>
             </div>
 
-            <div className="flex items-center justify-between p-6 bg-indigo-600 dark:bg-indigo-700 rounded-3xl shadow-xl shadow-indigo-100 dark:shadow-none">
-                <span className="font-black text-indigo-100 uppercase tracking-widest text-xs">Final Purchase Total</span>
-                <span className="text-3xl font-black text-white">{totalAmount.toLocaleString()}원</span>
-            </div>
-
-            <div className="flex flex-col gap-6">
-                <div className="flex items-center gap-3 px-2">
-                    <input
-                        type="checkbox"
-                        id="keepOpen"
-                        checked={keepOpen}
-                        onChange={e => setKeepOpen(e.target.checked)}
-                        className="h-5 w-5 rounded-lg border-2 border-slate-300 text-indigo-600 focus:ring-indigo-600 transition-all cursor-pointer"
-                    />
-                    <label htmlFor="keepOpen" className="text-sm font-black text-slate-200 cursor-pointer select-none">
-                        저장 후 창을 닫지 않고 계속 다른 영수증 입력 (연속 입력 모드)
-                    </label>
+            {/* Sticky-like Footer with Total and Submit */}
+            <div className="pt-2 space-y-4">
+                <div className="flex items-center justify-between p-4 bg-indigo-600 dark:bg-indigo-700 rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none border-b-4 border-indigo-800/30">
+                    <span className="font-black text-indigo-100 uppercase tracking-widest text-[10px]">Total Purchase Value</span>
+                    <span className="text-3xl font-black text-white italic tracking-tighter">
+                        {totalAmount.toLocaleString()}<span className="text-lg font-normal ml-1 border-l border-white/20 pl-2">원</span>
+                    </span>
                 </div>
 
-                <div className="flex gap-4">
-                    <Button variant="outline" className="flex-1 h-14 rounded-2xl font-black text-lg border-2 hover:bg-slate-50" onClick={onCancel} type="button">취소</Button>
-                    <Button className="flex-2 bg-indigo-600 hover:bg-indigo-700 text-white h-14 rounded-2xl text-lg font-black shadow-xl" disabled={loading} type="submit">
-                        <Save className="mr-2 h-6 w-6" />
-                        {loading ? "기록 중..." : "매입 완료 및 재고 반영"}
-                    </Button>
+                <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-2.5 px-2">
+                        <input
+                            type="checkbox"
+                            id="keepOpen"
+                            checked={keepOpen}
+                            onChange={e => setKeepOpen(e.target.checked)}
+                            className="h-4 w-4 rounded border-2 border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        />
+                        <label htmlFor="keepOpen" className="text-[11px] font-bold text-slate-400 cursor-pointer select-none">
+                            저장 후 연속 입력 모드 유지
+                        </label>
+                    </div>
+
+                    <div className="flex gap-2">
+                        <Button variant="outline" className="flex-1 h-11 rounded-xl font-black text-sm border-2 border-slate-200 hover:bg-slate-50 transition-all active:scale-95" onClick={onCancel} type="button">취소</Button>
+                        <Button className="flex-[2.5] bg-slate-900 border-b-4 border-slate-950 hover:bg-black text-white h-11 rounded-xl text-sm font-black transition-all active:scale-95 flex items-center justify-center gap-2" disabled={loading} type="submit">
+                            <Save className="h-4 w-4" />
+                            {loading ? "데이터 기록 중..." : "매입 내역 저장 및 재고 반영"}
+                        </Button>
+                    </div>
                 </div>
             </div>
         </form>

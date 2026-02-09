@@ -6,6 +6,9 @@ import { RecentIngredients } from "@/components/dashboard/RecentIngredients"
 import { HighMarginMenus } from "@/components/dashboard/HighMarginMenus"
 import { StockAlertCard } from "@/components/dashboard/StockAlertCard"
 import { MonthlyProfitChart } from "@/components/dashboard/MonthlyProfitChart"
+import { FinancialInsights } from "@/components/dashboard/FinancialInsights"
+import { InventoryAnalyticsCards } from "@/components/dashboard/InventoryAnalyticsCards"
+import { SourcingOptimizationCard } from "@/components/dashboard/SourcingOptimizationCard"
 import { useDashboard } from "@/hooks/useDashboard"
 
 export default function DashboardPage() {
@@ -31,6 +34,17 @@ export default function DashboardPage() {
           </button>
         </div>
 
+        <FinancialInsights insights={summary.insights} />
+
+        <InventoryAnalyticsCards
+          lossReport={summary.lossReport}
+          depletionPredictions={summary.depletionPredictions}
+        />
+
+        <SourcingOptimizationCard
+          opportunities={summary.sourcingOpportunities}
+        />
+
         <SummaryCards
           ingredientCount={summary.ingredientCount}
           recipeCount={summary.recipeCount}
@@ -38,6 +52,7 @@ export default function DashboardPage() {
           totalExpenses={summary.totalExpenses}
           targetRevenue={summary.targetRevenue}
           estimatedProfit={summary.estimatedProfit}
+          trends={(summary as any).trends}
         />
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">

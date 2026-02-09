@@ -52,15 +52,18 @@ export function StockAlertCard() {
                             <div className="flex items-center gap-2">
                                 <Package className="h-4 w-4 text-muted-foreground" />
                                 <div className="flex flex-col">
-                                    <span className="text-xs font-black text-slate-200">{item.name}</span>
-                                    <span className="text-[10px] font-black text-rose-400 bg-rose-500/10 px-1 rounded border border-rose-500/20 mt-0.5">
-                                        안전재고 {item.safety_stock}{item.purchase_unit} 미달
-                                    </span>
+                                    <span className="text-sm font-black text-slate-200">{item.name}</span>
                                 </div>
                             </div>
-                            <div className="text-sm">
-                                <span className="text-red-500 font-bold">{item.current_stock}</span>
-                                <span className="text-muted-foreground"> / {item.safety_stock} {item.purchase_unit}</span>
+                            <div className="text-right">
+                                <div className="text-sm font-black">
+                                    <span className="text-rose-500">{item.current_stock.toLocaleString()}</span>
+                                    <span className="text-slate-500 mx-1">/</span>
+                                    <span className="text-slate-300">{item.safety_stock.toLocaleString()}</span>
+                                </div>
+                                <div className="text-[10px] text-slate-500 font-black uppercase">
+                                    {item.purchase_unit || '개'}
+                                </div>
                             </div>
                         </div>
                     ))}

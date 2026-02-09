@@ -7,7 +7,8 @@ import { seedSales } from "./seed-sales"
 export const clearAllData = async (userId: string) => {
     console.log("Clearing all user data...")
 
-    // 1. Transaction-like deletion (sequential)
+    // Sequential deletion to avoid foreign key issues where possible
+    // Note: Better to delete child tables first
     await supabase.from("order_items").delete().neq("id", "00000000-0000-0000-0000-000000000000")
     await supabase.from("orders").delete().eq("user_id", userId)
     await supabase.from("purchase_items").delete().neq("id", "00000000-0000-0000-0000-000000000000")
@@ -20,6 +21,8 @@ export const clearAllData = async (userId: string) => {
     await supabase.from("expense_records").delete().eq("user_id", userId)
     await supabase.from("expense_categories").delete().eq("user_id", userId)
     await supabase.from("sales_records").delete().eq("user_id", userId)
+    // Clear store settings to allow fresh start
+    await supabase.from("store_settings").delete().eq("user_id", userId)
 
     console.log("All data cleared successfully.")
 }
@@ -66,12 +69,20 @@ export const seedPurchases = async (userId: string) => {
                 })
                 total += qty * price
 
-                // Also log to stock logs
+                // Sync Current Stock: Increase stock
+                const currentStock = Number(ing.current_stock) || 0
+                await supabase.from("ingredients").update({
+                    current_stock: currentStock + qty,
+                    updated_at: new Date().toISOString()
+                }).eq("id", ing.id)
+
+                // Also log to stock logs with BACKDATED created_at
                 await supabase.from("stock_adjustment_logs").insert({
                     ingredient_id: ing.id,
                     adjustment_type: 'purchase',
                     quantity: qty,
-                    reason: `Seed Purchase #${purchase.id.slice(0, 8)}`
+                    reason: `[샘플] ${supplier} 매입 입고`,
+                    created_at: new Date(purchaseDate).toISOString()
                 })
             }
 
@@ -94,31 +105,37 @@ export const seedPurchases = async (userId: string) => {
 }
 
 export const seedDetailedOrders = async (userId: string) => {
-    console.log("Seeding detailed order logs (last 7 days)...")
+    console.log("Seeding detailed order logs (last 30 days)...")
     const { data: recipes } = await supabase.from("recipes").select("*").eq("user_id", userId).eq("type", "menu")
     if (!recipes || recipes.length === 0) return
 
     const today = new Date()
 
-    // Seed 7 days of detailed orders
-    for (let d = 0; d < 7; d++) {
-        const orderDate = subDays(today, d)
-        const dateStr = format(orderDate, "yyyy-MM-dd")
+    // Seed 30 days of detailed orders for granular analytics
+    // 1. Fetch all ingredient impacts for recipes to avoid N+1 inside loops
+    const { data: ingredients } = await supabase.from("ingredients").select("*").eq("user_id", userId)
+    if (!ingredients) return
 
-        // Number of orders per day
-        const orderCount = 15 + Math.floor(Math.random() * 10)
+    for (let d = 0; d < 30; d++) {
+        const orderDate = subDays(today, d)
+        const dayOfWeek = orderDate.getDay()
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 5 || dayOfWeek === 6
+        const orderCount = (isWeekend ? 25 : 12) + Math.floor(Math.random() * 10)
 
         for (let o = 0; o < orderCount; o++) {
             const recipe = recipes[Math.floor(Math.random() * recipes.length)]
-            const qty = 1 + (Math.random() > 0.8 ? 1 : 0) // Mostly 1, sometimes 2
+            const qty = 1 + (Math.random() > 0.85 ? 1 : 0)
             const totalAmount = Number(recipe.selling_price) * qty
+
+            const orderTime = new Date(orderDate)
+            orderTime.setHours(11 + Math.floor(Math.random() * 10), Math.floor(Math.random() * 60))
 
             const { data: order } = await supabase.from("orders").insert({
                 user_id: userId,
                 total_amount: totalAmount,
-                total_cost: 0, // Simplified for seed
+                total_cost: 0,
                 status: 'completed',
-                created_at: new Date(orderDate.getTime() + (o * 30 * 60000)).toISOString() // Spread over day
+                created_at: orderTime.toISOString()
             }).select().single()
 
             if (order) {
@@ -126,9 +143,91 @@ export const seedDetailedOrders = async (userId: string) => {
                     order_id: order.id,
                     menu_id: recipe.id,
                     quantity: qty,
-                    price: recipe.selling_price
+                    price: recipe.selling_price,
+                    created_at: order.created_at
                 })
+
+                // STOCK SYNC: Calculate consumption (Recursive)
+                // This logic is simplified for seeding to avoid heavy DB calls per order
+                // In a real scenario, we'd use a cached 'recipe_impact' map
             }
+        }
+    }
+    console.log("Detailed orders seeded. Note: Stock consumption for sample orders is handled via bulk correction in runUnifiedSeed for performance.")
+}
+
+/**
+ * Bulk Stock Correction based on seeded data
+ * Decoupled from individual order insertion for performance
+ */
+export const syncSeededStock = async (userId: string) => {
+    console.log("Synchronizing stock levels with seeded history...")
+
+    // 1. Get all orders for the last 30 days
+    const { data: orders } = await supabase.from("order_items")
+        .select(`
+            quantity,
+            menu_id,
+            recipe:recipes (
+                id,
+                name,
+                recipe_ingredients (
+                    item_id,
+                    item_type,
+                    quantity
+                )
+            )
+        `)
+
+    if (!orders) return
+
+    // 2. Aggregate Consumption
+    const consumptionMap: Record<string, number> = {} // ing_id -> total_usage_unit
+
+    // Recursive helper (local)
+    const resolveUsage = async (recipeId: string, multiplier: number) => {
+        const { data: components } = await supabase.from("recipe_ingredients")
+            .select("*")
+            .eq("recipe_id", recipeId)
+
+        if (!components) return
+
+        for (const comp of components) {
+            if (comp.item_type === 'ingredient') {
+                consumptionMap[comp.item_id] = (consumptionMap[comp.item_id] || 0) + (comp.quantity * multiplier)
+            } else {
+                // Nested Recipe (Prep or Menu)
+                await resolveUsage(comp.item_id, comp.quantity * multiplier)
+            }
+        }
+    }
+
+    for (const item of orders) {
+        if (!item.menu_id) continue
+        await resolveUsage(item.menu_id, item.quantity)
+    }
+
+    // 3. Apply to Ingredients
+    const { data: ingredients } = await supabase.from("ingredients").select("*").eq("user_id", userId)
+    if (!ingredients) return
+
+    for (const ing of ingredients) {
+        const usageAmount = consumptionMap[ing.id] || 0
+        if (usageAmount > 0) {
+            const factor = ing.conversion_factor || 1
+            const usagePurchaseUnit = usageAmount / factor
+            const newStock = Math.max(0, (ing.current_stock || 0) - usagePurchaseUnit)
+
+            await supabase.from("ingredients").update({ current_stock: newStock }).eq("id", ing.id)
+
+            // Log Bulk Consumption
+            await supabase.from("stock_adjustment_logs").insert({
+                ingredient_id: ing.id,
+                adjustment_type: 'correction',
+                quantity: -usagePurchaseUnit,
+                reason: `[샘플 데이터] 주문 내역 기반 대량 재고 소진 보정`,
+                created_at: new Date().toISOString()
+            })
         }
     }
 }
@@ -152,6 +251,9 @@ export const runUnifiedSeed = async () => {
 
     // 5. Detailed Orders (Last 7 days)
     await seedDetailedOrders(user.id)
+
+    // 6. Final Stock Sync (Correct counts based on history)
+    await syncSeededStock(user.id)
 
     console.log("UNIFIED SEEDING COMPLETE!")
     return true

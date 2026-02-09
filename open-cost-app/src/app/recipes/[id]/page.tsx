@@ -7,10 +7,11 @@ import { supabase } from "@/lib/supabase"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { Button } from "@/components/ui/Button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
-import { ArrowLeft, Trash2, ChefHat, DollarSign, Settings } from "lucide-react"
+import { ArrowLeft, Trash2, ChefHat, Banknote, Settings, Coins } from "lucide-react"
 import { cn } from "@/lib/utils"
 // Import Database Types
 import { Database } from "@/types/database.types"
+import { getRecipeSalesWeights } from "@/lib/api/orders"
 
 // Types
 type IngredientRow = Database["public"]["Tables"]["ingredients"]["Row"]
@@ -19,7 +20,7 @@ type RecipeRow = Database["public"]["Tables"]["recipes"]["Row"]
 interface CostItem {
     id: string
     name: string
-    type: 'ingredient' | 'menu'
+    type: 'ingredient' | 'menu' | 'prep'
     quantity: number
     usage_unit: string
     unit_cost: number
@@ -46,6 +47,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
 
     const [recipe, setRecipe] = useState<RecipeDetail | null>(null)
     const [overheadCost, setOverheadCost] = useState(0)
+    const [isWeighted, setIsWeighted] = useState(false)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -68,7 +70,22 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                 if (settings) {
                     const fixed = Number(settings.monthly_fixed_cost) || 0
                     const target = Number(settings.monthly_target_sales_count) || 1
-                    if (fixed > 0 && target > 0) {
+
+                    // Advanced: Try to get actual sales weight
+                    try {
+                        const { weights, totalQty } = await getRecipeSalesWeights(30)
+                        if (totalQty > 0) {
+                            // If we have actual sales, per unit cost = fixed / totalQty
+                            // (Because weighted per menu = (fixed * (qtyA/totalQty)) / qtyA = fixed / totalQty)
+                            setOverheadCost(Math.round(fixed / totalQty))
+                            setIsWeighted(true)
+                        } else {
+                            // Fallback to target
+                            setOverheadCost(Math.round(fixed / target))
+                            setIsWeighted(false)
+                        }
+                    } catch (err) {
+                        console.error("Failed to fetch weights, using fallback", err)
                         setOverheadCost(Math.round(fixed / target))
                     }
                 }
@@ -167,7 +184,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                         unit_cost: unitCost,
                         total_cost: unitCost * quantity
                     }
-                } else if (itemType === 'menu') {
+                } else if (itemType === 'menu' || itemType === 'prep') {
                     const menu = allMenuMap.get(itemId)
                     if (!menu) return null
 
@@ -186,7 +203,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                     return {
                         id: menu.id,
                         name: menu.name,
-                        type: 'menu',
+                        type: itemType as 'menu' | 'prep',
                         quantity: quantity,
                         usage_unit: '개',
                         unit_cost: menuUnitCost,
@@ -275,24 +292,31 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
 
                 {/* Overhead Alert */}
                 {overheadCost > 0 ? (
-                    <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg flex items-center text-sm">
-                        <DollarSign className="h-4 w-4 mr-2" />
+                    <div className={cn(
+                        "px-4 py-3 rounded-xl flex items-center text-sm border-2",
+                        isWeighted
+                            ? "bg-indigo-50 border-indigo-100 text-indigo-700 dark:bg-indigo-950/20 dark:border-indigo-900/30 dark:text-indigo-400"
+                            : "bg-blue-50 border-blue-100 text-blue-700 dark:bg-blue-950/20 dark:border-blue-900/30 dark:text-blue-400"
+                    )}>
+                        <Banknote className="h-4 w-4 mr-2" />
                         <span>
-                            <b>자동 비용 배분 적용됨:</b> 설정에 따라 개당 <b>{overheadCost.toLocaleString()}원</b>(고정비/목표수량)이 원가에 포함되었습니다.
+                            <b className="font-black uppercase tracking-tight mr-1">
+                                {isWeighted ? "현장 데이터 기반 배분:" : "목표치 기반 배분:"}
+                            </b>
+                            최근 30일 데이터 기준, 개당 <b>{overheadCost.toLocaleString()}원</b>의 고정비가 할당되었습니다.
                         </span>
                     </div>
                 ) : (
-                    <div className="bg-amber-950/30 border border-amber-500/30 text-amber-400 px-4 py-3 rounded-xl flex items-center justify-between text-sm backdrop-blur-sm">
+                    <div className="bg-amber-950/30 border-2 border-amber-500/30 text-amber-400 px-4 py-3 rounded-xl flex items-center justify-between text-sm backdrop-blur-sm">
                         <div className="flex items-center">
-                            <DollarSign className="h-4 w-4 mr-2 text-amber-500" />
+                            <Coins className="h-4 w-4 mr-2 text-amber-500" />
                             <span>
-                                <b className="text-amber-300">고정비 반영 안됨:</b> 임대료, 인건비 등 매장 고정비를 반영하면 <b>실질적인 마진</b>을 볼 수 있습니다.
+                                <b className="text-amber-300">고정비 배분 미설정:</b> 고정 지출을 반영하면 <b>실질적인 순수익</b>을 파악할 수 있습니다.
                             </span>
                         </div>
                         <Link href="/settings">
-                            <Button variant="outline" size="sm" className="bg-amber-500/10 border-amber-500/50 hover:bg-amber-500/20 text-amber-400 h-8">
-                                <Settings className="h-3 w-3 mr-2" />
-                                비용 설정하기
+                            <Button variant="outline" size="sm" className="bg-amber-500/10 border-2 border-amber-500/50 hover:bg-amber-500/20 text-amber-400 h-8 font-black text-xs">
+                                <Settings className="h-3 w-3 mr-2" /> 설정 바로가기
                             </Button>
                         </Link>
                     </div>
@@ -359,7 +383,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                         <div className={cn("flex items-center justify-between border-b pb-4 p-2 rounded", overheadCost > 0 ? "bg-blue-50/50" : "bg-amber-50/50")}>
                             <div className="flex items-center gap-2">
                                 <div className={cn("p-1.5 rounded", overheadCost > 0 ? "bg-blue-100 text-blue-600" : "bg-amber-100 text-amber-600")}>
-                                    <DollarSign className="h-4 w-4" />
+                                    <Banknote className="h-4 w-4" />
                                 </div>
                                 <div>
                                     <p className={cn("font-bold", overheadCost > 0 ? "text-blue-700" : "text-amber-700")}>
@@ -400,6 +424,8 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                                         {/* Badge / Icon */}
                                         {item.type === 'menu' ? (
                                             <div className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">세트메뉴</div>
+                                        ) : item.type === 'prep' ? (
+                                            <div className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">반제품(Prep)</div>
                                         ) : (
                                             <div className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-700 text-slate-300">재료</div>
                                         )}
@@ -418,7 +444,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                                 </div>
 
                                 {/* Sub Items (Nested View) */}
-                                {item.type === 'menu' && item.subItems && item.subItems.length > 0 && (
+                                {(item.type === 'menu' || item.type === 'prep') && item.subItems && item.subItems.length > 0 && (
                                     <div className="ml-10 mt-1 p-3 bg-slate-900/50 rounded-lg border border-white/5 space-y-1">
                                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 flex items-center font-bold">
                                             <span className="w-1 h-1 bg-purple-500 rounded-full mr-2"></span>

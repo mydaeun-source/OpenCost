@@ -6,13 +6,15 @@ import { AppLayout } from "@/components/layout/AppLayout"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
-import { Settings, User, LogOut, DollarSign, TrendingUp, Loader2, Trash2, Database } from "lucide-react"
+import { Settings, User, LogOut, Banknote, TrendingUp, Loader2, Trash2, Database, Coins } from "lucide-react"
 
 export default function SettingsPage() {
     const [fixedCost, setFixedCost] = useState("")
     const [targetSales, setTargetSales] = useState("")
+    const [actualFixedTotal, setActualFixedTotal] = useState<number>(0)
     const [settingsLoading, setSettingsLoading] = useState(false)
     const [seedLoading, setSeedLoading] = useState(false)
+    const [isSyncing, setIsSyncing] = useState(false)
 
     useEffect(() => {
         loadSettings()
@@ -23,23 +25,40 @@ export default function SettingsPage() {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
+            // 1. Load Saved Settings
             const { data, error } = await supabase
                 .from("store_settings")
                 .select("*")
                 .eq("user_id", user.id)
                 .single()
 
-            if (error && error.code !== "PGRST116") { // Ignore 'not found' error
-                console.error("Error loading settings:", error)
-            }
-
             if (data) {
                 setFixedCost(data.monthly_fixed_cost?.toString() || "")
                 setTargetSales(data.monthly_target_sales_count?.toString() || "")
             }
+
+            // 2. Calculate Actual Fixed Expenses Sum
+            const { data: categories } = await supabase
+                .from("expense_categories")
+                .select("default_amount")
+                .eq("user_id", user.id)
+                .eq("is_fixed", true)
+
+            const total = categories?.reduce((sum, cat) => sum + (cat.default_amount || 0), 0) || 0
+            setActualFixedTotal(total)
+
         } catch (error) {
             console.error("Settings load error:", error)
         }
+    }
+
+    const handleSyncWithExpenses = () => {
+        setIsSyncing(true)
+        setFixedCost(actualFixedTotal.toString())
+        setTimeout(() => {
+            setIsSyncing(false)
+            alert("비용 관리의 고정비 항목을 기반으로 설정되었습니다.")
+        }, 500)
     }
 
     const saveSettings = async () => {
@@ -104,7 +123,7 @@ export default function SettingsPage() {
                     <Card className="border-primary/20 bg-primary/5">
                         <CardHeader>
                             <div className="flex items-center gap-2">
-                                <DollarSign className="h-5 w-5 text-primary" />
+                                <Banknote className="h-5 w-5 text-primary" />
                                 <CardTitle>매장 비용 설정 (자동 배분)</CardTitle>
                             </div>
                             <CardDescription>
@@ -115,16 +134,30 @@ export default function SettingsPage() {
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">월 고정비 총액 (임대료, 인건비 등)</label>
-                                    <div className="relative">
-                                        <DollarSign className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            type="number"
-                                            placeholder="예: 3000000"
-                                            className="pl-9"
-                                            value={fixedCost}
-                                            onChange={(e) => setFixedCost(e.target.value)}
-                                        />
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <Banknote className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                type="number"
+                                                placeholder="예: 3000000"
+                                                className="pl-9"
+                                                value={fixedCost}
+                                                onChange={(e) => setFixedCost(e.target.value)}
+                                            />
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleSyncWithExpenses}
+                                            disabled={isSyncing || actualFixedTotal === 0}
+                                            className="h-10 text-[10px] font-black uppercase tracking-widest border-indigo-500/30 text-indigo-500 bg-indigo-500/5 hover:bg-indigo-500/10"
+                                        >
+                                            {isSyncing ? "SYNC..." : "실제 비용 연동"}
+                                        </Button>
                                     </div>
+                                    <p className="text-[10px] text-muted-foreground mt-1">
+                                        현재 등록된 실제 고정비: <b className="text-indigo-500">{actualFixedTotal.toLocaleString()}원</b> (항목 설정 기준)
+                                    </p>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">월 목표 판매수량 (메뉴 개수)</label>
@@ -171,17 +204,18 @@ export default function SettingsPage() {
                         <CardContent className="space-y-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="font-medium">전체 샘플 데이터 생성 (추천)</p>
+                                    <p className="font-medium">6개월 샘플 데이터 시뮬레이션 (추천)</p>
                                     <p className="text-sm text-muted-foreground">
-                                        기존 데이터를 모두 지우고, <b>재료 + 메뉴 + 비용(3개월치)</b> 데이터를 한 번에 생성합니다.
+                                        기본 자료(재료+메뉴)와 함께 <b>지난 6개월간의 매입, 매출, 지출, 재고 로그</b>를 실감나게 생성합니다.
                                     </p>
                                 </div>
                                 <Button
                                     variant="outline"
                                     onClick={handleGenerateAllData}
                                     disabled={seedLoading}
+                                    className="border-primary/50 text-primary hover:bg-primary/10 font-bold"
                                 >
-                                    {seedLoading ? "생성 중..." : "전체 샘플 생성"}
+                                    {seedLoading ? "시뮬레이션 중..." : "6개월 샘플 생성"}
                                 </Button>
                             </div>
                         </CardContent>

@@ -75,16 +75,16 @@ export function StockHistory({ logs }: StockHistoryProps) {
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <span className="font-bold text-slate-800 dark:text-slate-200">
+                                            <span className="font-bold text-white">
                                                 {log.ingredient?.name || "알 수 없는 재료"}
                                             </span>
                                             <Badge variant="outline" className={cn("text-xs h-4 font-black", getTypeColor(log.adjustment_type))}>
                                                 {getTypeLabel(log.adjustment_type)}
                                             </Badge>
                                         </div>
-                                        <div className="text-xs text-slate-300 mt-1 font-black flex items-center gap-2">
+                                        <div className="text-xs text-slate-400 mt-1 font-black flex items-center gap-2">
                                             <span>{format(new Date(log.created_at), "yyyy년 MM월 dd일 HH:mm", { locale: ko })}</span>
-                                            {log.reason && (
+                                            {log.reason && !log.reason.startsWith('Seed Purchase') && (
                                                 <>
                                                     <span className="opacity-40">|</span>
                                                     <span className="text-white bg-slate-800 px-1.5 py-0.5 rounded italic">{log.reason}</span>

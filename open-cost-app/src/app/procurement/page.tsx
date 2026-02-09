@@ -113,12 +113,12 @@ export default function ProcurementPage() {
                 <div className="grid gap-4 md:grid-cols-3">
                     <Card className="bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all border-l-4 border-l-indigo-500">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-xs font-medium text-muted-foreground uppercase">총 매입액</CardTitle>
-                            <ShoppingBag className="h-4 w-4 text-indigo-500 opacity-70" />
+                            <CardTitle className="text-xs font-black text-white hover:text-indigo-300 uppercase tracking-widest transition-colors">총 매입액</CardTitle>
+                            <ShoppingBag className="h-4 w-4 text-indigo-400" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-slate-900 dark:text-slate-50">{totalAmount.toLocaleString()}원</div>
-                            <p className="text-xs font-black text-slate-300 mt-1 flex items-center">
+                            <div className="text-2xl font-black text-white">{totalAmount.toLocaleString()}원</div>
+                            <p className="text-xs font-black text-slate-100 mt-1 flex items-center">
                                 <TrendingUp className="h-3 w-3 mr-1 text-emerald-500" />
                                 {purchases.length}건의 매입 기록
                             </p>
@@ -127,23 +127,23 @@ export default function ProcurementPage() {
 
                     <Card className="bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all border-l-4 border-l-emerald-500">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-xs font-medium text-muted-foreground uppercase">최다 공급처</CardTitle>
-                            <Store className="h-4 w-4 text-emerald-500 opacity-70" />
+                            <CardTitle className="text-xs font-black text-white hover:text-emerald-300 uppercase tracking-widest transition-colors">최다 공급처</CardTitle>
+                            <Store className="h-4 w-4 text-emerald-400" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-slate-900 dark:text-slate-50 truncate">{topSupplier}</div>
-                            <p className="text-xs font-black text-slate-300 mt-1">거래 비중이 가장 높은 업체</p>
+                            <div className="text-2xl font-black text-white truncate">{topSupplier}</div>
+                            <p className="text-xs font-black text-slate-100 mt-1">거래 비중이 가장 높은 업체</p>
                         </CardContent>
                     </Card>
 
                     <Card className="bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all border-l-4 border-l-amber-500">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-xs font-medium text-muted-foreground uppercase">매입 건수</CardTitle>
-                            <Calendar className="h-4 w-4 text-amber-500 opacity-70" />
+                            <CardTitle className="text-xs font-black text-white hover:text-amber-300 uppercase tracking-widest transition-colors">매입 건수</CardTitle>
+                            <Calendar className="h-4 w-4 text-amber-400" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-slate-900 dark:text-slate-50">{purchases.length}건</div>
-                            <p className="text-xs font-black text-slate-300 mt-1">선택 기간 데이터</p>
+                            <div className="text-2xl font-black text-white">{purchases.length}건</div>
+                            <p className="text-xs font-black text-slate-100 mt-1">선택 기간 데이터</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -178,7 +178,6 @@ export default function ProcurementPage() {
                                         <div>
                                             <div className="flex items-center gap-3 mb-1">
                                                 <span className="font-bold text-lg">{purchase.supplier_name || "미지정 공급처"}</span>
-                                                <Badge className="bg-slate-700 text-slate-100 text-xs font-black font-mono border border-slate-600">#{purchase.id.slice(0, 8)}</Badge>
                                             </div>
                                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-muted/40 rounded-full">
@@ -259,6 +258,7 @@ export default function ProcurementPage() {
                 <Dialog
                     isOpen={isAddOpen}
                     onClose={() => setIsAddOpen(false)}
+                    maxWidth="max-w-2xl"
                     title="새 매입서 등록"
                     description="공급처 및 상세 구매 품목을 기록하세요. 단가는 가장 최근 매입가를 기준으로 자동 제안됩니다."
                 >

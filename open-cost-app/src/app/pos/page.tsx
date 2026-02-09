@@ -15,6 +15,7 @@ import { ShoppingCart, Plus, Minus, Trash2, CreditCard, Banknote, Upload, CheckC
 import { cn } from "@/lib/utils"
 import { supabase } from "@/lib/supabase" // Direct use for user_id
 import { useToast } from "@/hooks/use-toast"
+import { haptic } from "@/lib/haptics"
 
 interface CartItem {
     tempId: string
@@ -63,6 +64,7 @@ export default function POSPage() {
                         : item
                 )
             }
+            haptic.light()
             return [...prev, {
                 tempId: Math.random().toString(),
                 menuId: menu.id,
@@ -113,6 +115,7 @@ export default function POSPage() {
                 price: item.price
             })))
 
+            haptic.success()
             toast({
                 title: "결제 완료",
                 description: `${cartTotal.toLocaleString()}원 결제가 완료되었습니다.`,

@@ -31,6 +31,77 @@ export const getPurchases = async (startDate?: string, endDate?: string) => {
     return data
 }
 
+export const getSuppliers = async () => {
+    const { data, error } = await supabase
+        .from("purchases")
+        .select("supplier_name")
+        .not("supplier_name", "is", null)
+        .order("supplier_name")
+
+    if (error) throw error
+
+    // Return unique supplier names
+    const uniqueSuppliers = Array.from(new Set(data.map(p => p.supplier_name)))
+    return uniqueSuppliers as string[]
+}
+
+export const getPriceSpikes = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
+    // 1. Get average price and latest price for ingredients from purchase_items
+    const { data, error } = await supabase
+        .from("purchase_items")
+        .select(`
+            price,
+            ingredient_id,
+            created_at,
+            ingredients(name)
+        `)
+        .order("created_at", { ascending: false })
+
+    if (error) throw error
+
+    // 2. Process data to find spikes (price > avg by 10%+)
+    const ingredientPrices: Record<string, { name: string, prices: { price: number, date: string }[] }> = {}
+
+    data.forEach(item => {
+        if (!ingredientPrices[item.ingredient_id]) {
+            ingredientPrices[item.ingredient_id] = {
+                name: (item.ingredients as any)?.name || "Unknown",
+                prices: []
+            }
+        }
+        ingredientPrices[item.ingredient_id].prices.push({
+            price: Number(item.price),
+            date: item.created_at
+        })
+    })
+
+    const spikes = []
+    for (const id in ingredientPrices) {
+        const history = ingredientPrices[id].prices
+        if (history.length < 2) continue
+
+        const latest = history[0].price
+        const previousPrices = history.slice(1).map(h => h.price)
+        const avgPrevious = previousPrices.reduce((a, b) => a + b, 0) / previousPrices.length
+
+        if (latest > avgPrevious * 1.1) { // 10% spike
+            const percent = Math.round(((latest - avgPrevious) / avgPrevious) * 100)
+            spikes.push({
+                ingredientId: id,
+                name: ingredientPrices[id].name,
+                latestPrice: latest,
+                avgPrice: Math.round(avgPrevious),
+                percentIncrease: percent,
+            })
+        }
+    }
+
+    return spikes
+}
+
 export const getPurchaseDetails = async (purchaseId: string) => {
     const { data: purchase, error: pError } = await supabase
         .from("purchases")
@@ -118,7 +189,7 @@ export const createPurchase = async (
                         ingredient_id: item.ingredientId,
                         adjustment_type: 'purchase',
                         quantity: item.quantity,
-                        reason: `Purchase #${purchase.id.slice(0, 8)} (${purchase.supplier_name || "Unknown"})`
+                        reason: `구매 입고 (공급처: ${purchase.supplier_name || "미지정"})`
                     })
             }
         }
@@ -151,7 +222,7 @@ export const createPurchase = async (
                     category_id: categoryId,
                     amount: totalAmount,
                     expense_date: purchase.purchase_date,
-                    memo: `매입 건: ${purchase.supplier_name || "미지정"} (ID: ${purchase.id.slice(0, 8)})`
+                    memo: `매입 입고: ${purchase.supplier_name || "미지정"}`
                 })
         }
 

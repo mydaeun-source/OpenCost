@@ -19,6 +19,7 @@ interface RecipeBuilderProps {
         name: string
         selling_price: number
         category_id?: string
+        type?: 'menu' | 'prep'
         ingredients: {
             itemId: string // Can be ingredientId or recipeId
             itemType: 'ingredient' | 'menu' // Explicitly define type
@@ -40,7 +41,8 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
     const [activeTab, setActiveTab] = useState<'ingredient' | 'menu'>('ingredient')
     const [searchQuery, setSearchQuery] = useState("")
 
-    const [menuType, setMenuType] = useState<'single' | 'set'>(() => {
+    const [menuType, setMenuType] = useState<'single' | 'set' | 'prep'>(() => {
+        if (initialData?.type === 'prep') return 'prep'
         if (initialData?.ingredients?.some(item => item.itemType === 'menu')) {
             return 'set'
         }
@@ -253,7 +255,10 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
         if (!recipeName) return alert("메뉴 이름을 입력해주세요")
         if (selectedItems.length === 0) return alert("재료를 하나 이상 추가해주세요")
 
-        const categoryName = menuType === 'set' ? '세트 (Set)' : '단품 (Single)'
+        let categoryName = '단품 (Single)'
+        if (menuType === 'set') categoryName = '세트 (Set)'
+        if (menuType === 'prep') categoryName = '반제품 (Prep)'
+
         const categoryId = await ensureCategory(categoryName, 'menu')
         if (!categoryId) return alert("카테고리 설정 실패")
 
@@ -266,13 +271,14 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
         if (isEditMode && initialData?.id) {
             await updateRecipe(initialData.id, {
                 name: recipeName,
+                type: menuType === 'prep' ? 'prep' : 'menu',
                 selling_price: sellingPrice,
                 category_id: categoryId
             }, ingredientData)
         } else {
             await createRecipe({
                 name: recipeName,
-                type: "menu",
+                type: menuType === 'prep' ? 'prep' : 'menu',
                 selling_price: sellingPrice,
                 category_id: categoryId
             }, ingredientData)
@@ -395,12 +401,15 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                         </div>
                         <div className="col-span-2 space-y-2">
                             <label className="text-sm font-medium">구분</label>
-                            <div className="flex gap-4">
+                            <div className="flex flex-wrap gap-4">
                                 <label className={cn("flex items-center gap-2 cursor-pointer", menuType === 'single' ? "text-primary font-bold" : "text-muted-foreground")}>
                                     <input type="radio" checked={menuType === 'single'} onChange={() => setMenuType('single')} className="accent-primary" /> 단품
                                 </label>
                                 <label className={cn("flex items-center gap-2 cursor-pointer", menuType === 'set' ? "text-primary font-bold" : "text-muted-foreground")}>
                                     <input type="radio" checked={menuType === 'set'} onChange={() => setMenuType('set')} className="accent-primary" /> 세트
+                                </label>
+                                <label className={cn("flex items-center gap-2 cursor-pointer", menuType === 'prep' ? "text-indigo-500 font-bold" : "text-muted-foreground")}>
+                                    <input type="radio" checked={menuType === 'prep'} onChange={() => setMenuType('prep')} className="accent-primary" /> 반제품 (Prep)
                                 </label>
                             </div>
                         </div>

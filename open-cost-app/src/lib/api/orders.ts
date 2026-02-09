@@ -31,7 +31,7 @@ async function getIngredientUsage(menuId: string, quantity: number, usageMap: Ma
                 const unitCost = ((ing.purchase_price || 0) / (ing.conversion_factor || 1)) / divisor
                 totalCost += (unitCost * totalQty)
             }
-        } else if (item.item_type === 'menu') {
+        } else if (item.item_type === 'menu' || item.item_type === 'prep') {
             const subCost = await getIngredientUsage(item.item_id, totalQty, usageMap, ingredients)
             totalCost += subCost
         }
@@ -106,7 +106,7 @@ export const createOrder = async (
                         ingredient_id: ingId,
                         adjustment_type: 'order',
                         quantity: -qty,
-                        reason: `Order #${order.id.slice(0, 8)}`,
+                        reason: `판매 소진 (주문 내역)`,
                         created_at: order.created_at // Sync with order date
                     })
             }
@@ -224,7 +224,7 @@ export const cancelOrder = async (order: Order) => {
                         ingredient_id: ingId,
                         adjustment_type: 'refund',
                         quantity: qty,
-                        reason: `Cancel Order #${order.id.slice(0, 8)}`
+                        reason: `주문 취소 (재고 복구)`
                     })
             }
         }
@@ -262,5 +262,44 @@ export const cancelOrder = async (order: Order) => {
         console.error("Cancel Order Error:", error)
         throw error
     }
+}
+
+export const getRecipeSalesWeights = async (days = 30) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { weights: {}, totalQty: 0 }
+
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
+
+    const { data, error } = await supabase
+        .from("order_items")
+        .select(`
+            menu_id,
+            quantity,
+            orders!inner(user_id, status, created_at)
+        `)
+        .eq("orders.user_id", user.id)
+        .neq("orders.status", "cancelled")
+        .gte("orders.created_at", startDate.toISOString())
+
+    if (error) throw error
+
+    const weights: Record<string, number> = {}
+    let totalQty = 0
+
+    data.forEach(item => {
+        const qty = Number(item.quantity)
+        weights[item.menu_id] = (weights[item.menu_id] || 0) + qty
+        totalQty += qty
+    })
+
+    // Convert counts to percentages (0.0 to 1.0)
+    if (totalQty > 0) {
+        for (const id in weights) {
+            weights[id] = weights[id] / totalQty
+        }
+    }
+
+    return { weights, totalQty }
 }
 

@@ -44,6 +44,7 @@ export default function EditRecipePage({ params }: { params: Promise<{ id: strin
             setInitialData({
                 id: recipeData.id,
                 name: recipeData.name,
+                type: recipeData.type,
                 selling_price: recipeData.selling_price || 0,
                 ingredients: itemsData?.map((item: any) => ({
                     itemId: item.item_id, // Standardized prop name

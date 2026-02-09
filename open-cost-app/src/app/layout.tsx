@@ -9,8 +9,11 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Open-Cost Master",
+  title: "Open-Cost.AI | Smart Management",
   description: "All-Weather Profit and Inventory Management System",
+  manifest: "/manifest.json",
+  themeColor: "#6366f1",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0",
 };
 
 export default function RootLayout({
@@ -26,6 +29,17 @@ export default function RootLayout({
       >
         {children}
         <Toaster />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js');
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

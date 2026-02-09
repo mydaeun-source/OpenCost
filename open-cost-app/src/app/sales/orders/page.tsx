@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button"
 import { Badge } from "@/components/ui/Badge"
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns"
 import { ko } from "date-fns/locale"
-import { ChevronRight, ChevronDown, Reply, Hash, Calendar, DollarSign, AlertCircle, TrendingUp } from "lucide-react"
+import { ChevronRight, ChevronDown, Reply, Hash, Calendar, Banknote, AlertCircle, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
@@ -116,33 +116,33 @@ export default function OrderHistoryPage() {
 
                 {/* Summary Cards */}
                 <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="bg-slate-900/40 border-slate-800 shadow-xl border-l-4 border-l-indigo-500 overflow-hidden group hover:bg-slate-900/60 transition-all">
+                    <Card className="bg-white dark:bg-slate-900 shadow-sm border-l-4 border-l-indigo-500 overflow-hidden group hover:ring-2 hover:ring-indigo-100 dark:hover:ring-slate-800 transition-all">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-indigo-400 transition-colors">기간 매출액</CardTitle>
-                            <DollarSign className="h-4 w-4 text-indigo-400 opacity-50" />
+                            <CardTitle className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest group-hover:text-indigo-500 transition-colors">기간 매출 총액</CardTitle>
+                            <Banknote className="h-4 w-4 text-indigo-500 opacity-50" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-black text-white italic tracking-tight">{totalAmount.toLocaleString()}원</div>
+                            <div className="text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter">{totalAmount.toLocaleString()}<span className="text-xs font-normal ml-0.5 opacity-50">원</span></div>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-slate-900/40 border-slate-800 shadow-xl border-l-4 border-l-emerald-500 overflow-hidden group hover:bg-slate-900/60 transition-all">
+                    <Card className="bg-white dark:bg-slate-900 shadow-sm border-l-4 border-l-emerald-500 overflow-hidden group hover:ring-2 hover:ring-emerald-50 dark:hover:ring-slate-800 transition-all">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-emerald-400 transition-colors">평균 주문</CardTitle>
-                            <TrendingUp className="h-4 w-4 text-emerald-400 opacity-50" />
+                            <CardTitle className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest group-hover:text-emerald-500 transition-colors">평균 주문 단가</CardTitle>
+                            <TrendingUp className="h-4 w-4 text-emerald-500 opacity-50" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-black text-white italic tracking-tight">{Math.round(avgOrderValue).toLocaleString()}원</div>
+                            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 italic tracking-tighter">{Math.round(avgOrderValue).toLocaleString()}<span className="text-xs font-normal ml-0.5 opacity-50">원</span></div>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-slate-900/40 border-slate-800 shadow-xl border-l-4 border-l-amber-500 overflow-hidden group hover:bg-slate-900/60 transition-all">
+                    <Card className="bg-white dark:bg-slate-900 shadow-sm border-l-4 border-l-amber-500 overflow-hidden group hover:ring-2 hover:ring-amber-50 dark:hover:ring-slate-800 transition-all">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-amber-400 transition-colors">총 주문 수</CardTitle>
+                            <CardTitle className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest group-hover:text-amber-500 transition-colors">총 주문 건수</CardTitle>
                             <Hash className="h-4 w-4 text-amber-400 opacity-50" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-black text-white italic tracking-tight">{activeOrders.length}건</div>
+                            <div className="text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter">{activeOrders.length}건</div>
                         </CardContent>
                     </Card>
                 </div>

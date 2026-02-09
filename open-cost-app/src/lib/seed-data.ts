@@ -26,6 +26,7 @@ export const generateTestData = async () => {
             { name: "포장재 (Package)", type: "ingredient" },
             { name: "단품 (Single)", type: "menu" },
             { name: "세트 (Set)", type: "menu" },
+            { name: "밑준비 (Prep)", type: "prep" },
         ]
 
         const catMap = new Map<string, string>() // Name -> ID
@@ -40,23 +41,23 @@ export const generateTestData = async () => {
 
         // 3. Create Ingredients (Kkwabaegi Shop Theme - Enhanced)
         const ingredients = [
-            { name: "밀가루 (강력분)", category: "기본 재료 (Base)", purchase_price: 25000, purchase_unit: "20kg", usage_unit: "g", conversion_factor: 20000, loss_rate: 0.02, current_stock: 3, safety_stock: 5 }, // Low Stock
-            { name: "백설탕", category: "기본 재료 (Base)", purchase_price: 18000, purchase_unit: "15kg", usage_unit: "g", conversion_factor: 15000, loss_rate: 0.01, current_stock: 10, safety_stock: 2 },
-            { name: "찹쌀가루", category: "기본 재료 (Base)", purchase_price: 45000, purchase_unit: "10kg", usage_unit: "g", conversion_factor: 10000, loss_rate: 0.0, current_stock: 8, safety_stock: 3 },
-            { name: "이스트 (생)", category: "기본 재료 (Base)", purchase_price: 3500, purchase_unit: "500g", usage_unit: "g", conversion_factor: 500, loss_rate: 0.0, current_stock: 20, safety_stock: 5 },
-            { name: "식용유 (대두유)", category: "기본 재료 (Base)", purchase_price: 38000, purchase_unit: "18L", usage_unit: "ml", conversion_factor: 18000, loss_rate: 0.05, current_stock: 2, safety_stock: 4 }, // Low Stock
-            { name: "국산 팥앙금", category: "기본 재료 (Base)", purchase_price: 32000, purchase_unit: "5kg", usage_unit: "g", conversion_factor: 5000, loss_rate: 0.03, current_stock: 15, safety_stock: 5 },
-            { name: "슈크림 (커스터드)", category: "기본 재료 (Base)", purchase_price: 12000, purchase_unit: "2kg", usage_unit: "g", conversion_factor: 2000, loss_rate: 0.05, current_stock: 4, safety_stock: 5 }, // Low Stock
-            { name: "소시지 (점보)", category: "육류/가공 (Meat)", purchase_price: 15000, purchase_unit: "1kg", usage_unit: "g", conversion_factor: 1000, loss_rate: 0.0, current_stock: 30, safety_stock: 10 },
-            { name: "모짜렐라 치즈", category: "육류/가공 (Meat)", purchase_price: 28000, purchase_unit: "2.5kg", usage_unit: "g", conversion_factor: 2500, loss_rate: 0.02, current_stock: 12, safety_stock: 5 },
-            { name: "체다 치즈", category: "육류/가공 (Meat)", purchase_price: 24000, purchase_unit: "100매", usage_unit: "매", conversion_factor: 100, loss_rate: 0.0, current_stock: 5, safety_stock: 2 },
-            { name: "케첩 (업소용)", category: "소스/양념 (Sauce)", purchase_price: 3500, purchase_unit: "3kg", usage_unit: "g", conversion_factor: 3000, loss_rate: 0.05, current_stock: 50, safety_stock: 10 },
-            { name: "머스타드", category: "소스/양념 (Sauce)", purchase_price: 4500, purchase_unit: "2kg", usage_unit: "g", conversion_factor: 2000, loss_rate: 0.05, current_stock: 20, safety_stock: 5 },
-            { name: "우유 (1000ml)", category: "음료 (Beverage)", purchase_price: 2800, purchase_unit: "1개", usage_unit: "개", conversion_factor: 1, loss_rate: 0.0, current_stock: 2, safety_stock: 5 }, // Low Stock
-            { name: "오렌지 주스 (1.5L)", category: "음료 (Beverage)", purchase_price: 3500, purchase_unit: "1개", usage_unit: "개", conversion_factor: 1, loss_rate: 0.0, current_stock: 10, safety_stock: 3 },
-            { name: "종이 봉투 (소)", category: "포장재 (Package)", purchase_price: 2500, purchase_unit: "100매", usage_unit: "매", conversion_factor: 100, loss_rate: 0.0, current_stock: 50, safety_stock: 20 },
-            { name: "박스 (대)", category: "포장재 (Package)", purchase_price: 15000, purchase_unit: "50개", usage_unit: "개", conversion_factor: 50, loss_rate: 0.0, current_stock: 100, safety_stock: 20 },
-            { name: "세트용 선물 박스", category: "포장재 (Package)", purchase_price: 35000, purchase_unit: "50개", usage_unit: "개", conversion_factor: 50, loss_rate: 0.0, current_stock: 15, safety_stock: 10 },
+            { name: "밀가루 (강력분, 20kg)", category: "기본 재료 (Base)", purchase_price: 25000, purchase_unit: "박스", usage_unit: "g", conversion_factor: 20000, loss_rate: 0.02, current_stock: 3, safety_stock: 5 },
+            { name: "백설탕 (15kg)", category: "기본 재료 (Base)", purchase_price: 18000, purchase_unit: "박스", usage_unit: "g", conversion_factor: 15000, loss_rate: 0.01, current_stock: 10, safety_stock: 2 },
+            { name: "찹쌀가루 (10kg)", category: "기본 재료 (Base)", purchase_price: 45000, purchase_unit: "박스", usage_unit: "g", conversion_factor: 10000, loss_rate: 0.0, current_stock: 8, safety_stock: 3 },
+            { name: "이스트 (생, 500g)", category: "기본 재료 (Base)", purchase_price: 3500, purchase_unit: "개", usage_unit: "g", conversion_factor: 500, loss_rate: 0.0, current_stock: 20, safety_stock: 5 },
+            { name: "식용유 (대두유, 18L)", category: "기본 재료 (Base)", purchase_price: 38000, purchase_unit: "캔", usage_unit: "ml", conversion_factor: 18000, loss_rate: 0.05, current_stock: 2, safety_stock: 4 },
+            { name: "국산 팥앙금 (5kg)", category: "기본 재료 (Base)", purchase_price: 32000, purchase_unit: "박스", usage_unit: "g", conversion_factor: 5000, loss_rate: 0.03, current_stock: 15, safety_stock: 5 },
+            { name: "슈크림 (커스터드, 2kg)", category: "기본 재료 (Base)", purchase_price: 12000, purchase_unit: "팩", usage_unit: "g", conversion_factor: 2000, loss_rate: 0.05, current_stock: 4, safety_stock: 5 },
+            { name: "소시지 (점보, 1kg)", category: "육류/가공 (Meat)", purchase_price: 15000, purchase_unit: "팩", usage_unit: "g", conversion_factor: 1000, loss_rate: 0.0, current_stock: 30, safety_stock: 10 },
+            { name: "모짜렐라 치즈 (2.5kg)", category: "육류/가공 (Meat)", purchase_price: 28000, purchase_unit: "박스", usage_unit: "g", conversion_factor: 2500, loss_rate: 0.02, current_stock: 12, safety_stock: 5 },
+            { name: "체다 치즈 (100매)", category: "육류/가공 (Meat)", purchase_price: 24000, purchase_unit: "박스", usage_unit: "매", conversion_factor: 100, loss_rate: 0.0, current_stock: 5, safety_stock: 2 },
+            { name: "케첩 (업소용, 3kg)", category: "소스/양념 (Sauce)", purchase_price: 3500, purchase_unit: "개", usage_unit: "g", conversion_factor: 3000, loss_rate: 0.05, current_stock: 50, safety_stock: 10 },
+            { name: "머스타드 (2kg)", category: "소스/양념 (Sauce)", purchase_price: 4500, purchase_unit: "개", usage_unit: "g", conversion_factor: 2000, loss_rate: 0.05, current_stock: 20, safety_stock: 5 },
+            { name: "우유 (1000ml)", category: "음료 (Beverage)", purchase_price: 2800, purchase_unit: "개", usage_unit: "ml", conversion_factor: 1000, loss_rate: 0.0, current_stock: 2, safety_stock: 5 },
+            { name: "오렌지 주스 (1.5L)", category: "음료 (Beverage)", purchase_price: 3500, purchase_unit: "개", usage_unit: "ml", conversion_factor: 1500, loss_rate: 0.0, current_stock: 10, safety_stock: 3 },
+            { name: "종이 봉투 (소, 100매)", category: "포장재 (Package)", purchase_price: 2500, purchase_unit: "팩", usage_unit: "ea", conversion_factor: 100, loss_rate: 0.0, current_stock: 50, safety_stock: 20 },
+            { name: "박스 (대, 50개)", category: "포장재 (Package)", purchase_price: 15000, purchase_unit: "팩", usage_unit: "ea", conversion_factor: 50, loss_rate: 0.0, current_stock: 100, safety_stock: 20 },
+            { name: "세트용 선물 박스 (50개)", category: "포장재 (Package)", purchase_price: 35000, purchase_unit: "팩", usage_unit: "ea", conversion_factor: 50, loss_rate: 0.0, current_stock: 15, safety_stock: 10 },
         ]
 
         const ingMap = new Map<string, string>() // Name -> ID
@@ -91,18 +92,73 @@ export const generateTestData = async () => {
             if (data) ingMap.set(ing.name, data.id)
         }
 
-        // 4. Create Recipes (Single)
+        // 4. Create Recipes (Prep) - FOR PHASE 6
+        const preps = [
+            {
+                name: "꽈배기 반죽 (5kg)",
+                selling_price: 0,
+                description: "경성 꽈배기 전용 발효 반죽",
+                type: 'prep',
+                category: "밑준비 (Prep)",
+                items: [
+                    { name: "밀가루 (강력분)", quantity: 3800 },
+                    { name: "찹쌀가루", quantity: 800 },
+                    { name: "백설탕", quantity: 300 },
+                    { name: "이스트 (생)", quantity: 100 }
+                ]
+            },
+            {
+                name: "특제 팥 앙금 베이스",
+                selling_price: 0,
+                description: "견과류가 추가된 고급 팥 앙금",
+                type: 'prep',
+                category: "밑준비 (Prep)",
+                items: [
+                    { name: "국산 팥앙금", quantity: 4500 },
+                    { name: "백설탕", quantity: 500 }
+                ]
+            }
+        ]
+
+        const recipeMap = new Map<string, string>() // Name -> ID
+
+        for (const prep of preps) {
+            const catId = catMap.get(prep.category)
+            const { data: recipe } = await supabase.from("recipes").insert({
+                name: prep.name,
+                selling_price: prep.selling_price,
+                description: prep.description,
+                type: 'prep',
+                category_id: catId,
+                user_id: user.id
+            }).select().single()
+
+            if (recipe) {
+                recipeMap.set(prep.name, recipe.id)
+                const itemsToInsert = prep.items.map(item => {
+                    const itemId = ingMap.get(item.name)
+                    return {
+                        recipe_id: recipe.id,
+                        item_id: itemId,
+                        item_type: 'ingredient',
+                        quantity: item.quantity
+                    }
+                })
+                await supabase.from("recipe_ingredients").insert(itemsToInsert as any)
+            }
+        }
+
+        // 5. Create Recipes (Single)
         const singles = [
             {
                 name: "경성 찹쌀 꽈배기",
                 selling_price: 1000,
                 description: "쫄깃하고 담백한 경성 대표 꽈배기",
                 items: [
-                    { name: "밀가루 (강력분)", quantity: 45 },
-                    { name: "찹쌀가루", quantity: 15 },
-                    { name: "백설탕", quantity: 5 },
-                    { name: "식용유 (대두유)", quantity: 10 },
-                    { name: "종이 봉투 (소)", quantity: 1 }
+                    { name: "꽈배기 반죽 (5kg)", quantity: 70, type: 'prep' }, // Use Prep
+                    { name: "식용유 (대두유)", quantity: 10, type: 'ingredient' },
+                    { name: "백설탕", quantity: 2, type: 'ingredient' },
+                    { name: "종이 봉투 (소)", quantity: 1, type: 'ingredient' }
                 ]
             },
             {
@@ -110,11 +166,10 @@ export const generateTestData = async () => {
                 selling_price: 1500,
                 description: "달콤한 팥앙금이 가득 들어있는 도너츠",
                 items: [
-                    { name: "밀가루 (강력분)", quantity: 40 },
-                    { name: "국산 팥앙금", quantity: 30 },
-                    { name: "백설탕", quantity: 3 },
-                    { name: "식용유 (대두유)", quantity: 10 },
-                    { name: "종이 봉투 (소)", quantity: 1 }
+                    { name: "꽈배기 반죽 (5kg)", quantity: 65, type: 'prep' },
+                    { name: "특제 팥 앙금 베이스", quantity: 40, type: 'prep' },
+                    { name: "식용유 (대두유)", quantity: 10, type: 'ingredient' },
+                    { name: "종이 봉투 (소)", quantity: 1, type: 'ingredient' }
                 ]
             },
             {
@@ -122,11 +177,11 @@ export const generateTestData = async () => {
                 selling_price: 2500,
                 description: "큼직한 소시지가 들어간 옛날 핫도그",
                 items: [
-                    { name: "밀가루 (강력분)", quantity: 50 },
-                    { name: "소시지 (점보)", quantity: 60 },
-                    { name: "식용유 (대두유)", quantity: 12 },
-                    { name: "케첩 (업소용)", quantity: 10 },
-                    { name: "종이 봉투 (소)", quantity: 1 }
+                    { name: "꽈배기 반죽 (5kg)", quantity: 80, type: 'prep' },
+                    { name: "소시지 (점보)", quantity: 60, type: 'ingredient' },
+                    { name: "식용유 (대두유)", quantity: 12, type: 'ingredient' },
+                    { name: "케첩 (업소용)", quantity: 10, type: 'ingredient' },
+                    { name: "종이 봉투 (소)", quantity: 1, type: 'ingredient' }
                 ]
             },
             {
@@ -134,10 +189,10 @@ export const generateTestData = async () => {
                 selling_price: 3000,
                 description: "쭉 늘어나는 모짜렐라 치즈볼",
                 items: [
-                    { name: "찹쌀가루", quantity: 30 },
-                    { name: "모짜렐라 치즈", quantity: 45 },
-                    { name: "식용유 (대두유)", quantity: 8 },
-                    { name: "박스 (대)", quantity: 1 }
+                    { name: "꽈배기 반죽 (5kg)", quantity: 50, type: 'prep' },
+                    { name: "모짜렐라 치즈", quantity: 45, type: 'ingredient' },
+                    { name: "식용유 (대두유)", quantity: 8, type: 'ingredient' },
+                    { name: "박스 (대)", quantity: 1, type: 'ingredient' }
                 ]
             },
             {
@@ -145,16 +200,14 @@ export const generateTestData = async () => {
                 selling_price: 1800,
                 description: "부드러운 커스터드 크림이 듬뿍",
                 items: [
-                    { name: "밀가루 (강력분)", quantity: 40 },
-                    { name: "슈크림 (커스터드)", quantity: 35 },
-                    { name: "백설탕", quantity: 3 },
-                    { name: "식용유 (대두유)", quantity: 10 },
-                    { name: "종이 봉투 (소)", quantity: 1 }
+                    { name: "꽈배기 반죽 (5kg)", quantity: 65, type: 'prep' },
+                    { name: "슈크림 (커스터드)", quantity: 35, type: 'ingredient' },
+                    { name: "식용유 (대두유)", quantity: 10, type: 'ingredient' },
+                    { name: "종이 봉투 (소)", quantity: 1, type: 'ingredient' }
                 ]
             }
         ]
 
-        const recipeMap = new Map<string, string>() // Name -> ID
         const singleCatId = catMap.get("단품 (Single)")
 
         for (const single of singles) {
@@ -173,12 +226,17 @@ export const generateTestData = async () => {
 
                 // Insert Ingredients
                 const itemsToInsert = single.items.map(item => {
-                    const itemId = ingMap.get(item.name)
-                    if (!itemId) throw new Error(`Ingredient not found: ${item.name}`)
+                    let itemId: string | undefined
+                    if (item.type === 'prep') {
+                        itemId = recipeMap.get(item.name)
+                    } else {
+                        itemId = ingMap.get(item.name)
+                    }
+                    if (!itemId) throw new Error(`Item not found for Single: ${item.name}`)
                     return {
                         recipe_id: recipe.id,
                         item_id: itemId,
-                        item_type: 'ingredient',
+                        item_type: item.type,
                         quantity: item.quantity
                     }
                 })

@@ -9,9 +9,11 @@ import { Dialog } from "@/components/ui/Dialog"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { supabase } from "@/lib/supabase"
 import { toast } from "@/hooks/use-toast"
-import { Plus, Trash2, Calendar as CalendarIcon, DollarSign, TrendingUp, Filter, ArrowRight } from "lucide-react"
+import { Plus, Trash2, Calendar as CalendarIcon, Receipt, TrendingUp, Filter, ArrowRight, Wallet, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { format } from "date-fns" // Assuming date-fns is installed or use native
+import { format, startOfMonth, endOfMonth, parseISO } from "date-fns"
+import { useDashboard } from "@/hooks/useDashboard"
+import Link from "next/link"
 
 // Types
 interface ExpenseCategory {
@@ -33,6 +35,7 @@ interface ExpenseRecord {
 export default function ExpensesPage() {
     const [activeTab, setActiveTab] = useState<'history' | 'items' | 'report'>('history')
     const [loading, setLoading] = useState(false)
+    const { summary, loading: dashboardLoading } = useDashboard()
 
     // Data State
     const [categories, setCategories] = useState<ExpenseCategory[]>([])
@@ -68,27 +71,36 @@ export default function ExpensesPage() {
 
     const fetchRecords = async (month: string) => {
         setLoading(true)
-        // month is YYYY-MM
-        const startDate = `${month}-01`
-        const endDate = `${month}-31` // Simplified
+        try {
+            // month is YYYY-MM
+            const baseDate = parseISO(`${month}-01`)
+            const startDate = format(startOfMonth(baseDate), "yyyy-MM-dd")
+            const endDate = format(endOfMonth(baseDate), "yyyy-MM-dd")
 
-        const { data, error } = await supabase
-            .from("expense_records")
-            .select(`
-                *,
-                expense_categories (name)
-            `)
-            .gte("expense_date", startDate)
-            .lte("expense_date", endDate)
-            .order("expense_date", { ascending: false })
+            const { data, error } = await supabase
+                .from("expense_records")
+                .select(`
+                    *,
+                    expense_categories (name)
+                `)
+                .gte("expense_date", startDate)
+                .lte("expense_date", endDate)
+                .order("expense_date", { ascending: false })
 
-        if (data) {
-            setRecords(data.map(r => ({
-                ...r,
-                category_name: (r.expense_categories as any)?.name || "미분류"
-            })))
+            if (error) throw error
+
+            if (data) {
+                setRecords(data.map(r => ({
+                    ...r,
+                    category_name: (r.expense_categories as any)?.name || "미분류"
+                })))
+            }
+        } catch (e: any) {
+            console.error("Fetch records error:", e)
+            toast({ title: "데이터 조회 실패", description: e.message, type: "destructive" })
+        } finally {
+            setLoading(false)
         }
-        setLoading(false)
     }
 
     // ============================================================================================
@@ -109,6 +121,8 @@ export default function ExpensesPage() {
             toast({ title: "저장 완료", description: "비용 항목이 추가되었습니다." })
             fetchCategories()
             setIsAddCategoryOpen(false)
+        } else {
+            toast({ title: "저장 실패", description: error.message, type: "destructive" })
         }
     }
 
@@ -135,8 +149,19 @@ export default function ExpensesPage() {
 
         if (!error) {
             toast({ title: "등록 완료", description: "지출 내역이 저장되었습니다." })
-            fetchRecords(selectedMonth)
+
+            // If the added record is in the current viewing month, refresh
+            if (date.startsWith(selectedMonth)) {
+                fetchRecords(selectedMonth)
+            } else {
+                toast({ title: "참고", description: "등록된 날짜가 현재 보고 있는 달과 달라 리스트에 표시되지 않을 수 있습니다." })
+                // Optional: switch month to date's month
+                setSelectedMonth(date.slice(0, 7))
+            }
+
             setIsAddRecordOpen(false)
+        } else {
+            toast({ title: "등록 실패", description: error.message, type: "destructive" })
         }
     }
 
@@ -207,7 +232,7 @@ export default function ExpensesPage() {
                                     type="month"
                                     value={selectedMonth}
                                     onChange={(e) => setSelectedMonth(e.target.value)}
-                                    className="w-40 bg-black/20"
+                                    className="w-40 bg-slate-800 border-slate-600 text-white font-black"
                                 />
                                 <div className="text-sm">
                                     <span className="text-muted-foreground">총 지출:</span>
@@ -240,7 +265,7 @@ export default function ExpensesPage() {
                                     ) : (
                                         records.map((record) => (
                                             <tr key={record.id} className="hover:bg-muted/50 transition-colors">
-                                                <td className="p-4 font-mono font-black text-slate-100 italic">{record.expense_date}</td>
+                                                <td className="p-4 font-mono font-black text-indigo-300 tracking-tighter">{record.expense_date}</td>
                                                 <td className="p-4">
                                                     <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-bold">
                                                         {record.category_name}
@@ -308,31 +333,60 @@ export default function ExpensesPage() {
                                     <div className="text-4xl font-bold text-white mb-4">
                                         {reportData.totalExpense.toLocaleString()}원
                                     </div>
-                                    <div className="space-y-2">
-                                        {Object.entries(reportData.byCategory).map(([name, amount]) => (
-                                            <div key={name} className="flex justify-between items-center text-sm">
-                                                <span className="text-muted-foreground">{name}</span>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="h-2 w-20 bg-slate-800 rounded-full overflow-hidden">
+                                    <div className="space-y-3 pt-2">
+                                        {Object.entries(reportData.byCategory)
+                                            .sort((a, b) => Number(b[1]) - Number(a[1])) // Robust Sort
+                                            .map(([name, amount]) => (
+                                                <div key={name} className="flex items-center gap-4 text-xs">
+                                                    {/* Category Name (Fixed Width) */}
+                                                    <span className="w-24 shrink-0 text-slate-400 font-black truncate uppercase tracking-tighter">
+                                                        {name}
+                                                    </span>
+
+                                                    {/* Bar (Flexible) */}
+                                                    <div className="flex-1 h-1.5 bg-slate-800/50 rounded-full overflow-hidden border border-white/5">
                                                         <div
-                                                            className="h-full bg-primary"
-                                                            style={{ width: `${(amount / reportData.totalExpense) * 100}%` }}
+                                                            className="h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.4)] transition-all duration-700 ease-out"
+                                                            style={{ width: `${(amount / (reportData.totalExpense || 1)) * 100}%` }}
                                                         />
                                                     </div>
-                                                    <span>{amount.toLocaleString()}원</span>
+
+                                                    {/* Amount (Fixed Width) */}
+                                                    <span className="w-24 shrink-0 text-right font-black text-white italic tracking-tight">
+                                                        {amount.toLocaleString()}원
+                                                    </span>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))}
                                     </div>
                                 </CardContent>
                             </Card>
-                            <Card className="bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border-indigo-500/20">
+                            <Card className="bg-indigo-600 border-0 shadow-xl shadow-indigo-500/20 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-8 bg-white/10 blur-3xl rounded-full -mr-16 -mt-16" />
                                 <CardHeader>
-                                    <CardTitle>순이익 추정 (Beta)</CardTitle>
-                                    <CardDescription>매출 기능 연동 시 자동 계산됩니다.</CardDescription>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Wallet className="h-4 w-4 text-white/70" />
+                                        <CardTitle className="text-white">순이익 분석 요약</CardTitle>
+                                    </div>
+                                    <CardDescription className="text-white/60">현재 설정 및 매출 기준 예상 데이터입니다.</CardDescription>
                                 </CardHeader>
-                                <CardContent className="flex items-center justify-center h-[200px] text-muted-foreground">
-                                    준비 중입니다...
+                                <CardContent className="space-y-6 relative z-10">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">이번 달 예상 순이익</p>
+                                        <div className="text-3xl font-black text-white italic tracking-tighter">
+                                            {dashboardLoading ? "불러오는 중..." : `${Math.round(summary.estimatedProfit).toLocaleString()}원`}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-between items-center text-xs text-white/80 font-bold border-t border-white/10 pt-4">
+                                        <span>평균 예상 마진율</span>
+                                        <span className="text-emerald-300">{summary.avgMarginRate}%</span>
+                                    </div>
+
+                                    <Link href="/analysis/profit" className="block">
+                                        <Button className="w-full bg-white text-indigo-600 hover:bg-slate-50 font-black text-[10px] uppercase tracking-widest">
+                                            상세 분석 및 시뮬레이션 <ChevronRight className="ml-2 h-3 w-3" />
+                                        </Button>
+                                    </Link>
                                 </CardContent>
                             </Card>
                         </div>

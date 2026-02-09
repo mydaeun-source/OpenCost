@@ -23,17 +23,28 @@ export function useRecipes() {
                     *,
                     categories (
                         name
+                    ),
+                    recipe_ingredients (
+                        id,
+                        item_id,
+                        item_type,
+                        quantity
                     )
                 `)
                 .order("created_at", { ascending: false })
 
             if (error) throw error
             setRecipes(data || [])
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error fetching recipes:", error)
+            if (error.message) {
+                console.error("Error message:", error.message)
+                console.error("Error details:", error.details)
+                console.error("Error hint:", error.hint)
+            }
             toast({
                 title: "불러오기 실패",
-                description: "레시피 목록을 불러오지 못했습니다.",
+                description: `레시피 목록을 불러오지 못했습니다. ${error.message || ""}`,
                 type: "destructive",
             })
         } finally {

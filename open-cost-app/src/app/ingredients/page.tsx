@@ -13,7 +13,8 @@ import { cn } from "@/lib/utils"
 import { useViewMode } from "@/hooks/useViewMode"
 import { StockAdjustmentDialog } from "@/components/ingredients/StockAdjustmentDialog"
 import { StockHistory } from "@/components/ingredients/StockHistory"
-import { History, DollarSign, AlertCircle } from "lucide-react"
+import { History, Banknote, Coins, AlertCircle } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
 export default function IngredientsPage() {
     const { ingredients, stockLogs, totalInventoryValue, loading, addIngredient, updateIngredient, deleteIngredient, adjustStock } = useIngredients()
@@ -78,7 +79,6 @@ export default function IngredientsPage() {
                                     "p-2 rounded-md transition-all",
                                     viewMode === 'list' ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground"
                                 )}
-                                title="리스트 보기"
                             >
                                 <List className="h-4 w-4" />
                             </button>
@@ -95,7 +95,7 @@ export default function IngredientsPage() {
                     <Card className="bg-slate-900/60 border-slate-700 shadow-xl border-l-4 border-l-indigo-500 overflow-hidden group hover:bg-slate-900/80 transition-all">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-xs font-black text-slate-300 uppercase tracking-widest group-hover:text-indigo-400 transition-colors">총 재고 가치</CardTitle>
-                            <DollarSign className="h-4 w-4 text-indigo-400 opacity-70" />
+                            <Banknote className="h-4 w-4 text-indigo-400 opacity-70" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-black text-white italic tracking-tight">{totalInventoryValue.toLocaleString()}원</div>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button"
 import { SalesCalendar } from "@/components/sales/SalesCalendar"
 import { SalesEntryDialog } from "@/components/sales/SalesEntryDialog"
 import { useState } from "react"
-import { Plus, TrendingUp, DollarSign, BarChart3 } from "lucide-react"
+import { Plus, TrendingUp, Banknote, BarChart3 } from "lucide-react"
 import { useDashboard } from "@/hooks/useDashboard"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card"
 
@@ -51,39 +51,48 @@ export default function SalesPage() {
 
                 {/* Monthly Quick Summary */}
                 <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="bg-white dark:bg-slate-900 shadow-sm border-l-4 border-l-indigo-500 overflow-hidden group hover:ring-2 hover:ring-indigo-100 dark:hover:ring-slate-800 transition-all">
+                    <Card className="bg-indigo-600 border-none shadow-xl overflow-hidden group hover:scale-[1.02] transition-all duration-300">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-indigo-500 transition-colors">이번 달 총 매출</CardTitle>
-                            <TrendingUp className="h-4 w-4 text-indigo-500 opacity-50" />
+                            <CardTitle className="text-[10px] font-black text-indigo-100 uppercase tracking-widest">이번 달 총 매출</CardTitle>
+                            <div className="p-2 bg-white/10 rounded-lg">
+                                <TrendingUp className="h-4 w-4 text-white" />
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-black text-slate-900 dark:text-white italic">
-                                {dashLoading ? "..." : monthlyRevenue.toLocaleString()}<span className="text-xs font-normal ml-0.5">원</span>
+                            <div className="text-3xl font-black text-white tracking-tight">
+                                {dashLoading ? "..." : monthlyRevenue.toLocaleString()}<span className="text-sm font-bold ml-1 opacity-70">원</span>
                             </div>
+                            <div className="mt-1 text-[10px] text-indigo-200 font-bold uppercase tracking-tighter">Current Month Revenue</div>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-white dark:bg-slate-900 shadow-sm border-l-4 border-l-emerald-500 overflow-hidden group hover:ring-2 hover:ring-emerald-50 dark:hover:ring-slate-800 transition-all">
+                    <Card className="bg-emerald-600 border-none shadow-xl overflow-hidden group hover:scale-[1.02] transition-all duration-300">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-emerald-500 transition-colors">이번 달 예상 수익</CardTitle>
-                            <DollarSign className="h-4 w-4 text-emerald-500 opacity-50" />
+                            <CardTitle className="text-[10px] font-black text-emerald-100 uppercase tracking-widest">이번 달 예상 수익</CardTitle>
+                            <div className="p-2 bg-white/10 rounded-lg">
+                                <Banknote className="h-4 w-4 text-white" />
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 italic">
-                                {dashLoading ? "..." : (currentMonthData?.profit || 0).toLocaleString()}<span className="text-xs font-normal ml-0.5">원</span>
+                            <div className="text-3xl font-black text-white tracking-tight">
+                                {dashLoading ? "..." : (currentMonthData?.profit || 0).toLocaleString()}<span className="text-sm font-bold ml-1 opacity-70">원</span>
                             </div>
+                            <div className="mt-1 text-[10px] text-emerald-200 font-bold uppercase tracking-tighter">Estimated Net Profit</div>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-white dark:bg-slate-900 shadow-sm border-l-4 border-l-amber-500 overflow-hidden group hover:ring-2 hover:ring-amber-50 dark:hover:ring-slate-800 transition-all">
+                    <Card className="bg-amber-600 border-none shadow-xl overflow-hidden group hover:scale-[1.02] transition-all duration-300">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-amber-500 transition-colors">마진율 (Margin)</CardTitle>
-                            <BarChart3 className="h-4 w-4 text-amber-500 opacity-50" />
+                            <CardTitle className="text-[10px] font-black text-amber-100 uppercase tracking-widest">마진율 (Margin)</CardTitle>
+                            <div className="p-2 bg-white/10 rounded-lg">
+                                <BarChart3 className="h-4 w-4 text-white" />
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-black text-slate-900 dark:text-white italic">
+                            <div className="text-3xl font-black text-white tracking-tight">
                                 {dashLoading ? "..." : (monthlyRevenue > 0 ? Math.round(((monthlyRevenue - monthlyCogs) / monthlyRevenue) * 100) : 0)}%
                             </div>
+                            <div className="mt-1 text-[10px] text-amber-200 font-bold uppercase tracking-tighter">Profit Margin Ratio</div>
                         </CardContent>
                     </Card>
                 </div>

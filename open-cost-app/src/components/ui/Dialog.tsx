@@ -9,22 +9,26 @@ interface DialogProps {
     title: string
     description?: string
     children: React.ReactNode
+    maxWidth?: string
 }
 
-export function Dialog({ isOpen, onClose, title, description, children }: DialogProps) {
+export function Dialog({ isOpen, onClose, title, description, children, maxWidth = "max-w-lg" }: DialogProps) {
     if (!isOpen) return null
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div
-                className="relative w-full max-w-lg rounded-lg border bg-background p-6 shadow-lg animate-in zoom-in-95 duration-200"
+                className={cn(
+                    "relative w-full rounded-2xl border bg-background p-6 shadow-xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]",
+                    maxWidth
+                )}
                 role="dialog"
                 aria-modal="true"
             >
-                <div className="flex flex-col space-y-1.5 text-center sm:text-left mb-4">
-                    <h2 className="text-lg font-semibold leading-none tracking-tight">{title}</h2>
+                <div className="flex flex-col space-y-1 sm:text-left mb-4 flex-none">
+                    <h2 className="text-xl font-black leading-none tracking-tight">{title}</h2>
                     {description && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs font-black text-slate-400 italic">
                             {description}
                         </p>
                     )}
@@ -33,14 +37,14 @@ export function Dialog({ isOpen, onClose, title, description, children }: Dialog
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute right-4 top-4 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+                    className="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors"
                     onClick={onClose}
                 >
                     <X className="h-4 w-4" />
                     <span className="sr-only">Close</span>
                 </Button>
 
-                <div>
+                <div className="overflow-y-auto pr-2 custom-scrollbar">
                     {children}
                 </div>
             </div>

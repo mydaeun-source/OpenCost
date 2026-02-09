@@ -11,7 +11,7 @@ export function BottomNav() {
     return (
         <div className="md:hidden fixed bottom-0 left-0 right-0 border-t border-white/5 bg-black/20 backdrop-blur-xl z-50 pb-safe">
             <div className="flex justify-around items-center h-16">
-                {NAV_ITEMS.map((item) => {
+                {NAV_ITEMS.filter(item => ["대시보드", "판매 (POS)", "매입 관리", "순이익 분석", "설정"].includes(item.label)).map((item) => {
                     const isActive = pathname === item.href
                     return (
                         <Link
