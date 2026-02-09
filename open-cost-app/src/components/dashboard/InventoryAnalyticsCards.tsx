@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
 import { TrendingDown, Hourglass } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatNumber } from "@/lib/utils"
 import { InventoryLossReport } from "@/lib/api/inventory-analytics"
 
 interface InventoryAnalyticsCardsProps {
@@ -44,14 +44,13 @@ export function InventoryAnalyticsCards({ lossReport, depletionPredictions }: In
                                 <div className="space-y-1">
                                     <p className="text-sm font-black text-slate-800 dark:text-slate-100">{item.name}</p>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase">
-                                        이론 대비 <span className="text-rose-500">+{item.lossRate}%</span> 더 소진됨
+                                        이론 대비 <span className="text-rose-500">+{formatNumber(item.lossRate)}%</span> 더 소진됨
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-sm font-black text-rose-500 italic">-{item.lossValue.toLocaleString()}원</p>
+                                    <p className="text-sm font-black text-rose-500 italic">-{formatNumber(item.lossValue)}원</p>
                                     <p className="text-[10px] font-bold text-slate-400">
-                                        {item.lossQuantity}
-                                        {"단위"}
+                                        {formatNumber(item.lossQuantity)} {item.unit}
                                     </p>
                                 </div>
                             </div>
@@ -83,8 +82,7 @@ export function InventoryAnalyticsCards({ lossReport, depletionPredictions }: In
                                 <div className="space-y-1">
                                     <p className="text-sm font-black text-slate-800 dark:text-slate-100">{item.name}</p>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase">
-                                        하루 평균 {item.usagePerDay}
-                                        {item.unit} 소진 중
+                                        하루 평균 {formatNumber(item.usagePerDay)} {item.unit} 소진 중
                                     </p>
                                 </div>
                                 <div className="text-right">

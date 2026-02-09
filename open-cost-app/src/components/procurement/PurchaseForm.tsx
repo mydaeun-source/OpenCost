@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
+import { NumericInput } from "@/components/ui/NumericInput"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/Card"
 import { Plus, Trash2, Search, Save, X, ShoppingCart, ChevronRight, User, Calendar, PlusCircle, Camera, Loader2 } from "lucide-react"
 import { useIngredients } from "@/hooks/useIngredients"
 import { cn } from "@/lib/utils"
@@ -10,6 +12,7 @@ import { cn } from "@/lib/utils"
 import { createPurchase, getSuppliers } from "@/lib/api/procurement"
 import { useToast } from "@/hooks/use-toast"
 import { processReceiptImage } from "@/lib/ocr-service"
+import { formatNumber } from "@/lib/utils"
 
 interface PurchaseFormProps {
     onSuccess?: () => void
@@ -311,7 +314,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                                                     </div>
                                                     <div>
                                                         <span className="text-sm font-black block text-slate-900 dark:text-slate-100">{ing.name}</span>
-                                                        <span className="text-[10px] text-slate-400 font-bold uppercase">{ing.purchase_unit} 당 {(Number(ing.purchase_price) || 0).toLocaleString()}원</span>
+                                                        <span className="text-[10px] text-slate-400 font-bold uppercase">{ing.purchase_unit} 당 {formatNumber(ing.purchase_price)}원</span>
                                                     </div>
                                                 </div>
                                                 <ChevronRight className="h-4 w-4 text-slate-300" />
@@ -345,27 +348,23 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                                         <div className="flex items-center gap-2">
                                             <div className="w-20">
                                                 <label className="text-[9px] font-black text-slate-400 mb-1 block uppercase text-center">수량</label>
-                                                <Input
-                                                    type="number"
+                                                <NumericInput
                                                     className="h-9 px-2 text-center text-sm font-black border-2 border-slate-100 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-indigo-500/10"
                                                     value={item.quantity}
-                                                    onChange={e => updateItem(item.ingredientId, 'quantity', Number(e.target.value))}
-                                                    min="0.01"
-                                                    step="0.01"
+                                                    onChange={(val: number) => updateItem(item.ingredientId, 'quantity', val)}
                                                 />
                                             </div>
                                             <div className="w-32">
                                                 <label className="text-[9px] font-black text-slate-400 mb-1 block uppercase text-center">단가 (원)</label>
-                                                <Input
-                                                    type="number"
+                                                <NumericInput
                                                     className="h-9 px-2 text-center text-sm font-black border-2 border-slate-100 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-indigo-500/10"
                                                     value={item.price}
-                                                    onChange={e => updateItem(item.ingredientId, 'price', Number(e.target.value))}
+                                                    onChange={(val: number) => updateItem(item.ingredientId, 'price', val)}
                                                 />
                                             </div>
                                             <div className="w-24 text-right pr-1">
                                                 <label className="text-[9px] font-black text-slate-400 mb-1 block uppercase">합계</label>
-                                                <p className="text-sm font-black text-indigo-500">{(item.quantity * item.price).toLocaleString()}<span className="text-[10px] ml-0.5">원</span></p>
+                                                <p className="text-sm font-black text-indigo-500">{formatNumber(item.quantity * item.price)}<span className="text-[10px] ml-0.5">원</span></p>
                                             </div>
                                             <Button
                                                 variant="ghost"
@@ -389,7 +388,7 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                 <div className="flex items-center justify-between p-4 bg-indigo-600 dark:bg-indigo-700 rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none border-b-4 border-indigo-800/30">
                     <span className="font-black text-indigo-100 uppercase tracking-widest text-[10px]">Total Purchase Value</span>
                     <span className="text-3xl font-black text-white italic tracking-tighter">
-                        {totalAmount.toLocaleString()}<span className="text-lg font-normal ml-1 border-l border-white/20 pl-2">원</span>
+                        {formatNumber(totalAmount)}<span className="text-lg font-normal ml-1 border-l border-white/20 pl-2">원</span>
                     </span>
                 </div>
 

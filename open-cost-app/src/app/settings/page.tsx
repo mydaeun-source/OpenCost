@@ -6,6 +6,7 @@ import { AppLayout } from "@/components/layout/AppLayout"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
+import { NumericInput } from "@/components/ui/NumericInput"
 import { Settings, User, LogOut, Banknote, TrendingUp, Loader2, Trash2, Database, Coins, Key } from "lucide-react"
 
 export default function SettingsPage() {
@@ -148,12 +149,11 @@ export default function SettingsPage() {
                                     <div className="flex gap-2">
                                         <div className="relative flex-1">
                                             <Banknote className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                            <Input
-                                                type="number"
+                                            <NumericInput
                                                 placeholder="예: 3000000"
                                                 className="pl-9"
-                                                value={fixedCost}
-                                                onChange={(e) => setFixedCost(e.target.value)}
+                                                value={Number(fixedCost) || 0}
+                                                onChange={(val: number) => setFixedCost(val.toString())}
                                             />
                                         </div>
                                         <Button
@@ -174,12 +174,11 @@ export default function SettingsPage() {
                                     <label className="text-sm font-medium">월 목표 판매수량 (메뉴 개수)</label>
                                     <div className="relative">
                                         <TrendingUp className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            type="number"
+                                        <NumericInput
                                             placeholder="예: 1000"
                                             className="pl-9"
-                                            value={targetSales}
-                                            onChange={(e) => setTargetSales(e.target.value)}
+                                            value={Number(targetSales) || 0}
+                                            onChange={(val: number) => setTargetSales(val.toString())}
                                         />
                                     </div>
                                 </div>

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/Button"
 import { AlertTriangle, ArrowRight, Package } from "lucide-react"
 import Link from "next/link"
-import { cn } from "@/lib/utils"
+import { cn, formatNumber } from "@/lib/utils"
 
 export function StockAlertCard() {
     const { ingredients, loading } = useIngredients()
@@ -57,9 +57,9 @@ export function StockAlertCard() {
                             </div>
                             <div className="text-right">
                                 <div className="text-sm font-black">
-                                    <span className="text-rose-500">{item.current_stock.toLocaleString()}</span>
+                                    <span className="text-rose-500">{formatNumber(item.current_stock)}</span>
                                     <span className="text-slate-500 mx-1">/</span>
-                                    <span className="text-slate-300">{item.safety_stock.toLocaleString()}</span>
+                                    <span className="text-slate-300">{formatNumber(item.safety_stock)}</span>
                                 </div>
                                 <div className="text-[10px] text-slate-500 font-black uppercase">
                                     {item.purchase_unit || '개'}

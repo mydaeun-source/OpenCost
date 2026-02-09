@@ -9,7 +9,7 @@ import { IngredientForm } from "@/components/ingredients/IngredientForm"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { useIngredients } from "@/hooks/useIngredients"
 import { Plus, Trash2, Package, LayoutGrid, List, TrendingUp, History, Banknote, Coins, AlertCircle } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatNumber } from "@/lib/utils"
 import { useViewMode } from "@/hooks/useViewMode"
 import { StockAdjustmentDialog } from "@/components/ingredients/StockAdjustmentDialog"
 import { StockHistory } from "@/components/ingredients/StockHistory"
@@ -123,7 +123,7 @@ export default function IngredientsPage() {
                             <Banknote className="h-4 w-4 text-indigo-400 opacity-70" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-black text-white italic tracking-tight">{totalInventoryValue.toLocaleString()}원</div>
+                            <div className="text-2xl font-black text-white italic tracking-tight">{formatNumber(totalInventoryValue)}원</div>
                         </CardContent>
                     </Card>
 
@@ -205,7 +205,7 @@ export default function IngredientsPage() {
                                                                 )}
                                                             </CardTitle>
                                                             <CardDescription className="text-xs mt-1">
-                                                                구매: {Number(ingredient.purchase_price).toLocaleString()}원 / {ingredient.purchase_unit}
+                                                                구매: {formatNumber(ingredient.purchase_price)}원 / {ingredient.purchase_unit}
                                                             </CardDescription>
                                                         </div>
                                                         <div className="flex items-center gap-1">
@@ -239,17 +239,17 @@ export default function IngredientsPage() {
                                                     <div className="flex justify-between">
                                                         <span className="text-slate-300 font-bold">현재 재고</span>
                                                         <span className={cn("font-black text-base", isLowStock ? "text-rose-400" : "text-white")}>
-                                                            {ingredient.current_stock?.toLocaleString()} {ingredient.purchase_unit}
+                                                            {formatNumber(ingredient.current_stock)} {ingredient.purchase_unit}
                                                         </span>
                                                     </div>
                                                     <div className="flex justify-between">
                                                         <span className="text-slate-300 font-bold text-xs uppercase tracking-widest">환산 비율</span>
-                                                        <span className="font-black text-xs text-slate-300 italic">1 : {ingredient.conversion_factor} ({ingredient.usage_unit})</span>
+                                                        <span className="font-black text-xs text-slate-300 italic">1 : {formatNumber(ingredient.conversion_factor)} ({ingredient.usage_unit})</span>
                                                     </div>
                                                     <div className="border-t border-slate-800 pt-2 mt-2 flex justify-between items-center">
                                                         <span className="font-black text-xs text-indigo-400 uppercase tracking-widest bg-slate-800 px-2 py-0.5 rounded outline outline-1 outline-slate-700">실질 단가 ({ingredient.usage_unit})</span>
                                                         <span className="text-lg font-black text-primary italic">
-                                                            {(((ingredient.purchase_price || 0) / (ingredient.conversion_factor || 1)) / (1 - (ingredient.loss_rate || 0))).toLocaleString(undefined, { maximumFractionDigits: 2 })}원
+                                                            {formatNumber(((ingredient.purchase_price || 0) / (ingredient.conversion_factor || 1)) / (1 - (ingredient.loss_rate || 0)))}원
                                                         </span>
                                                     </div>
                                                 </CardContent>
@@ -286,17 +286,17 @@ export default function IngredientsPage() {
                                                             </div>
                                                         </td>
                                                         <td className="p-4 text-right">
-                                                            {Number(ingredient.purchase_price).toLocaleString()}원
+                                                            {formatNumber(ingredient.purchase_price)}원
                                                             <span className="text-xs text-muted-foreground ml-1">/ {ingredient.purchase_unit}</span>
                                                         </td>
                                                         <td className={cn("p-4 text-right font-medium", isLowStock ? "text-red-500" : "")}>
-                                                            {ingredient.current_stock?.toLocaleString()} {ingredient.purchase_unit}
+                                                            {formatNumber(ingredient.current_stock)} {ingredient.purchase_unit}
                                                         </td>
                                                         <td className="p-4 text-center text-muted-foreground">
-                                                            1 : {ingredient.conversion_factor}
+                                                            1 : {formatNumber(ingredient.conversion_factor)}
                                                         </td>
                                                         <td className="p-4 text-right font-bold text-primary">
-                                                            {(((ingredient.purchase_price || 0) / (ingredient.conversion_factor || 1)) / (1 - (ingredient.loss_rate || 0))).toLocaleString(undefined, { maximumFractionDigits: 2 })}원
+                                                            {formatNumber(((ingredient.purchase_price || 0) / (ingredient.conversion_factor || 1)) / (1 - (ingredient.loss_rate || 0)))}원
                                                         </td>
                                                         <td className="p-4 text-center">
                                                             <div className="flex items-center justify-center gap-1">

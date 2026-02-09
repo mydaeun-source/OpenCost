@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
 import { Component, Utensils, TrendingUp, Banknote, Wallet, ChevronRight } from "lucide-react"
 import Link from "next/link"
+import { formatNumber } from "@/lib/utils"
 
 interface SummaryCardsProps {
     ingredientCount: number
@@ -24,8 +25,7 @@ export function SummaryCards({
     estimatedProfit,
     trends
 }: SummaryCardsProps) {
-    // Format currency helper
-    const fmt = (n: number) => n.toLocaleString()
+    // Format currency helper - replaced by global formatNumber
 
     const TrendBadge = ({ value }: { value: number }) => {
         if (!value) return null
@@ -50,12 +50,12 @@ export function SummaryCards({
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-baseline">
-                            <div className="text-2xl font-black text-indigo-500 dark:text-indigo-400 italic">{fmt(Math.round(estimatedProfit))}원</div>
+                            <div className="text-2xl font-black text-indigo-500 dark:text-indigo-400 italic">{formatNumber(Math.round(estimatedProfit))}원</div>
                             {trends?.profit !== undefined && <TrendBadge value={trends.profit} />}
                         </div>
                         <div className="flex items-center justify-between mt-1">
                             <p className="text-[10px] font-bold text-white/70">
-                                목표 매출({fmt(Math.round(targetRevenue / 10000))}만) 기준
+                                목표 매출({formatNumber(Math.round(targetRevenue / 10000))}만) 기준
                             </p>
                             <span className="text-[9px] font-black text-indigo-500 uppercase flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 분석하기 <ChevronRight className="h-2 w-2" />
@@ -72,7 +72,7 @@ export function SummaryCards({
                     <Banknote className="h-4 w-4 text-rose-500" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-black text-white italic tracking-tight">{fmt(totalExpenses)}원</div>
+                    <div className="text-2xl font-black text-white italic tracking-tight">{formatNumber(totalExpenses)}원</div>
                     <p className="text-xs font-bold text-white/50 mt-1">
                         고정비 + 변동비 합계
                     </p>
@@ -86,7 +86,7 @@ export function SummaryCards({
                     <TrendingUp className="h-4 w-4 text-emerald-500" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-black text-white italic tracking-tight">{avgMarginRate}%</div>
+                    <div className="text-2xl font-black text-white italic tracking-tight">{formatNumber(avgMarginRate)}%</div>
                     <p className="text-xs font-bold text-white/50 mt-1">
                         예상 마진율 (목표 70%)
                     </p>

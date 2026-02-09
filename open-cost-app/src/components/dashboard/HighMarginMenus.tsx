@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
 import { Database } from "@/types/database.types"
 import { ChefHat } from "lucide-react"
+import { formatNumber } from "@/lib/utils"
 
 type Recipe = Database["public"]["Tables"]["recipes"]["Row"]
 
@@ -38,7 +39,7 @@ export function HighMarginMenus({ menus }: HighMarginMenusProps) {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="font-bold">{Number(menu.selling_price).toLocaleString()}원</div>
+                                    <div className="font-bold">{formatNumber(menu.selling_price)}원</div>
                                     {/* Mock Margin Rate for visual consistency (In real app, calculate this) */}
                                     <div className="text-xs text-green-600 font-medium">마진 분석중</div>
                                 </div>

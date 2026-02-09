@@ -6,9 +6,10 @@ import { useIngredients } from "@/hooks/useIngredients"
 import { useRecipes } from "@/hooks/useRecipes"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
+import { NumericInput } from "@/components/ui/NumericInput"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/Card"
 import { Trash2, Plus, Calculator, ArrowRight, Search, GripVertical } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatNumber } from "@/lib/utils"
 
 import { supabase } from "@/lib/supabase"
 import { useCategories } from "@/hooks/useCategories"
@@ -359,7 +360,7 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                                 <div className="flex-1">
                                     <div className="font-medium text-sm">{item.name}</div>
                                     <div className="text-xs text-muted-foreground">
-                                        {activeTab === 'ingredient' ? `${Number((item as any).purchase_price).toLocaleString()}원` : `판매가: ${Number((item as any).selling_price).toLocaleString()}원`}
+                                        {activeTab === 'ingredient' ? `${formatNumber((item as any).purchase_price)}원` : `판매가: ${formatNumber((item as any).selling_price)}원`}
                                     </div>
                                 </div>
                                 <Plus className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
@@ -392,11 +393,10 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium">판매 가격 (원)</label>
-                            <Input
-                                type="number"
+                            <NumericInput
                                 placeholder="0"
-                                value={sellingPrice || ""}
-                                onChange={e => setSellingPrice(Number(e.target.value))}
+                                value={sellingPrice || 0}
+                                onChange={(val: number) => setSellingPrice(val)}
                             />
                         </div>
                         <div className="col-span-2 space-y-2">
@@ -464,10 +464,9 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <label className="text-xs text-muted-foreground">수량</label>
-                                                <Input
-                                                    type="number"
-                                                    value={item.quantity || ""}
-                                                    onChange={(e) => handleUpdateQuantity(item.tempId, Number(e.target.value))}
+                                                <NumericInput
+                                                    value={item.quantity || 0}
+                                                    onChange={(val: number) => handleUpdateQuantity(item.tempId, val)}
                                                     className="w-20 text-right"
                                                     autoFocus={item.quantity === 0} // Auto focus on new items
                                                 />
@@ -496,12 +495,12 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                             <div className="flex gap-8 text-sm">
                                 <div>
                                     <span className="text-muted-foreground block mb-1">총 원가</span>
-                                    <span className="text-2xl font-bold">{Math.round(totalCost).toLocaleString()}원</span>
+                                    <span className="text-2xl font-bold">{formatNumber(totalCost)}원</span>
                                 </div>
                                 <div>
                                     <span className="text-muted-foreground block mb-1">마진</span>
                                     <span className={cn("text-2xl font-bold", margin > 0 ? "text-green-500" : "text-red-500")}>
-                                        {Math.round(margin).toLocaleString()}원 ({marginRate.toFixed(1)}%)
+                                        {formatNumber(margin)}원 ({formatNumber(marginRate)}%)
                                     </span>
                                 </div>
                             </div>

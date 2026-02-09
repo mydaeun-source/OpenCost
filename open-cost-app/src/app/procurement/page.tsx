@@ -11,7 +11,7 @@ import { PurchaseForm } from "@/components/procurement/PurchaseForm"
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns"
 import { ko } from "date-fns/locale"
 import { Plus, ShoppingBag, Calendar, ChevronRight, ChevronDown, Package, TrendingUp, Store } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatNumber } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 
 type Period = 'day' | 'week' | 'month' | 'quarter' | 'year'
@@ -117,7 +117,7 @@ export default function ProcurementPage() {
                             <ShoppingBag className="h-4 w-4 text-indigo-400" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-black text-white">{totalAmount.toLocaleString()}원</div>
+                            <div className="text-2xl font-black text-white">{formatNumber(totalAmount)}원</div>
                             <p className="text-xs font-black text-slate-100 mt-1 flex items-center">
                                 <TrendingUp className="h-3 w-3 mr-1 text-emerald-500" />
                                 {purchases.length}건의 매입 기록
@@ -189,7 +189,7 @@ export default function ProcurementPage() {
                                     </div>
                                     <div className="text-right">
                                         <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
-                                            {Number(purchase.total_amount).toLocaleString()}<span className="text-xs font-normal ml-0.5">원</span>
+                                            {formatNumber(purchase.total_amount)}<span className="text-xs font-normal ml-0.5">원</span>
                                         </div>
                                         <div className="flex items-center justify-end gap-1.5 mt-1 text-[10px] font-bold text-emerald-600">
                                             <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
@@ -223,15 +223,15 @@ export default function ProcurementPage() {
                                                                 <div>
                                                                     <p className="font-bold text-slate-800 dark:text-slate-100">{item.ingredients?.name}</p>
                                                                     <p className="text-[11px] text-muted-foreground">
-                                                                        {Number(item.price).toLocaleString()}원 / {item.ingredients?.purchase_unit}
+                                                                        {formatNumber(item.price)}원 / {item.ingredients?.purchase_unit}
                                                                     </p>
                                                                 </div>
                                                             </div>
                                                             <div className="text-right">
                                                                 <span className="text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-2 py-1 rounded-lg font-bold">
-                                                                    {item.quantity} {item.ingredients?.purchase_unit}
+                                                                    {formatNumber(item.quantity)} {item.ingredients?.purchase_unit}
                                                                 </span>
-                                                                <p className="font-black text-lg mt-1 tracking-tight text-slate-900 dark:text-slate-50">{(item.price * item.quantity).toLocaleString()}원</p>
+                                                                <p className="font-black text-lg mt-1 tracking-tight text-slate-900 dark:text-slate-50">{formatNumber(item.price * item.quantity)}원</p>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -243,7 +243,7 @@ export default function ProcurementPage() {
                                                         <p className="text-xs opacity-70">결제 및 입고가 완료된 총액입니다.</p>
                                                     </div>
                                                     <div className="text-3xl font-black italic">
-                                                        {Number(purchase.total_amount).toLocaleString()}원
+                                                        {formatNumber(purchase.total_amount)}원
                                                     </div>
                                                 </div>
                                             </div>

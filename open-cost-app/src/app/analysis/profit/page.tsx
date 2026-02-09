@@ -18,7 +18,7 @@ import {
     ChevronDown,
     ChevronUp
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatNumber } from "@/lib/utils"
 
 export default function ProfitAnalysisPage() {
     const { summary, loading } = useDashboard()
@@ -74,7 +74,6 @@ export default function ProfitAnalysisPage() {
         </AppLayout>
     )
 
-    const fmt = (n: number) => Math.round(n).toLocaleString()
 
     return (
         <AppLayout>
@@ -114,7 +113,7 @@ export default function ProfitAnalysisPage() {
                         </CardHeader>
                         <CardContent className="p-4 pt-1">
                             <div className="text-2xl font-black italic tracking-tighter text-white">
-                                {fmt(analysis.revenue)}원
+                                {formatNumber(analysis.revenue)}원
                             </div>
                         </CardContent>
                     </Card>
@@ -125,7 +124,7 @@ export default function ProfitAnalysisPage() {
                         </CardHeader>
                         <CardContent className="p-4 pt-1">
                             <div className="text-2xl font-black italic tracking-tighter text-rose-500">
-                                {fmt(analysis.cogs + analysis.fixedCost + analysis.variableExpenses)}원
+                                {formatNumber(analysis.cogs + analysis.fixedCost + analysis.variableExpenses)}원
                             </div>
                         </CardContent>
                     </Card>
@@ -139,7 +138,7 @@ export default function ProfitAnalysisPage() {
                         </CardHeader>
                         <CardContent className="p-4 pt-1 relative z-10">
                             <div className="text-2xl font-black italic tracking-tighter text-white">
-                                {fmt(analysis.operatingProfit)}원
+                                {formatNumber(analysis.operatingProfit)}원
                             </div>
                         </CardContent>
                     </Card>
@@ -240,24 +239,24 @@ export default function ProfitAnalysisPage() {
                             <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/10">
                                 <div className="text-[8px] font-black text-rose-500 uppercase mb-1">식자재비 (COGS)</div>
                                 <div className="flex justify-between items-baseline">
-                                    <span className="text-sm font-black italic text-rose-500">{fmt(analysis.cogs)}원</span>
-                                    <span className="text-[10px] font-bold text-slate-400">{(analysis.cogs / analysis.revenue * 100).toFixed(1)}%</span>
+                                    <span className="text-sm font-black italic text-rose-500">{formatNumber(analysis.cogs)}원</span>
+                                    <span className="text-[10px] font-bold text-slate-400">{formatNumber(analysis.cogs / analysis.revenue * 100)}%</span>
                                 </div>
                             </div>
 
                             <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
                                 <div className="text-[8px] font-black text-amber-500 uppercase mb-1">운영비 (OPEX)</div>
                                 <div className="flex justify-between items-baseline">
-                                    <span className="text-sm font-black italic text-amber-500">{fmt(analysis.fixedCost + analysis.variableExpenses)}원</span>
-                                    <span className="text-[10px] font-bold text-slate-400">{((analysis.fixedCost + analysis.variableExpenses) / analysis.revenue * 100).toFixed(1)}%</span>
+                                    <span className="text-sm font-black italic text-amber-500">{formatNumber(analysis.fixedCost + analysis.variableExpenses)}원</span>
+                                    <span className="text-[10px] font-bold text-slate-400">{formatNumber((analysis.fixedCost + analysis.variableExpenses) / analysis.revenue * 100)}%</span>
                                 </div>
                             </div>
 
                             <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
                                 <div className="text-[8px] font-black text-emerald-500 uppercase mb-1">영업이익률 (MARGIN)</div>
                                 <div className="flex justify-between items-baseline">
-                                    <span className="text-sm font-black italic text-emerald-500">{fmt(analysis.operatingProfit)}원</span>
-                                    <span className="text-[12px] font-black text-emerald-600">{analysis.operatingMarginRate.toFixed(1)}%</span>
+                                    <span className="text-sm font-black italic text-emerald-500">{formatNumber(analysis.operatingProfit)}원</span>
+                                    <span className="text-[12px] font-black text-emerald-600">{formatNumber(analysis.operatingMarginRate)}%</span>
                                 </div>
                             </div>
                         </div>

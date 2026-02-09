@@ -8,7 +8,7 @@ import { AppLayout } from "@/components/layout/AppLayout"
 import { Button } from "@/components/ui/Button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
 import { ArrowLeft, Trash2, ChefHat, Banknote, Settings, Coins } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatNumber } from "@/lib/utils"
 // Import Database Types
 import { Database } from "@/types/database.types"
 import { getRecipeSalesWeights } from "@/lib/api/orders"
@@ -303,7 +303,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                             <b className="font-black uppercase tracking-tight mr-1">
                                 {isWeighted ? "현장 데이터 기반 배분:" : "목표치 기반 배분:"}
                             </b>
-                            최근 30일 데이터 기준, 개당 <b>{overheadCost.toLocaleString()}원</b>의 고정비가 할당되었습니다.
+                            최근 30일 데이터 기준, 개당 <b>{formatNumber(overheadCost)}원</b>의 고정비가 할당되었습니다.
                         </span>
                     </div>
                 ) : (
@@ -329,7 +329,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                             <CardTitle className="text-sm font-medium text-muted-foreground">판매가</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{recipe.selling_price.toLocaleString()}원</div>
+                            <div className="text-2xl font-bold">{formatNumber(recipe.selling_price)}원</div>
                         </CardContent>
                     </Card>
                     <Card>
@@ -338,16 +338,16 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-red-500">
-                                {Math.round(totalCost).toLocaleString()}원
+                                {formatNumber(totalCost)}원
                             </div>
                             <div className="text-xs text-muted-foreground mt-1 space-y-1">
                                 <div className="flex justify-between">
                                     <span>순수 재료비:</span>
-                                    <span>{Math.round(materialCost).toLocaleString()}원</span>
+                                    <span>{formatNumber(materialCost)}원</span>
                                 </div>
                                 <div className={cn("flex justify-between font-medium", overheadCost > 0 ? "text-blue-600" : "text-amber-600")}>
                                     <span>배분 비용:</span>
-                                    <span>+{overheadCost.toLocaleString()}원</span>
+                                    <span>+{formatNumber(overheadCost)}원</span>
                                 </div>
                             </div>
                         </CardContent>
@@ -358,10 +358,10 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                         </CardHeader>
                         <CardContent>
                             <div className={cn("text-2xl font-bold", marginRate < 20 ? "text-red-600" : "text-green-600")}>
-                                {Math.round(margin).toLocaleString()}원
+                                {formatNumber(margin)}원
                             </div>
                             <p className={cn("text-xs font-medium", marginRate < 20 ? "text-red-500" : "text-green-500")}>
-                                순이익률 {Math.round(marginRate)}%
+                                순이익률 {formatNumber(marginRate)}%
                             </p>
                         </CardContent>
                     </Card>
@@ -397,7 +397,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                             <div className="text-right">
                                 {overheadCost > 0 ? (
                                     <>
-                                        <p className="font-medium text-blue-700">{overheadCost.toLocaleString()}원</p>
+                                        <p className="font-medium text-blue-700">{formatNumber(overheadCost)}원</p>
                                         <div className="w-24 h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
                                             <div
                                                 className="h-full bg-blue-400"
@@ -433,13 +433,13 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                                         <div>
                                             <p className="font-medium text-slate-200">{item.name}</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {item.quantity.toLocaleString()}{item.usage_unit}
-                                                {item.unit_cost > 0 && ` × ${Math.round(item.unit_cost).toLocaleString()}원`}
+                                                {formatNumber(item.quantity)} {item.usage_unit}
+                                                {item.unit_cost > 0 && ` × ${formatNumber(item.unit_cost)}원`}
                                             </p>
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-medium text-slate-200">{Math.round(item.total_cost).toLocaleString()}원</p>
+                                        <p className="font-medium text-slate-200">{formatNumber(item.total_cost)}원</p>
                                     </div>
                                 </div>
 
@@ -452,8 +452,8 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                                         </p>
                                         {item.subItems.map(sub => (
                                             <div key={sub.id} className="flex justify-between items-center text-xs text-slate-400 border-b border-white/5 last:border-0 py-1">
-                                                <span>{sub.name} ({sub.quantity}{sub.usage_unit})</span>
-                                                <span className="font-mono">{Math.round(sub.total_cost).toLocaleString()}</span>
+                                                <span>{sub.name} ({formatNumber(sub.quantity)} {sub.usage_unit})</span>
+                                                <span className="font-mono">{formatNumber(sub.total_cost)}</span>
                                             </div>
                                         ))}
                                     </div>

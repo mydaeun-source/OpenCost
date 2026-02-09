@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
 import { Sparkles, ArrowRight, DollarSign, Repeat } from "lucide-react"
+import { formatNumber } from "@/lib/utils"
 
 interface SourcingOpportunity {
     ingredientId: string
@@ -40,7 +41,7 @@ export function SourcingOptimizationCard({ opportunities }: SourcingOptimization
                                     <div className="flex justify-between items-start">
                                         <p className="text-sm font-black text-slate-800 dark:text-slate-100">{opp.name}</p>
                                         <div className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase">
-                                            {opp.savingPercent}% SAVING
+                                            {formatNumber(opp.savingPercent)}% SAVING
                                         </div>
                                     </div>
 
@@ -59,7 +60,7 @@ export function SourcingOptimizationCard({ opportunities }: SourcingOptimization
                                         <div>
                                             <p className="text-[9px] font-black text-slate-400 uppercase">단위당 절감액</p>
                                             <p className="text-lg font-black text-slate-900 dark:text-slate-100 italic">
-                                                {opp.potentialSavingPerUnit.toLocaleString()}<span className="text-[10px] whitespace-nowrap not-italic ml-0.5">원</span>
+                                                {formatNumber(opp.potentialSavingPerUnit)}<span className="text-[10px] whitespace-nowrap not-italic ml-0.5">원</span>
                                             </p>
                                         </div>
                                         <div className="h-8 w-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-500">
@@ -75,7 +76,7 @@ export function SourcingOptimizationCard({ opportunities }: SourcingOptimization
                 {topOpportunities.length > 0 && (
                     <div className="p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
                         <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 leading-relaxed text-center">
-                            💡 **{topOpportunities[0].bestSupplier}**에서 **{topOpportunities[0].name}**을(를) 구매하시면 평소보다 약 {topOpportunities[0].bestPrice.toLocaleString()}원에 매입이 가능합니다.
+                            💡 **{topOpportunities[0].bestSupplier}**에서 **{topOpportunities[0].name}**을(를) 구매하시면 평소보다 약 {formatNumber(topOpportunities[0].bestPrice)}원에 매입이 가능합니다.
                         </p>
                     </div>
                 )}

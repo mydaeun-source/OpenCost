@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
 import { Database } from "@/types/database.types"
 import { Package } from "lucide-react"
+import { formatNumber } from "@/lib/utils"
 
 type Ingredient = Database["public"]["Tables"]["ingredients"]["Row"]
 
@@ -32,12 +33,12 @@ export function RecentIngredients({ ingredients }: RecentIngredientsProps) {
                                 <div className="ml-4 space-y-1">
                                     <p className="text-sm font-medium leading-none">{ing.name}</p>
                                     <div className="flex items-baseline gap-1">
-                                        <div className="text-sm font-black text-slate-200">{Number(ing.purchase_price).toLocaleString()}원</div>
+                                        <div className="text-sm font-black text-slate-200">{formatNumber(ing.purchase_price)}원</div>
                                         <div className="text-xs font-black text-slate-300 italic">/{ing.purchase_unit}</div>
                                     </div>
                                 </div>
                                 <div className="ml-auto font-medium text-sm">
-                                    +{ing.conversion_factor} {ing.usage_unit}
+                                    +{formatNumber(ing.conversion_factor)} {ing.usage_unit}
                                 </div>
                             </div>
                         ))

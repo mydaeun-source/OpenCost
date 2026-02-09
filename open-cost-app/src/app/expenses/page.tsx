@@ -5,6 +5,7 @@ import { AppLayout } from "@/components/layout/AppLayout"
 import { Button } from "@/components/ui/Button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
 import { Input } from "@/components/ui/Input"
+import { NumericInput } from "@/components/ui/NumericInput"
 import { Dialog } from "@/components/ui/Dialog"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { supabase } from "@/lib/supabase"
@@ -431,7 +432,11 @@ function AddCategoryDialog({ isOpen, onClose, onSubmit }: any) {
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-medium">기본 금액 (선택)</label>
-                    <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0" />
+                    <NumericInput
+                        value={Number(amount) || 0}
+                        onChange={(val: number) => setAmount(val.toString())}
+                        placeholder="0"
+                    />
                 </div>
                 <div className="flex items-center gap-2">
                     <input type="checkbox" checked={isFixed} onChange={e => setIsFixed(e.target.checked)} id="fixed" className="h-4 w-4" />
@@ -485,7 +490,11 @@ function AddRecordDialog({ isOpen, onClose, categories, onSubmit }: any) {
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-medium">금액</label>
-                    <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0" />
+                    <NumericInput
+                        value={Number(amount) || 0}
+                        onChange={(val: number) => setAmount(val.toString())}
+                        placeholder="0"
+                    />
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-medium">메모</label>

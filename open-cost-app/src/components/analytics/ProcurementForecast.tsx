@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
 import { ForecastItem, getProcurementForecast } from "@/lib/api/procurement-predictor"
 import { supabase } from "@/lib/supabase"
 import { AlertTriangle, Calendar, ShoppingCart, TrendingDown, Package, Clock } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatNumber } from "@/lib/utils"
 
 export function ProcurementForecast() {
     const [forecast, setForecast] = useState<ForecastItem[]>([])
@@ -69,7 +69,7 @@ export function ProcurementForecast() {
                                         </span>
                                         <span className="flex items-center gap-1 text-[10px] font-bold text-indigo-400 uppercase tracking-tighter">
                                             <TrendingDown className="h-3 w-3" />
-                                            일평균 {item.avgDailyUsage.toFixed(2)}{item.unit} 소모
+                                            일평균 {formatNumber(item.avgDailyUsage)} {item.unit} 소모
                                         </span>
                                     </div>
                                 </div>
@@ -78,7 +78,7 @@ export function ProcurementForecast() {
                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">권장 구매량</p>
                                 <div className="flex items-center gap-2 justify-end">
                                     <span className="text-lg font-black text-white italic">
-                                        {item.suggestedPurchaseQty.toLocaleString()}
+                                        {formatNumber(item.suggestedPurchaseQty)}
                                     </span>
                                     <span className="text-xs font-bold text-slate-400">{item.unit}</span>
                                     <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-lg shadow-indigo-500/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ml-2">

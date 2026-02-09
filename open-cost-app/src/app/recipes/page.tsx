@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
 import { useRecipes } from "@/hooks/useRecipes"
 import { Plus, ChefHat, TrendingUp, LayoutGrid, List, ArrowRight, Trash2 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatNumber } from "@/lib/utils"
 
 import { useViewMode } from "@/hooks/useViewMode"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
@@ -118,7 +118,7 @@ export default function RecipesPage() {
                                                     <div className="space-y-2">
                                                         <div className="flex justify-between items-center text-sm">
                                                             <span className="text-muted-foreground">판매가</span>
-                                                            <span className="font-semibold">{Number(recipe.selling_price).toLocaleString()} 원</span>
+                                                            <span className="font-semibold">{formatNumber(recipe.selling_price)} 원</span>
                                                         </div>
                                                         <div className="pt-2 border-t border-slate-700 mt-2 flex items-center text-xs font-black text-slate-300 italic">
                                                             <TrendingUp className="h-3 w-3 mr-1" />
@@ -169,7 +169,7 @@ export default function RecipesPage() {
                                                         )}
                                                     </td>
                                                     <td className="p-4 text-right font-medium">
-                                                        {Number(recipe.selling_price).toLocaleString()} 원
+                                                        {formatNumber(recipe.selling_price)} 원
                                                     </td>
                                                     <td className="p-4 text-right pr-6">
                                                         <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors flex items-center justify-end gap-2">

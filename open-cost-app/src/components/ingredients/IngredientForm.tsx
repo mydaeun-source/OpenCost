@@ -1,10 +1,12 @@
 import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
+import { NumericInput } from "@/components/ui/NumericInput"
 import { Select } from "@/components/ui/Select"
 import { Database } from "@/types/database.types"
 import { Info, TrendingUp } from "lucide-react"
 import { KAMIS_ITEMS } from "@/lib/api/kamis"
+import { formatNumber } from "@/lib/utils"
 
 type IngredientInsert = Database["public"]["Tables"]["ingredients"]["Insert"]
 type IngredientRow = Database["public"]["Tables"]["ingredients"]["Row"]
@@ -53,19 +55,6 @@ export function IngredientForm({ initialData, onSubmit, onCancel }: IngredientFo
         current_stock: 0,
         safety_stock: 0,
     })
-
-    // Helper: Format number with commas
-    const formatNumber = (val: number | string | undefined | null) => {
-        if (val === undefined || val === null || val === "") return ""
-        const num = Number(val)
-        if (isNaN(num)) return ""
-        return num.toLocaleString()
-    }
-
-    // Helper: Parse string with commas to number
-    const parseNumber = (val: string) => {
-        return Number(val.replace(/,/g, "")) || 0
-    }
 
     // Helper: Format loss rate as percentage
     const formatLossRateAsPercent = (val: number | undefined | null) => {
@@ -127,7 +116,7 @@ export function IngredientForm({ initialData, onSubmit, onCancel }: IngredientFo
                 <Input
                     required
                     placeholder="예: 양파, 밀가루"
-                    value={formData.name}
+                    value={formData.name || ""}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
             </div>
@@ -135,13 +124,11 @@ export function IngredientForm({ initialData, onSubmit, onCancel }: IngredientFo
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <label className="text-sm font-black text-white uppercase tracking-widest">구매 가격 (원)</label>
-                    <Input
+                    <NumericInput
                         required
-                        type="text"
-                        inputMode="numeric"
                         placeholder="0"
-                        value={formatNumber(formData.purchase_price)}
-                        onChange={(e) => setFormData({ ...formData, purchase_price: parseNumber(e.target.value) })}
+                        value={formData.purchase_price || 0}
+                        onChange={(val) => setFormData({ ...formData, purchase_price: val })}
                     />
                 </div>
                 <div className="space-y-2">
@@ -166,7 +153,7 @@ export function IngredientForm({ initialData, onSubmit, onCancel }: IngredientFo
                 <div className="space-y-2">
                     <label className="text-sm font-medium">구매 단위</label>
                     <Select
-                        value={formData.purchase_unit}
+                        value={formData.purchase_unit || "kg"}
                         onChange={(e) => setFormData({ ...formData, purchase_unit: e.target.value })}
                     >
                         {UNITS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
@@ -175,7 +162,7 @@ export function IngredientForm({ initialData, onSubmit, onCancel }: IngredientFo
                 <div className="space-y-2">
                     <label className="text-sm font-medium">사용 단위 (레시피용)</label>
                     <Select
-                        value={formData.usage_unit}
+                        value={formData.usage_unit || "g"}
                         onChange={(e) => setFormData({ ...formData, usage_unit: e.target.value })}
                     >
                         {UNITS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
@@ -210,22 +197,18 @@ export function IngredientForm({ initialData, onSubmit, onCancel }: IngredientFo
             <div className="grid grid-cols-2 gap-4 border-t pt-4 mt-2">
                 <div className="space-y-2">
                     <label className="text-sm font-black text-white uppercase tracking-widest">현재 재고 ({formData.purchase_unit})</label>
-                    <Input
-                        type="text"
-                        inputMode="numeric"
+                    <NumericInput
                         placeholder="0"
-                        value={formatNumber(formData.current_stock)}
-                        onChange={(e) => setFormData({ ...formData, current_stock: parseNumber(e.target.value) })}
+                        value={formData.current_stock || 0}
+                        onChange={(val) => setFormData({ ...formData, current_stock: val })}
                     />
                 </div>
                 <div className="space-y-2">
                     <label className="text-sm font-black text-white uppercase tracking-widest">안전 재고 ({formData.purchase_unit})</label>
-                    <Input
-                        type="text"
-                        inputMode="numeric"
+                    <NumericInput
                         placeholder="알림 기준"
-                        value={formatNumber(formData.safety_stock)}
-                        onChange={(e) => setFormData({ ...formData, safety_stock: parseNumber(e.target.value) })}
+                        value={formData.safety_stock || 0}
+                        onChange={(val) => setFormData({ ...formData, safety_stock: val })}
                     />
                 </div>
             </div>
@@ -242,12 +225,10 @@ export function IngredientForm({ initialData, onSubmit, onCancel }: IngredientFo
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">1 {formData.purchase_unit} = </span>
-                    <Input
-                        type="text"
-                        inputMode="decimal"
+                    <NumericInput
                         className="w-24 h-8"
-                        value={formatNumber(formData.conversion_factor)}
-                        onChange={(e) => setFormData({ ...formData, conversion_factor: parseNumber(e.target.value) })}
+                        value={formData.conversion_factor || 1}
+                        onChange={(val) => setFormData({ ...formData, conversion_factor: val })}
                     />
                     <span className="text-sm text-muted-foreground">{formData.usage_unit}</span>
                 </div>
@@ -256,7 +237,7 @@ export function IngredientForm({ initialData, onSubmit, onCancel }: IngredientFo
             <div className="flex items-center justify-between rounded-md border p-3 bg-secondary/20">
                 <span className="text-sm font-medium">예상 실질 단가 (1 {formData.usage_unit})</span>
                 <span className="text-lg font-bold text-primary">
-                    {estimatedCost.toLocaleString(undefined, { maximumFractionDigits: 2 })} 원
+                    {formatNumber(estimatedCost)} 원
                 </span>
             </div>
 

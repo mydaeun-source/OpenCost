@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { fetchMarketPrice, MarketPrice } from "@/lib/api/kamis"
 import { TrendingUp, TrendingDown, Minus, Loader2, AlertCircle } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatNumber } from "@/lib/utils"
 
 interface MarketPriceCardProps {
     itemCode: string
@@ -65,7 +65,7 @@ export function MarketPriceCard({ itemCode, categoryCode, myPrice, unit, classNa
             <div className="flex items-end justify-between">
                 <div>
                     <p className="text-lg font-black text-white italic tracking-tighter">
-                        {marketData.price.toLocaleString()}원 <span className="text-[10px] font-normal opacity-50">/ {marketData.unit}</span>
+                        {formatNumber(marketData.price)}원 <span className="text-[10px] font-normal opacity-50">/ {marketData.unit}</span>
                     </p>
                     <div className="flex items-center gap-1 mt-0.5">
                         {marketData.direction === 'up' && <TrendingUp className="h-3 w-3 text-rose-500" />}
@@ -76,7 +76,7 @@ export function MarketPriceCard({ itemCode, categoryCode, myPrice, unit, classNa
                             marketData.direction === 'up' ? "text-rose-500" :
                                 marketData.direction === 'down' ? "text-emerald-500" : "text-slate-500"
                         )}>
-                            어제보다 {marketData.changePercent}% {marketData.direction === 'up' ? '상승' : marketData.direction === 'down' ? '하락' : '변동없음'}
+                            어제보다 {formatNumber(marketData.changePercent)}% {marketData.direction === 'up' ? '상승' : marketData.direction === 'down' ? '하락' : '변동없음'}
                         </span>
                     </div>
                 </div>
@@ -85,11 +85,11 @@ export function MarketPriceCard({ itemCode, categoryCode, myPrice, unit, classNa
                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">내 매입가 비교</p>
                     {isCompetitive ? (
                         <div className="text-emerald-400 font-black italic text-sm">
-                            평균보다 {diffPercent}% 저렴 <span className="text-[10px]">👍</span>
+                            평균보다 {formatNumber(diffPercent)}% 저렴 <span className="text-[10px]">👍</span>
                         </div>
                     ) : (
                         <div className="text-rose-400 font-black italic text-sm">
-                            평균보다 {diffPercent}% 비쌈 <span className="text-[10px]">⚠️</span>
+                            평균보다 {formatNumber(diffPercent)}% 비쌈 <span className="text-[10px]">⚠️</span>
                         </div>
                     )}
                 </div>

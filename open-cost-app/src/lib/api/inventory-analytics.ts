@@ -8,6 +8,7 @@ export interface InventoryLossReport {
     lossQuantity: number
     lossRate: number
     lossValue: number
+    unit: string
 }
 
 export const getInventoryLossReport = async (days = 30) => {
@@ -90,9 +91,10 @@ export const getInventoryLossReport = async (days = 30) => {
             name: ing.name,
             theoreticalUsage: tUsage,
             actualUsage: totalActualUsage,
-            lossQuantity: aLossUsageUnit,
-            lossRate: Math.round(lossRate * 10) / 10,
-            lossValue: Math.round(aLossUsageUnit * unitCost)
+            lossQuantity: aLossInPurchaseUnit, // Keep in purchase unit for display
+            lossRate: lossRate,
+            lossValue: aLossInPurchaseUnit * (ing.purchase_price || 0),
+            unit: ing.purchase_unit || "개"
         }
     }).filter(r => r.theoreticalUsage > 0 || r.lossQuantity > 0)
 
