@@ -19,6 +19,7 @@ import {
     ChevronUp
 } from "lucide-react"
 import { cn, formatNumber } from "@/lib/utils"
+import { CollapsibleCard } from "@/components/dashboard/CollapsibleCard"
 
 export default function ProfitAnalysisPage() {
     const { summary, loading } = useDashboard()
@@ -77,7 +78,7 @@ export default function ProfitAnalysisPage() {
 
     return (
         <AppLayout>
-            <div className="max-w-4xl mx-auto space-y-6">
+            <div className="max-w-4xl mx-auto space-y-6 pb-20">
 
                 {/* 1. Header & Quick Status */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -94,118 +95,111 @@ export default function ProfitAnalysisPage() {
                             )}
                         </p>
                     </div>
-                    <Button
-                        variant={showSimulator ? "secondary" : "default"}
-                        size="sm"
-                        onClick={() => setShowSimulator(!showSimulator)}
-                        className="font-black text-[10px] uppercase tracking-widest px-4 shadow-lg active:scale-95 transition-all"
-                    >
-                        {showSimulator ? <X className="h-3 w-3 mr-2" /> : <Settings2 className="h-3 w-3 mr-2" />}
-                        {showSimulator ? "분석 닫기" : "시뮬레이션 조절"}
-                    </Button>
                 </div>
 
-                {/* 2. Top Level KPI Row (Ultra Clean) */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card className="bg-slate-900 border-2 border-slate-800 shadow-sm relative overflow-hidden group">
-                        <CardHeader className="p-4 pb-0">
-                            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">01. 매출액 (REVENUE)</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-1">
-                            <div className="text-2xl font-black italic tracking-tighter text-white">
-                                {formatNumber(analysis.revenue)}원
-                            </div>
-                        </CardContent>
-                    </Card>
+                {/* 2. Top Level KPI Row */}
+                <CollapsibleCard
+                    title="핵심 수익 지표 (Key Financials)"
+                    description="매출, 지출 및 최종 순이익 요약입니다."
+                    icon={<BarChart3 className="h-4 w-4" />}
+                    storageKey="profit-kpis"
+                >
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Card className="bg-white/5 dark:bg-slate-900 border-none shadow-none relative overflow-hidden group">
+                            <CardHeader className="p-4 pb-0">
+                                <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">01. 매출액 (REVENUE)</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4 pt-1">
+                                <div className="text-2xl font-black italic tracking-tighter text-white">
+                                    {formatNumber(analysis.revenue)}원
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                    <Card className="bg-slate-900 border-2 border-slate-800 shadow-sm relative overflow-hidden group">
-                        <CardHeader className="p-4 pb-0">
-                            <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">02. 총 지출 (TOTAL COSTS)</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-1">
-                            <div className="text-2xl font-black italic tracking-tighter text-rose-500">
-                                {formatNumber(analysis.cogs + analysis.fixedCost + analysis.variableExpenses)}원
-                            </div>
-                        </CardContent>
-                    </Card>
+                        <Card className="bg-white/5 dark:bg-slate-900 border-none shadow-none relative overflow-hidden group">
+                            <CardHeader className="p-4 pb-0">
+                                <CardTitle className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">02. 총 지출 (TOTAL COSTS)</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4 pt-1">
+                                <div className="text-2xl font-black italic tracking-tighter text-rose-500">
+                                    {formatNumber(analysis.cogs + analysis.fixedCost + analysis.variableExpenses)}원
+                                </div>
+                            </CardContent>
+                        </Card>
 
-                    <Card className="bg-indigo-600 border-0 shadow-xl shadow-indigo-500/20 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-10">
-                            <TrendingUp className="h-12 w-12 text-white" />
+                        <Card className="bg-indigo-600/20 border-none shadow-none relative overflow-hidden group">
+                            <CardHeader className="p-4 pb-0">
+                                <CardTitle className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">03. 최종 순이익 (NET PROFIT)</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4 pt-1 relative z-10">
+                                <div className="text-2xl font-black italic tracking-tighter text-indigo-400">
+                                    {formatNumber(analysis.operatingProfit)}원
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </CollapsibleCard>
+
+                {/* 3. SIMULATOR PANEL */}
+                <CollapsibleCard
+                    title="수익 전략 시뮬레이션"
+                    description="판매량, 가격, 원가 변동에 따른 기대 수익 변화를 계산합니다."
+                    icon={<Calculator className="h-4 w-4" />}
+                    storageKey="profit-sim"
+                    defaultCollapsed={true}
+                >
+                    <div className="p-2 grid md:grid-cols-3 gap-8">
+                        {/* Volume */}
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-end">
+                                <label className="text-[10px] font-black text-slate-500 uppercase">판매량 (Volume)</label>
+                                <span className={cn("text-sm font-black italic border-b-2", volAdj >= 0 ? "text-emerald-400 border-emerald-400/30" : "text-rose-400 border-rose-400/30")}>
+                                    {volAdj > 0 ? '+' : ''}{volAdj}%
+                                </span>
+                            </div>
+                            <input type="range" min="-30" max="100" step="5" value={volAdj} onChange={(e) => setVolAdj(Number(e.target.value))} className="w-full accent-indigo-500" />
                         </div>
-                        <CardHeader className="p-4 pb-0">
-                            <CardTitle className="text-[10px] font-black text-white/70 uppercase tracking-[0.2em]">03. 최종 순이익 (NET PROFIT)</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-1 relative z-10">
-                            <div className="text-2xl font-black italic tracking-tighter text-white">
-                                {formatNumber(analysis.operatingProfit)}원
+
+                        {/* Price */}
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-end">
+                                <label className="text-[10px] font-black text-slate-500 uppercase">판매가격 (Price)</label>
+                                <span className={cn("text-sm font-black italic border-b-2", priceAdj >= 0 ? "text-emerald-400 border-emerald-400/30" : "text-rose-400 border-rose-400/30")}>
+                                    {priceAdj > 0 ? '+' : ''}{priceAdj}%
+                                </span>
                             </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                            <input type="range" min="-20" max="30" step="1" value={priceAdj} onChange={(e) => setPriceAdj(Number(e.target.value))} className="w-full accent-indigo-500" />
+                        </div>
 
-                {/* 3. SIMULATOR PANEL (Collapsible) */}
-                {showSimulator && (
-                    <Card className="border-2 border-indigo-500/30 bg-indigo-500/[0.03] animate-in slide-in-from-top-2 duration-300">
-                        <CardHeader className="pb-2 border-b border-indigo-500/10">
-                            <CardTitle className="text-xs font-black text-indigo-500 uppercase tracking-[0.2em] flex items-center justify-between">
-                                <span className="flex items-center gap-2"><Calculator className="h-3 w-3" /> WHAT-IF STRATEGY SIMULATOR</span>
-                                <Button variant="ghost" size="sm" onClick={() => { setVolAdj(0); setPriceAdj(0); setCostAdj(0); }} className="h-6 text-[8px] font-black uppercase tracking-widest text-indigo-500 hover:bg-indigo-500/10">RESET ALL</Button>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-6 grid md:grid-cols-3 gap-8">
-                            {/* Volume */}
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-end">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase">판매량 (Volume)</label>
-                                    <span className={cn("text-sm font-black italic border-b-2", volAdj >= 0 ? "text-emerald-500 border-emerald-500/30" : "text-rose-500 border-rose-500/30")}>
-                                        {volAdj > 0 ? '+' : ''}{volAdj}%
-                                    </span>
-                                </div>
-                                <input type="range" min="-30" max="100" step="5" value={volAdj} onChange={(e) => setVolAdj(Number(e.target.value))} className="w-full" />
+                        {/* Cost */}
+                        <div className="space-y-3">
+                            <div className="flex justify-between items-end">
+                                <label className="text-[10px] font-black text-slate-500 uppercase">원가 변동 (Material)</label>
+                                <span className={cn("text-sm font-black italic border-b-2", costAdj <= 0 ? "text-emerald-400 border-emerald-400/30" : "text-rose-400 border-rose-400/30")}>
+                                    {costAdj > 0 ? '+' : ''}{costAdj}%
+                                </span>
                             </div>
+                            <input type="range" min="-20" max="50" step="1" value={costAdj} onChange={(e) => setCostAdj(Number(e.target.value))} className="w-full accent-indigo-500" />
+                        </div>
+                    </div>
+                </CollapsibleCard>
 
-                            {/* Price */}
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-end">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase">판매가격 (Price)</label>
-                                    <span className={cn("text-sm font-black italic border-b-2", priceAdj >= 0 ? "text-emerald-500 border-emerald-500/30" : "text-rose-500 border-rose-500/30")}>
-                                        {priceAdj > 0 ? '+' : ''}{priceAdj}%
-                                    </span>
-                                </div>
-                                <input type="range" min="-20" max="30" step="1" value={priceAdj} onChange={(e) => setPriceAdj(Number(e.target.value))} className="w-full" />
-                            </div>
-
-                            {/* Cost */}
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-end">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase">원가 변동 (Material)</label>
-                                    <span className={cn("text-sm font-black italic border-b-2", costAdj <= 0 ? "text-emerald-500 border-emerald-500/30" : "text-rose-500 border-rose-500/30")}>
-                                        {costAdj > 0 ? '+' : ''}{costAdj}%
-                                    </span>
-                                </div>
-                                <input type="range" min="-20" max="50" step="1" value={costAdj} onChange={(e) => setCostAdj(Number(e.target.value))} className="w-full" />
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* 4. MAIN WATERFALL BREAKDOWN (Simplified Horizontal) */}
-                <Card className="border-2 border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden bg-white dark:bg-slate-900/50">
-                    <CardHeader className="pb-0 pt-6 px-6">
-                        <CardTitle className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">PROFIT WATERFALL</CardTitle>
-                        <CardDescription className="text-[10px] font-bold">수익 구조의 단계별 현황입니다.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6 space-y-1">
-
+                {/* 4. MAIN WATERFALL BREAKDOWN */}
+                <CollapsibleCard
+                    title="수익 구조 상세 분석 (Waterfall)"
+                    description="매출액 대비 주요 비용 항목의 비중입니다."
+                    icon={<TrendingUp className="h-4 w-4" />}
+                    storageKey="profit-waterfall"
+                >
+                    <div className="space-y-1">
                         {/* THE BAR CONTAINER */}
-                        <div className="relative h-12 w-full bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden flex shadow-inner border border-slate-200 dark:border-slate-700">
+                        <div className="relative h-12 w-full bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden flex shadow-inner border-none">
                             {/* COGS Segment */}
                             <div
-                                className="h-full bg-rose-500/80 border-r border-white/20 relative group"
+                                className="h-full bg-rose-500/60 border-r border-white/5 relative group"
                                 style={{ width: `${(analysis.cogs / analysis.revenue) * 100}%` }}
                             >
-                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 <div className="flex items-center justify-center h-full">
                                     {(analysis.cogs / analysis.revenue) > 0.15 && <span className="text-[10px] font-black text-white/50 uppercase tracking-tighter">COGS</span>}
                                 </div>
@@ -213,10 +207,10 @@ export default function ProfitAnalysisPage() {
 
                             {/* Fixed + Var Segment */}
                             <div
-                                className="h-full bg-amber-500/80 border-r border-white/20 relative group"
+                                className="h-full bg-amber-500/60 border-r border-white/5 relative group"
                                 style={{ width: `${((analysis.fixedCost + analysis.variableExpenses) / analysis.revenue) * 100}%` }}
                             >
-                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 <div className="flex items-center justify-center h-full">
                                     {((analysis.fixedCost + analysis.variableExpenses) / analysis.revenue) > 0.15 && <span className="text-[10px] font-black text-white/50 uppercase tracking-tighter">OPEX</span>}
                                 </div>
@@ -224,10 +218,10 @@ export default function ProfitAnalysisPage() {
 
                             {/* Net Profit Segment */}
                             <div
-                                className="h-full bg-emerald-500/80 relative group"
+                                className="h-full bg-indigo-500/60 relative group"
                                 style={{ width: `${Math.max(0, (analysis.operatingProfit / analysis.revenue) * 100)}%` }}
                             >
-                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 <div className="flex items-center justify-center h-full">
                                     {(analysis.operatingProfit / analysis.revenue) > 0.1 && <span className="text-[10px] font-black text-white uppercase tracking-tighter italic">PROFIT</span>}
                                 </div>
@@ -236,32 +230,32 @@ export default function ProfitAnalysisPage() {
 
                         {/* Legends & Details */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-6">
-                            <div className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/10">
-                                <div className="text-[8px] font-black text-rose-500 uppercase mb-1">식자재비 (COGS)</div>
+                            <div className="p-3 rounded-xl bg-white/5 border-none">
+                                <div className="text-[8px] font-black text-rose-400 uppercase mb-1">식자재비 (COGS)</div>
                                 <div className="flex justify-between items-baseline">
-                                    <span className="text-sm font-black italic text-rose-500">{formatNumber(analysis.cogs)}원</span>
-                                    <span className="text-[10px] font-bold text-slate-400">{formatNumber(analysis.cogs / analysis.revenue * 100)}%</span>
+                                    <span className="text-sm font-black italic text-rose-400">{formatNumber(analysis.cogs)}원</span>
+                                    <span className="text-[10px] font-bold text-slate-500">{formatNumber(analysis.cogs / analysis.revenue * 100)}%</span>
                                 </div>
                             </div>
 
-                            <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
-                                <div className="text-[8px] font-black text-amber-500 uppercase mb-1">운영비 (OPEX)</div>
+                            <div className="p-3 rounded-xl bg-white/5 border-none">
+                                <div className="text-[8px] font-black text-amber-400 uppercase mb-1">운영비 (OPEX)</div>
                                 <div className="flex justify-between items-baseline">
-                                    <span className="text-sm font-black italic text-amber-500">{formatNumber(analysis.fixedCost + analysis.variableExpenses)}원</span>
-                                    <span className="text-[10px] font-bold text-slate-400">{formatNumber((analysis.fixedCost + analysis.variableExpenses) / analysis.revenue * 100)}%</span>
+                                    <span className="text-sm font-black italic text-amber-400">{formatNumber(analysis.fixedCost + analysis.variableExpenses)}원</span>
+                                    <span className="text-[10px] font-bold text-slate-500">{formatNumber((analysis.fixedCost + analysis.variableExpenses) / analysis.revenue * 100)}%</span>
                                 </div>
                             </div>
 
-                            <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
-                                <div className="text-[8px] font-black text-emerald-500 uppercase mb-1">영업이익률 (MARGIN)</div>
+                            <div className="p-3 rounded-xl bg-indigo-500/10 border-none">
+                                <div className="text-[8px] font-black text-indigo-400 uppercase mb-1">영업이익률 (MARGIN)</div>
                                 <div className="flex justify-between items-baseline">
-                                    <span className="text-sm font-black italic text-emerald-500">{formatNumber(analysis.operatingProfit)}원</span>
-                                    <span className="text-[12px] font-black text-emerald-600">{formatNumber(analysis.operatingMarginRate)}%</span>
+                                    <span className="text-sm font-black italic text-indigo-400">{formatNumber(analysis.operatingProfit)}원</span>
+                                    <span className="text-[12px] font-black text-indigo-500">{formatNumber(analysis.operatingMarginRate)}%</span>
                                 </div>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </CollapsibleCard>
 
                 {/* 5. Strategy Insight (Simplified) */}
                 <div className="p-6 bg-slate-950 rounded-2xl border-2 border-slate-900 shadow-xl relative overflow-hidden group">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/Toaster";
+import { StoreProvider } from "@/contexts/StoreContext";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -27,8 +28,10 @@ export default function RootLayout({
         className={`${outfit.variable} antialiased`}
         suppressHydrationWarning={true}
       >
-        {children}
-        <Toaster />
+        <StoreProvider>
+          {children}
+          <Toaster />
+        </StoreProvider>
         <script
           dangerouslySetInnerHTML={{
             __html: `

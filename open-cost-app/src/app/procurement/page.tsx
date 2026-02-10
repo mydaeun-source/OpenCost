@@ -13,6 +13,7 @@ import { ko } from "date-fns/locale"
 import { Plus, ShoppingBag, Calendar, ChevronRight, ChevronDown, Package, TrendingUp, Store } from "lucide-react"
 import { cn, formatNumber } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { CollapsibleCard } from "@/components/dashboard/CollapsibleCard"
 
 type Period = 'day' | 'week' | 'month' | 'quarter' | 'year'
 
@@ -110,43 +111,51 @@ export default function ProcurementPage() {
                 </div>
 
                 {/* Analytics Summary */}
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all border-l-4 border-l-indigo-500">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-xs font-black text-white hover:text-indigo-300 uppercase tracking-widest transition-colors">총 매입액</CardTitle>
-                            <ShoppingBag className="h-4 w-4 text-indigo-400" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-black text-white">{formatNumber(totalAmount)}원</div>
-                            <p className="text-xs font-black text-slate-100 mt-1 flex items-center">
-                                <TrendingUp className="h-3 w-3 mr-1 text-emerald-500" />
-                                {purchases.length}건의 매입 기록
-                            </p>
-                        </CardContent>
-                    </Card>
+                <CollapsibleCard
+                    title="매입 분석 요약"
+                    description="선택한 기간의 매입 총액 및 주요 지표입니다."
+                    icon={<TrendingUp className="h-4 w-4" />}
+                    storageKey="proc-summary"
+                    className="w-full"
+                >
+                    <div className="grid gap-4 md:grid-cols-3">
+                        <Card className="bg-white/5 dark:bg-slate-900 shadow-none border-none hover:bg-white/10 transition-colors">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-[10px] font-black tracking-widest text-indigo-400 uppercase">총 매입액</CardTitle>
+                                <ShoppingBag className="h-4 w-4 text-indigo-400" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-black text-white">{formatNumber(totalAmount)}원</div>
+                                <p className="text-[10px] font-black text-slate-400 mt-1 flex items-center">
+                                    <TrendingUp className="h-3 w-3 mr-1 text-emerald-500" />
+                                    {purchases.length}건의 매입 기록
+                                </p>
+                            </CardContent>
+                        </Card>
 
-                    <Card className="bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all border-l-4 border-l-emerald-500">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-xs font-black text-white hover:text-emerald-300 uppercase tracking-widest transition-colors">최다 공급처</CardTitle>
-                            <Store className="h-4 w-4 text-emerald-400" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-black text-white truncate">{topSupplier}</div>
-                            <p className="text-xs font-black text-slate-100 mt-1">거래 비중이 가장 높은 업체</p>
-                        </CardContent>
-                    </Card>
+                        <Card className="bg-white/5 dark:bg-slate-900 shadow-none border-none hover:bg-white/10 transition-colors">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-[10px] font-black tracking-widest text-emerald-400 uppercase">최다 공급처</CardTitle>
+                                <Store className="h-4 w-4 text-emerald-400" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-black text-white truncate">{topSupplier}</div>
+                                <p className="text-[10px] font-black text-slate-400 mt-1">거래 비중이 가장 높은 업체</p>
+                            </CardContent>
+                        </Card>
 
-                    <Card className="bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-all border-l-4 border-l-amber-500">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-xs font-black text-white hover:text-amber-300 uppercase tracking-widest transition-colors">매입 건수</CardTitle>
-                            <Calendar className="h-4 w-4 text-amber-400" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-black text-white">{purchases.length}건</div>
-                            <p className="text-xs font-black text-slate-100 mt-1">선택 기간 데이터</p>
-                        </CardContent>
-                    </Card>
-                </div>
+                        <Card className="bg-white/5 dark:bg-slate-900 shadow-none border-none hover:bg-white/10 transition-colors">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-[10px] font-black tracking-widest text-amber-400 uppercase">매입 건수</CardTitle>
+                                <Calendar className="h-4 w-4 text-amber-400" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-black text-white">{purchases.length}건</div>
+                                <p className="text-[10px] font-black text-slate-400 mt-1">선택 기간 데이터</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </CollapsibleCard>
 
                 {/* Purchases List */}
                 <div className="grid gap-4">

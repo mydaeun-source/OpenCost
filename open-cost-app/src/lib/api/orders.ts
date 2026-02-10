@@ -40,13 +40,19 @@ async function getIngredientUsage(menuId: string, quantity: number, usageMap: Ma
 }
 
 export const createOrder = async (
-    orderData: Omit<OrderInsert, "total_cost">,
+    orderData: Omit<OrderInsert, "total_cost" | "store_id">,
     items: { menuId: string, quantity: number, price: number }[],
+    storeId: string,
     customDate?: string
 ) => {
     try {
-        // 0. Preliminary: Fetch all ingredients for cost calculation
-        const { data: allIngredients } = await supabase.from("ingredients").select("*")
+        if (!storeId) throw new Error("Store ID required")
+        // 0. Preliminary: Fetch all ingredients for the store for cost calculation
+        const { data: allIngredients } = await supabase
+            .from("ingredients")
+            .select("*")
+            .eq("store_id", storeId)
+
         if (!allIngredients) throw new Error("Could not fetch ingredients for cost calculation")
 
         // 1. Calculate COGS and Usage
@@ -58,7 +64,7 @@ export const createOrder = async (
         }
 
         // 1.1 Override created_at for manual/historical orders
-        const insertData = { ...orderData, total_cost: totalCost }
+        const insertData = { ...orderData, total_cost: totalCost, store_id: storeId }
         if (customDate) {
             // Set created_at to the start of the selected date to maintain order
             (insertData as any).created_at = new Date(customDate).toISOString()
@@ -117,7 +123,7 @@ export const createOrder = async (
             .from("sales_records")
             .select("*")
             .eq("sales_date", salesDate)
-            .eq("user_id", order.user_id)
+            .eq("store_id", storeId)
             .single()
 
         if (existingSales) {
@@ -134,6 +140,7 @@ export const createOrder = async (
                 .from("sales_records")
                 .insert({
                     user_id: order.user_id,
+                    store_id: storeId,
                     sales_date: salesDate,
                     daily_revenue: order.total_amount,
                     daily_cogs: totalCost,
@@ -148,7 +155,7 @@ export const createOrder = async (
     }
 }
 
-export const getOrders = async (startDate?: string, endDate?: string, limit = 100, includeItems = false) => {
+export const getOrders = async (startDate?: string, endDate?: string, storeId?: string, limit = 100, includeItems = false) => {
     let selectString = "*"
     if (includeItems) {
         selectString = `
@@ -164,6 +171,10 @@ export const getOrders = async (startDate?: string, endDate?: string, limit = 10
         .from("orders")
         .select(selectString)
         .order("created_at", { ascending: false })
+
+    if (storeId) {
+        query = query.eq("store_id", storeId)
+    }
 
     if (startDate) {
         query = query.gte("created_at", `${startDate}T00:00:00`)
@@ -200,7 +211,11 @@ export const cancelOrder = async (order: Order) => {
         // 1. Get items and ingredients to restore
         const items = await getOrderItems(order.id)
         const usageMap = new Map<string, number>()
-        const { data: allIngredients } = await supabase.from("ingredients").select("*")
+        const { data: allIngredients } = await supabase
+            .from("ingredients")
+            .select("*")
+            .eq("store_id", order.store_id)
+
         if (!allIngredients) throw new Error("Could not fetch ingredients")
 
         for (const item of items) {
@@ -243,7 +258,7 @@ export const cancelOrder = async (order: Order) => {
             .from("sales_records")
             .select("*")
             .eq("sales_date", salesDate)
-            .eq("user_id", order.user_id)
+            .eq("store_id", order.store_id)
             .single()
 
         if (sales) {
@@ -264,9 +279,8 @@ export const cancelOrder = async (order: Order) => {
     }
 }
 
-export const getRecipeSalesWeights = async (days = 30) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { weights: {}, totalQty: 0 }
+export const getRecipeSalesWeights = async (storeId: string, days = 30) => {
+    if (!storeId) return { weights: {}, totalQty: 0 }
 
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
@@ -276,9 +290,9 @@ export const getRecipeSalesWeights = async (days = 30) => {
         .select(`
             menu_id,
             quantity,
-            orders!inner(user_id, status, created_at)
+            orders!inner(store_id, status, created_at)
         `)
-        .eq("orders.user_id", user.id)
+        .eq("orders.store_id", storeId)
         .neq("orders.status", "cancelled")
         .gte("orders.created_at", startDate.toISOString())
 

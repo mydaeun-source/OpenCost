@@ -16,6 +16,7 @@ export interface Database {
                     type: 'ingredient' | 'menu' | 'prep'
                     created_at: string
                     user_id: string | null
+                    store_id: string | null
                 }
                 Insert: {
                     id?: string
@@ -23,6 +24,7 @@ export interface Database {
                     type: 'ingredient' | 'menu' | 'prep'
                     created_at?: string
                     user_id?: string | null
+                    store_id?: string | null
                 }
                 Update: {
                     id?: string
@@ -30,6 +32,7 @@ export interface Database {
                     type?: 'ingredient' | 'menu' | 'prep'
                     created_at?: string
                     user_id?: string | null
+                    store_id?: string | null
                 }
             }
             ingredients: {
@@ -41,10 +44,10 @@ export interface Database {
                     purchase_unit: string
                     usage_unit: string
                     conversion_factor: number
-
                     loss_rate: number
                     created_at: string
                     user_id: string | null
+                    store_id: string | null
                     current_stock: number
                     safety_stock: number
                 }
@@ -59,6 +62,7 @@ export interface Database {
                     loss_rate?: number
                     created_at?: string
                     user_id?: string | null
+                    store_id?: string | null
                     current_stock?: number
                     safety_stock?: number
                 }
@@ -73,6 +77,7 @@ export interface Database {
                     loss_rate?: number
                     created_at?: string
                     user_id?: string | null
+                    store_id?: string | null
                     current_stock?: number
                     safety_stock?: number
                 }
@@ -88,6 +93,7 @@ export interface Database {
                     description: string | null
                     created_at: string
                     user_id: string | null
+                    store_id: string | null
                 }
                 Insert: {
                     id?: string
@@ -99,6 +105,7 @@ export interface Database {
                     description?: string | null
                     created_at?: string
                     user_id?: string | null
+                    store_id?: string | null
                 }
                 Update: {
                     id?: string
@@ -110,6 +117,7 @@ export interface Database {
                     description?: string | null
                     created_at?: string
                     user_id?: string | null
+                    store_id?: string | null
                 }
             }
             recipe_ingredients: {
@@ -158,6 +166,70 @@ export interface Database {
                     updated_at?: string
                 }
             }
+            stores: {
+                Row: {
+                    id: string
+                    owner_id: string
+                    name: string
+                    business_number: string | null
+                    address: string | null
+                    contact: string | null
+                    monthly_fixed_cost: number
+                    monthly_target_sales_count: number
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    owner_id?: string
+                    name: string
+                    business_number?: string | null
+                    address?: string | null
+                    contact?: string | null
+                    monthly_fixed_cost?: number
+                    monthly_target_sales_count?: number
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    owner_id?: string
+                    name?: string
+                    business_number?: string | null
+                    address?: string | null
+                    contact?: string | null
+                    monthly_fixed_cost?: number
+                    monthly_target_sales_count?: number
+                    created_at?: string
+                    updated_at?: string
+                }
+            }
+            store_staff: {
+                Row: {
+                    id: string
+                    store_id: string
+                    user_id: string
+                    role: 'owner' | 'manager' | 'staff'
+                    permissions: Json
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    store_id: string
+                    user_id: string
+                    role: 'owner' | 'manager' | 'staff'
+                    permissions?: Json
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    store_id?: string
+                    user_id?: string
+                    role?: 'owner' | 'manager' | 'staff'
+                    permissions?: Json
+                    created_at?: string
+                }
+            }
             expense_categories: {
                 Row: {
                     id: string
@@ -166,6 +238,7 @@ export interface Database {
                     default_amount: number | null
                     is_fixed: boolean
                     created_at: string
+                    store_id: string | null
                 }
                 Insert: {
                     id?: string
@@ -174,6 +247,7 @@ export interface Database {
                     default_amount?: number | null
                     is_fixed?: boolean
                     created_at?: string
+                    store_id?: string | null
                 }
                 Update: {
                     id?: string
@@ -182,6 +256,7 @@ export interface Database {
                     default_amount?: number | null
                     is_fixed?: boolean
                     created_at?: string
+                    store_id?: string | null
                 }
             }
             expense_records: {
@@ -193,6 +268,7 @@ export interface Database {
                     expense_date: string
                     memo: string | null
                     created_at: string
+                    store_id: string | null
                 }
                 Insert: {
                     id?: string
@@ -202,6 +278,7 @@ export interface Database {
                     expense_date?: string
                     memo?: string | null
                     created_at?: string
+                    store_id?: string | null
                 }
                 Update: {
                     id?: string
@@ -211,6 +288,7 @@ export interface Database {
                     expense_date?: string
                     memo?: string | null
                     created_at?: string
+                    store_id?: string | null
                 }
             }
             sales_records: {
@@ -223,6 +301,7 @@ export interface Database {
                     memo: string | null
                     created_at: string
                     updated_at: string
+                    store_id: string | null
                 }
                 Insert: {
                     id?: string
@@ -233,6 +312,7 @@ export interface Database {
                     memo?: string | null
                     created_at?: string
                     updated_at?: string
+                    store_id?: string | null
                 }
                 Update: {
                     id?: string
@@ -243,6 +323,7 @@ export interface Database {
                     memo?: string | null
                     created_at?: string
                     updated_at?: string
+                    store_id?: string | null
                 }
             }
             orders: {
@@ -254,6 +335,7 @@ export interface Database {
                     payment_method: 'card' | 'cash' | 'transfer'
                     status: 'completed' | 'cancelled'
                     created_at: string
+                    store_id: string | null
                 }
                 Insert: {
                     id?: string
@@ -263,6 +345,7 @@ export interface Database {
                     payment_method: 'card' | 'cash' | 'transfer'
                     status?: 'completed' | 'cancelled'
                     created_at?: string
+                    store_id?: string | null
                 }
                 Update: {
                     id?: string
@@ -272,6 +355,7 @@ export interface Database {
                     payment_method?: 'card' | 'cash' | 'transfer'
                     status?: 'completed' | 'cancelled'
                     created_at?: string
+                    store_id?: string | null
                 }
             }
             order_items: {
@@ -335,6 +419,7 @@ export interface Database {
                     total_amount: number
                     status: 'completed' | 'draft'
                     created_at: string
+                    store_id: string | null
                 }
                 Insert: {
                     id?: string
@@ -344,6 +429,7 @@ export interface Database {
                     total_amount: number
                     status?: 'completed' | 'draft'
                     created_at?: string
+                    store_id?: string | null
                 }
                 Update: {
                     id?: string
@@ -353,6 +439,7 @@ export interface Database {
                     total_amount?: number
                     status?: 'completed' | 'draft'
                     created_at?: string
+                    store_id?: string | null
                 }
             }
             purchase_items: {
@@ -379,6 +466,29 @@ export interface Database {
                     quantity?: number
                     price?: number
                     created_at?: string
+                }
+            }
+            profiles: {
+                Row: {
+                    id: string
+                    full_name: string | null
+                    avatar_url: string | null
+                    role: 'super_admin' | 'owner' | 'manager' | 'staff'
+                    updated_at: string
+                }
+                Insert: {
+                    id: string
+                    full_name?: string | null
+                    avatar_url?: string | null
+                    role?: 'super_admin' | 'owner' | 'manager' | 'staff'
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    full_name?: string | null
+                    avatar_url?: string | null
+                    role?: 'super_admin' | 'owner' | 'manager' | 'staff'
+                    updated_at?: string
                 }
             }
         }

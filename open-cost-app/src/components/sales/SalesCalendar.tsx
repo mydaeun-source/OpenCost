@@ -9,8 +9,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card"
 import { fetchSalesRecords, SalesRecord, upsertSalesRecord } from "@/lib/api/sales"
 import { SalesDialog } from "./SalesDialog" // Make sure to import this correctly
 import { supabase } from "@/lib/supabase"
+import { useStore } from "@/contexts/StoreContext"
 
 export function SalesCalendar() {
+    const { activeStore } = useStore()
     const [currentDate, setCurrentDate] = useState(new Date())
     const [salesData, setSalesData] = useState<SalesRecord[]>([])
     const [loading, setLoading] = useState(false)
@@ -22,16 +24,14 @@ export function SalesCalendar() {
     const loadSalesData = async () => {
         setLoading(true)
         try {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
+            if (!activeStore) return
 
             const year = currentDate.getFullYear()
             const month = currentDate.getMonth() + 1 // 1-based index
-            // Calculate start/end of month for query
             const startStr = format(startOfMonth(currentDate), "yyyy-MM-dd")
             const endStr = format(endOfMonth(currentDate), "yyyy-MM-dd")
 
-            const data = await fetchSalesRecords(user.id, startStr, endStr)
+            const data = await fetchSalesRecords(activeStore.id, startStr, endStr)
             setSalesData(data || [])
         } catch (e) {
             console.error("Failed to load sales:", e)
@@ -117,7 +117,7 @@ export function SalesCalendar() {
                                         }`}>
                                         {format(day, "d")}
                                     </span>
-                                    {isToday && <span className="text-xs font-black bg-primary text-primary-foreground px-1.5 py-0.5 rounded shadow-sm">Today</span>}
+                                    {isToday && <span className="text-xs font-black bg-primary text-primary-foreground px-1.5 py-0.5 rounded shadow-sm">오늘</span>}
                                 </div>
 
                                 <div className="mt-1 text-right">

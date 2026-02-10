@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase"
 import { createOrder } from "@/lib/api/orders"
 import { upsertSalesRecord } from "@/lib/api/sales"
 import { cn } from "@/lib/utils"
+import { useStore } from "@/contexts/StoreContext"
 
 interface SalesEntryDialogProps {
     isOpen: boolean
@@ -19,6 +20,7 @@ interface SalesEntryDialogProps {
 }
 
 export function SalesEntryDialog({ isOpen, onClose, onSuccess }: SalesEntryDialogProps) {
+    const { activeStore } = useStore()
     const { recipes, fetchRecipes } = useRecipes()
     const { toast } = useToast()
 
@@ -68,13 +70,14 @@ export function SalesEntryDialog({ isOpen, onClose, onSuccess }: SalesEntryDialo
         try {
             setLoading(true)
             const { data: { user } } = await supabase.auth.getUser()
-            if (!user) throw new Error("로그인이 필요합니다.")
+            if (!user || !activeStore) throw new Error("로그인 또는 사업장 정보가 없습니다.")
 
             await upsertSalesRecord({
                 user_id: user.id,
                 sales_date: salesDate,
                 daily_revenue: revenue,
-                memo: memo || "Manual Revenue Entry"
+                memo: memo || "Manual Revenue Entry",
+                store_id: activeStore.id
             })
 
             toast({ title: "매출 기록 완료", description: "일일 매출 합계가 수동으로 업데이트되었습니다." })
@@ -94,7 +97,7 @@ export function SalesEntryDialog({ isOpen, onClose, onSuccess }: SalesEntryDialo
         try {
             setLoading(true)
             const { data: { user } } = await supabase.auth.getUser()
-            if (!user) throw new Error("로그인이 필요합니다.")
+            if (!user || !activeStore) throw new Error("로그인 또는 사업장 정보가 없습니다.")
 
             const totalAmount = selectedItems.reduce((sum, i) => sum + (i.price * i.quantity), 0)
 
@@ -106,6 +109,7 @@ export function SalesEntryDialog({ isOpen, onClose, onSuccess }: SalesEntryDialo
                     status: 'completed'
                 },
                 selectedItems.map(i => ({ menuId: i.recipeId, quantity: i.quantity, price: i.price })),
+                activeStore.id,
                 salesDate
             )
 

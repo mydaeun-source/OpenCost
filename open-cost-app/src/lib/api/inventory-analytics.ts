@@ -11,17 +11,16 @@ export interface InventoryLossReport {
     unit: string
 }
 
-export const getInventoryLossReport = async (days = 30) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return []
+export const getInventoryLossReport = async (days = 30, storeId: string) => {
+    if (!storeId) return []
 
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - days)
 
     // 1. Get all recipes and their ingredients for BOM mapping
-    const { data: recipes } = await supabase.from("recipes").select("id, name")
-    const { data: recipeIngs } = await supabase.from("recipe_ingredients").select("*")
-    const { data: ingredients } = await supabase.from("ingredients").select("*").eq("user_id", user.id)
+    const { data: recipes } = await supabase.from("recipes").select("id, name").eq("store_id", storeId)
+    const { data: recipeIngs } = await supabase.from("recipe_ingredients").select("*, recipes!inner(store_id)").eq("recipes.store_id", storeId)
+    const { data: ingredients } = await supabase.from("ingredients").select("*").eq("store_id", storeId)
 
     if (!recipes || !recipeIngs || !ingredients) return []
 
@@ -31,9 +30,9 @@ export const getInventoryLossReport = async (days = 30) => {
         .select(`
             menu_id,
             quantity,
-            orders!inner(user_id, status, created_at)
+            orders!inner(store_id, status, created_at)
         `)
-        .eq("orders.user_id", user.id)
+        .eq("orders.store_id", storeId)
         .neq("orders.status", "cancelled")
         .gte("orders.created_at", startDate.toISOString())
 
@@ -62,7 +61,11 @@ export const getInventoryLossReport = async (days = 30) => {
     // 4. Get Actual Usage (Stock Adjustments of type 'loss' or manual discrepancies)
     const { data: adjustments } = await supabase
         .from("stock_adjustment_logs")
-        .select("*")
+        .select(`
+            *,
+            ingredients!inner(store_id)
+        `)
+        .eq("ingredients.store_id", storeId)
         .gte("created_at", startDate.toISOString())
         .order("created_at", { ascending: false })
 
@@ -101,13 +104,12 @@ export const getInventoryLossReport = async (days = 30) => {
     return report.sort((a, b) => b.lossValue - a.lossValue)
 }
 
-export const getPredictiveDepletion = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return []
+export const getPredictiveDepletion = async (storeId: string) => {
+    if (!storeId) return []
 
     // 1. Get average daily usage from last 14 days
-    const report = await getInventoryLossReport(14)
-    const { data: ingredients } = await supabase.from("ingredients").select("*").eq("user_id", user.id)
+    const report = await getInventoryLossReport(14, storeId)
+    const { data: ingredients } = await supabase.from("ingredients").select("*").eq("store_id", storeId)
     if (!ingredients) return []
 
     return ingredients.map(ing => {
@@ -129,9 +131,8 @@ export const getPredictiveDepletion = async () => {
         }
     }).filter(p => p.daysLeft < 7) // Show only items running out in < 1 week
 }
-export const getSourcingOptimization = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return []
+export const getSourcingOptimization = async (storeId: string) => {
+    if (!storeId) return []
 
     // 1. Get purchase items with supplier info
     const { data, error } = await supabase
@@ -139,10 +140,10 @@ export const getSourcingOptimization = async () => {
         .select(`
             ingredient_id,
             price,
-            purchases!inner(supplier_name, user_id),
+            purchases!inner(supplier_name, store_id),
             ingredients(name)
         `)
-        .eq("purchases.user_id", user.id)
+        .eq("purchases.store_id", storeId)
 
     if (error || !data) return []
 
@@ -191,13 +192,12 @@ export const getSourcingOptimization = async () => {
     return opportunities.sort((a, b) => b.potentialSavingPerUnit - a.potentialSavingPerUnit)
 }
 
-export const createProductionRecord = async (recipeId: string, quantity: number) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error("Unauthorized")
+export const createProductionRecord = async (recipeId: string, quantity: number, storeId: string) => {
+    if (!storeId) throw new Error("Store ID required")
 
     // 1. Fetch Recipe and all ingredients for deduction
-    const { data: recipeIngs } = await supabase.from("recipe_ingredients").select("*")
-    const { data: ingredients } = await supabase.from("ingredients").select("*").eq("user_id", user.id)
+    const { data: recipeIngs } = await supabase.from("recipe_ingredients").select("*, recipes!inner(store_id)").eq("recipes.store_id", storeId)
+    const { data: ingredients } = await supabase.from("ingredients").select("*").eq("store_id", storeId)
 
     if (!recipeIngs || !ingredients) throw new Error("Missing master data")
 

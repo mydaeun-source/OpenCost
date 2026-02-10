@@ -13,45 +13,52 @@ interface InventoryAnalyticsCardsProps {
         daysLeft: number
         unit: string
     }[]
+    noWrapper?: boolean
 }
 
-export function InventoryAnalyticsCards({ lossReport, depletionPredictions }: InventoryAnalyticsCardsProps) {
+export function InventoryAnalyticsCards({ lossReport, depletionPredictions, noWrapper = false }: InventoryAnalyticsCardsProps) {
     const topLossItems = lossReport.filter((r) => r.lossQuantity > 0).slice(0, 3)
     const criticalStock = depletionPredictions.filter((p) => p.daysLeft <= 3).slice(0, 3)
 
     return (
-        <div className="grid gap-6 md:grid-cols-2 mb-6">
+        <div className={cn("grid gap-6 md:grid-cols-2", !noWrapper && "mb-6")}>
             {/* 1. Shadow Loss / Waste Analysis */}
-            <Card className="border-2 border-rose-500/20 bg-rose-500/[0.02]">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-black text-rose-500 uppercase flex items-center gap-2">
-                        <TrendingDown className="h-4 w-4" />
-                        그림자 로스 (Hidden Waste)
-                    </CardTitle>
-                    <CardDescription className="text-xs font-bold">판매량 대비 재고 소진이 더 많은 품목입니다.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+            <Card className="border-none shadow-none bg-rose-500/[0.03]">
+                {!noWrapper && (
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-black text-rose-500 uppercase flex items-center gap-2">
+                            <TrendingDown className="h-4 w-4" />
+                            그림자 로스 (Hidden Waste)
+                        </CardTitle>
+                        <CardDescription className="text-xs font-bold">판매량 대비 재고 소진이 더 많은 품목입니다.</CardDescription>
+                    </CardHeader>
+                )}
+                <CardContent className={cn("space-y-4", noWrapper && "p-0")}>
+                    {noWrapper && (
+                        <div className="mb-2">
+                            <p className="text-xs font-black text-rose-500 uppercase flex items-center gap-2">
+                                <TrendingDown className="h-3 w-3" /> 그림자 로스
+                            </p>
+                        </div>
+                    )}
                     {topLossItems.length === 0 ? (
                         <div className="py-4 text-center text-slate-400 text-xs font-bold italic">
-                            감지된 특이 로스가 없습니다. 우수한 재고 관리!
+                            감지된 특이 로스가 없습니다.
                         </div>
                     ) : (
                         topLossItems.map((item) => (
                             <div
                                 key={item.ingredientId}
-                                className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-xl border-2 border-slate-100 dark:border-slate-800 transition-all hover:border-rose-200"
+                                className="flex items-center justify-between p-3 bg-transparent rounded-xl border-none transition-all hover:bg-rose-500/10"
                             >
                                 <div className="space-y-1">
-                                    <p className="text-sm font-black text-slate-800 dark:text-slate-100">{item.name}</p>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase">
-                                        이론 대비 <span className="text-rose-500">+{formatNumber(item.lossRate)}%</span> 더 소진됨
+                                    <p className="text-sm font-black text-rose-600 dark:text-rose-300">{item.name}</p>
+                                    <p className="text-[10px] font-black text-rose-500 uppercase italic">
+                                        이론 대비 +{formatNumber(item.lossRate)}%
                                     </p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-sm font-black text-rose-500 italic">-{formatNumber(item.lossValue)}원</p>
-                                    <p className="text-[10px] font-bold text-slate-400">
-                                        {formatNumber(item.lossQuantity)} {item.unit}
-                                    </p>
                                 </div>
                             </div>
                         ))
@@ -60,39 +67,43 @@ export function InventoryAnalyticsCards({ lossReport, depletionPredictions }: In
             </Card>
 
             {/* 2. Predictive Stock Alerts */}
-            <Card className="border-2 border-amber-500/20 bg-amber-500/[0.02]">
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-black text-amber-500 uppercase flex items-center gap-2">
-                        <Hourglass className="h-4 w-4" />
-                        재고 소진 임박 예측
-                    </CardTitle>
-                    <CardDescription className="text-xs font-bold">최근 판매 속도 기준, 곧 품절될 품목입니다.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+            <Card className="border-none shadow-none bg-amber-500/[0.03]">
+                {!noWrapper && (
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-black text-amber-500 uppercase flex items-center gap-2">
+                            <Hourglass className="h-4 w-4" />
+                            재고 소진 임박 예측
+                        </CardTitle>
+                        <CardDescription className="text-xs font-bold">곧 품절될 품목입니다.</CardDescription>
+                    </CardHeader>
+                )}
+                <CardContent className={cn("space-y-4", noWrapper && "p-0")}>
+                    {noWrapper && (
+                        <div className="mb-2">
+                            <p className="text-xs font-black text-amber-500 uppercase flex items-center gap-2">
+                                <Hourglass className="h-3 w-3" /> 소진 임박 예측
+                            </p>
+                        </div>
+                    )}
                     {criticalStock.length === 0 ? (
                         <div className="py-4 text-center text-slate-400 text-xs font-bold italic">
-                            7일 내 소진 예상 품목이 없습니다.
+                            소진 예정 품목 없음
                         </div>
                     ) : (
                         criticalStock.map((item) => (
                             <div
                                 key={item.id}
-                                className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-xl border-2 border-slate-100 dark:border-slate-800 transition-all hover:border-amber-200"
+                                className="flex items-center justify-between p-3 bg-transparent rounded-xl border-none transition-all hover:bg-amber-500/10"
                             >
                                 <div className="space-y-1">
-                                    <p className="text-sm font-black text-slate-800 dark:text-slate-100">{item.name}</p>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase">
-                                        하루 평균 {formatNumber(item.usagePerDay)} {item.unit} 소진 중
+                                    <p className="text-sm font-black text-amber-600 dark:text-amber-300">{item.name}</p>
+                                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-tighter italic">
+                                        D-{item.daysLeft} 남음
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <div
-                                        className={cn(
-                                            "px-2 py-1 rounded-lg text-xs font-black italic",
-                                            item.daysLeft <= 1 ? "bg-rose-500 text-white" : "bg-amber-500 text-white",
-                                        )}
-                                    >
-                                        D-{item.daysLeft}
+                                    <div className="px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-500 text-white italic shadow-lg shadow-amber-500/30">
+                                        임박
                                     </div>
                                 </div>
                             </div>

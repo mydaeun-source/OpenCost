@@ -3,6 +3,10 @@ import { Sidebar } from "./Sidebar"
 import { BottomNav } from "./BottomNav"
 import { cn } from "@/lib/utils"
 import { useGlobalScrollbar } from "@/hooks/useGlobalScrollbar"
+import { useStore } from "@/contexts/StoreContext"
+import { ShieldAlert, Clock, LogOut, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/Button"
+import { supabase } from "@/lib/supabase"
 
 interface AppLayoutProps {
     children: React.ReactNode
@@ -25,8 +29,68 @@ export function AppLayout({ children }: AppLayoutProps) {
         localStorage.setItem('sidebar-collapsed', String(newState))
     }
 
+    const { role, isApproved, loading: contextLoading } = useStore()
+
     if (!mounted) {
         return <div className="min-h-screen bg-background" />
+    }
+
+    // Dashboard Interception for Pending Approval
+    if (!contextLoading && role === 'owner' && !isApproved) {
+        return (
+            <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 bg-background">
+                {/* Background Glow */}
+                <div className="absolute inset-0 z-[-1]">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[128px]" />
+                </div>
+
+                <div className="max-w-md w-full space-y-8 text-center animate-in fade-in zoom-in duration-700">
+                    <div className="flex justify-center">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full animate-pulse" />
+                            <div className="relative bg-white/5 border border-white/10 p-6 rounded-full">
+                                <Clock className="h-16 w-16 text-indigo-400" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h1 className="text-4xl font-black italic text-white tracking-tighter uppercase">
+                            Approval Pending
+                        </h1>
+                        <p className="text-slate-400 text-lg leading-relaxed">
+                            관리자의 승인을 기다리고 있습니다.<br />
+                            정상적인 이용을 위해 개발자의 최종 승인이 필요합니다.
+                        </p>
+                    </div>
+
+                    <div className="pt-8 flex flex-col gap-4">
+                        <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-4 flex items-center gap-3 text-left">
+                            <ShieldAlert className="h-5 w-5 text-indigo-400 shrink-0" />
+                            <span className="text-sm text-indigo-200">
+                                승인이 완료되면 페이지를 새로고침하거나 다시 로그인해 주세요.
+                            </span>
+                        </div>
+
+                        <Button
+                            variant="outline"
+                            className="bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
+                            onClick={async () => {
+                                await supabase.auth.signOut()
+                                window.location.href = "/login"
+                            }}
+                        >
+                            <LogOut className="mr-2 h-4 w-4" />
+                            로그아웃
+                        </Button>
+                    </div>
+
+                    <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">
+                        Powered by Open-Cost.AI Secure Engine
+                    </p>
+                </div>
+            </div>
+        )
     }
 
     return (

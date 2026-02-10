@@ -1,4 +1,4 @@
-import { LayoutDashboard, Scale, ChefHat, Settings, TrendingUp, Receipt, ShoppingCart, ShoppingBag, Repeat, BarChart3, PieChart } from "lucide-react"
+import { LayoutDashboard, Scale, ChefHat, Settings, TrendingUp, Receipt, ShoppingCart, ShoppingBag, Repeat, BarChart3, PieChart, Building2, Users, ShieldAlert } from "lucide-react"
 
 export const NAV_ITEMS = [
     {
@@ -52,8 +52,24 @@ export const NAV_ITEMS = [
         icon: PieChart,
     },
     {
+        label: "사업장 관리",
+        href: "/settings/stores",
+        icon: Building2,
+    },
+    {
+        label: "직원 관리",
+        href: "/settings/staff",
+        icon: Users,
+    },
+    {
         label: "설정",
         href: "/settings",
         icon: Settings,
+    },
+    {
+        label: "최고 관리자",
+        href: "/settings/admin",
+        icon: ShieldAlert,
+        adminOnly: true,
     },
 ]

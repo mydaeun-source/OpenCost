@@ -8,6 +8,7 @@ import { Dialog } from "@/components/ui/Dialog"
 import { IngredientForm } from "@/components/ingredients/IngredientForm"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { useIngredients } from "@/hooks/useIngredients"
+import { CollapsibleCard } from "@/components/dashboard/CollapsibleCard"
 import { Plus, Trash2, Package, LayoutGrid, List, TrendingUp, History, Banknote, Coins, AlertCircle } from "lucide-react"
 import { cn, formatNumber } from "@/lib/utils"
 import { useViewMode } from "@/hooks/useViewMode"
@@ -111,234 +112,263 @@ export default function IngredientsPage() {
                 </div>
 
                 {/* AI Procurement Forecast Section */}
-                <div className="mb-8">
+                <CollapsibleCard
+                    title="스마트 구매 권장 리스트"
+                    description="AI가 분석한 향후 7일 내 구매가 필요한 품목입니다."
+                    icon={<TrendingUp className="h-4 w-4" />}
+                    storageKey="ing-forecast-collapsible"
+                    className="mb-6"
+                >
                     <ProcurementForecast />
-                </div>
+                </CollapsibleCard>
 
-                {/* Summary Cards */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <Card className="bg-slate-900/60 border-slate-700 shadow-xl border-l-4 border-l-indigo-500 overflow-hidden group hover:bg-slate-900/80 transition-all">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-xs font-black text-slate-300 uppercase tracking-widest group-hover:text-indigo-400 transition-colors">총 재고 가치</CardTitle>
-                            <Banknote className="h-4 w-4 text-indigo-400 opacity-70" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-black text-white italic tracking-tight">{formatNumber(totalInventoryValue)}원</div>
-                        </CardContent>
-                    </Card>
+                <div className="flex flex-col gap-6">
+                    {/* Summary Cards */}
+                    <CollapsibleCard
+                        title="재고 자산 요약"
+                        description="현재 보유 중인 모든 식자재의 자산 가치 및 상태 요약입니다."
+                        icon={<Banknote className="h-4 w-4" />}
+                        storageKey="ing-summary"
+                        className="w-full"
+                    >
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            <Card className="bg-white/5 dark:bg-slate-900/40 border-none shadow-none group hover:bg-white/10 transition-all">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-[10px] font-black tracking-widest text-indigo-400 uppercase">총 재고 가치</CardTitle>
+                                    <Banknote className="h-4 w-4 text-indigo-400 opacity-70" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-black text-white italic tracking-tight">{formatNumber(totalInventoryValue)}원</div>
+                                </CardContent>
+                            </Card>
 
-                    <Card className="bg-slate-900/60 border-slate-700 shadow-xl border-l-4 border-l-emerald-500 overflow-hidden group hover:bg-slate-900/80 transition-all">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-xs font-black text-slate-300 uppercase tracking-widest group-hover:text-emerald-400 transition-colors">재료 품목 수</CardTitle>
-                            <Package className="h-4 w-4 text-emerald-400 opacity-70" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-black text-white italic tracking-tight">{ingredients.length}개</div>
-                        </CardContent>
-                    </Card>
+                            <Card className="bg-white/5 dark:bg-slate-900/40 border-none shadow-none group hover:bg-white/10 transition-all">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-[10px] font-black tracking-widest text-emerald-400 uppercase">재료 품목 수</CardTitle>
+                                    <Package className="h-4 w-4 text-emerald-400 opacity-70" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-black text-white italic tracking-tight">{ingredients.length}개</div>
+                                </CardContent>
+                            </Card>
 
-                    <Card className="bg-slate-900/60 border-slate-700 shadow-xl border-l-4 border-l-rose-500 overflow-hidden group hover:bg-slate-900/80 transition-all">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-xs font-black text-slate-300 uppercase tracking-widest group-hover:text-rose-400 transition-colors">재고 부족 품목</CardTitle>
-                            <AlertCircle className="h-4 w-4 text-rose-400 opacity-70" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-black text-white italic tracking-tight">
-                                {ingredients.filter(i => (i.current_stock || 0) <= (i.safety_stock || 0)).length}개
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
+                            <Card className="bg-white/5 dark:bg-slate-900/40 border-none shadow-none group hover:bg-white/10 transition-all">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-[10px] font-black tracking-widest text-rose-400 uppercase">재고 부족 품목</CardTitle>
+                                    <AlertCircle className="h-4 w-4 text-rose-400 opacity-70" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-black text-white italic tracking-tight">
+                                        {ingredients.filter(i => (i.current_stock || 0) <= (i.safety_stock || 0)).length}개
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </CollapsibleCard>
 
-                {loading ? (
-                    <div className="flex items-center justify-center h-64">
-                        <p className="text-muted-foreground animate-pulse">데이터를 불러오는 중...</p>
-                    </div>
-                ) : (
-                    <>
-                        {ingredients.length === 0 ? (
-                            <div className="col-span-full flex flex-col items-center justify-center p-12 border rounded-lg border-dashed bg-muted/20 text-muted-foreground">
-                                <Package className="h-12 w-12 mb-4 opacity-50" />
-                                <p className="text-lg font-medium">등록된 재료가 없습니다.</p>
-                                <p className="text-sm">새로운 재료를 등록하여 원가 및 재고 관리를 시작해보세요.</p>
+                    {/* Ingredients List Section */}
+                    <CollapsibleCard
+                        title="보유 재료 리스트"
+                        description={`총 ${ingredients.length}개의 재료가 관리되고 있습니다.`}
+                        icon={<List className="h-4 w-4" />}
+                        storageKey="ing-list-collapsible"
+                    >
+                        {loading ? (
+                            <div className="flex items-center justify-center h-64">
+                                <p className="text-muted-foreground animate-pulse">데이터를 불러오는 중...</p>
                             </div>
                         ) : (
-                            viewMode === 'grid' ? (
-                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                                    {ingredients.map((ingredient) => {
-                                        const isLowStock = (ingredient.current_stock || 0) <= (ingredient.safety_stock || 0)
-                                        const kamisMappingRaw = typeof window !== "undefined" ? (localStorage.getItem(`kamis_mapping_${ingredient.id}`) || localStorage.getItem(`kamis_mapping_name_${ingredient.name}`)) : null
-                                        const kamisMapping = kamisMappingRaw ? JSON.parse(kamisMappingRaw) : null
-
-                                        return (
-                                            <Card
-                                                key={ingredient.id}
-                                                className={cn("overflow-hidden transition-all hover:border-primary/50 cursor-pointer", isLowStock && "border-red-500/50 bg-red-500/5")}
-                                                onClick={() => setEditingId(ingredient.id)}
-                                            >
-                                                {/* Market Comparison Card (Subtle) */}
-                                                {kamisMapping && (
-                                                    <div className="px-4 pt-4">
-                                                        <MarketPriceCard
-                                                            itemCode={kamisMapping.code}
-                                                            categoryCode={kamisMapping.category}
-                                                            myPrice={ingredient.purchase_price}
-                                                            unit={ingredient.purchase_unit}
-                                                        />
-                                                    </div>
-                                                )}
-
-                                                <CardHeader className="pb-3 bg-secondary/10">
-                                                    <div className="flex justify-between items-start">
-                                                        <div>
-                                                            <CardTitle className="text-lg flex items-center gap-2">
-                                                                {ingredient.name}
-                                                                {isLowStock && <span className="text-xs bg-rose-600 text-white px-2 py-0.5 rounded-full font-black animate-pulse shadow-[0_0_10px_rgba(225,29,72,0.4)]">부족</span>}
-                                                                {forecasts[ingredient.id]?.daysRemaining !== null && forecasts[ingredient.id].daysRemaining! < 14 && (
-                                                                    <span className={cn(
-                                                                        "text-[10px] px-2 py-0.5 rounded-full font-black flex items-center gap-1",
-                                                                        forecasts[ingredient.id].daysRemaining! < 3 ? "bg-rose-500/20 text-rose-500" : "bg-amber-500/20 text-amber-500"
-                                                                    )}>
-                                                                        <Clock className="h-3 w-3" />
-                                                                        {Math.floor(forecasts[ingredient.id].daysRemaining!)}일 후 고갈
-                                                                    </span>
-                                                                )}
-                                                            </CardTitle>
-                                                            <CardDescription className="text-xs mt-1">
-                                                                구매: {formatNumber(ingredient.purchase_price)}원 / {ingredient.purchase_unit}
-                                                            </CardDescription>
-                                                        </div>
-                                                        <div className="flex items-center gap-1">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-8 w-8 text-primary hover:bg-primary/10"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation()
-                                                                    setAdjustmentId(ingredient.id)
-                                                                }}
-                                                                title="재고 조정"
-                                                            >
-                                                                <History className="h-4 w-4" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation()
-                                                                    setDeleteItem({ id: ingredient.id, name: ingredient.name })
-                                                                }}
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                </CardHeader>
-                                                <CardContent className="pt-4 text-sm space-y-2">
-                                                    <div className="flex justify-between">
-                                                        <span className="text-slate-300 font-bold">현재 재고</span>
-                                                        <span className={cn("font-black text-base", isLowStock ? "text-rose-400" : "text-white")}>
-                                                            {formatNumber(ingredient.current_stock)} {ingredient.purchase_unit}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-slate-300 font-bold text-xs uppercase tracking-widest">환산 비율</span>
-                                                        <span className="font-black text-xs text-slate-300 italic">1 : {formatNumber(ingredient.conversion_factor)} ({ingredient.usage_unit})</span>
-                                                    </div>
-                                                    <div className="border-t border-slate-800 pt-2 mt-2 flex justify-between items-center">
-                                                        <span className="font-black text-xs text-indigo-400 uppercase tracking-widest bg-slate-800 px-2 py-0.5 rounded outline outline-1 outline-slate-700">실질 단가 ({ingredient.usage_unit})</span>
-                                                        <span className="text-lg font-black text-primary italic">
-                                                            {formatNumber(((ingredient.purchase_price || 0) / (ingredient.conversion_factor || 1)) / (1 - (ingredient.loss_rate || 0)))}원
-                                                        </span>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        )
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="rounded-xl border border-white/10 overflow-hidden bg-card text-card-foreground shadow-sm">
-                                    <table className="w-full text-sm text-left">
-                                        <thead className="bg-slate-800 text-slate-300 font-black border-b border-slate-700">
-                                            <tr>
-                                                <th className="p-4 pl-6 uppercase tracking-widest text-xs">재료명</th>
-                                                <th className="p-4 text-right uppercase tracking-widest text-xs">구매가 (단위)</th>
-                                                <th className="p-4 text-right uppercase tracking-widest text-xs">현재 재고</th>
-                                                <th className="p-4 text-center uppercase tracking-widest text-xs">환산비</th>
-                                                <th className="p-4 text-right font-black text-primary uppercase tracking-widest text-xs">실질단가 ({ingredients[0]?.usage_unit || "단위"})</th>
-                                                <th className="p-4 text-center w-[80px] uppercase tracking-widest text-xs">관리</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-white/10">
+                            <>
+                                {ingredients.length === 0 ? (
+                                    <div className="col-span-full flex flex-col items-center justify-center p-12 border rounded-lg border-dashed bg-muted/20 text-muted-foreground">
+                                        <Package className="h-12 w-12 mb-4 opacity-50" />
+                                        <p className="text-lg font-medium">등록된 재료가 없습니다.</p>
+                                        <p className="text-sm">새로운 재료를 등록하여 원가 및 재고 관리를 시작해보세요.</p>
+                                    </div>
+                                ) : (
+                                    viewMode === 'grid' ? (
+                                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                                             {ingredients.map((ingredient) => {
                                                 const isLowStock = (ingredient.current_stock || 0) <= (ingredient.safety_stock || 0)
+                                                const kamisMappingRaw = typeof window !== "undefined" ? (localStorage.getItem(`kamis_mapping_${ingredient.id}`) || localStorage.getItem(`kamis_mapping_name_${ingredient.name}`)) : null
+                                                const kamisMapping = kamisMappingRaw ? JSON.parse(kamisMappingRaw) : null
+
                                                 return (
-                                                    <tr
+                                                    <Card
                                                         key={ingredient.id}
-                                                        className="hover:bg-muted/50 transition-colors cursor-pointer"
+                                                        className={cn("overflow-hidden transition-all hover:border-primary/50 cursor-pointer", isLowStock && "border-red-500/50 bg-red-500/5")}
                                                         onClick={() => setEditingId(ingredient.id)}
                                                     >
-                                                        <td className="p-4 pl-6 font-medium">
-                                                            <div className="flex items-center gap-2">
-                                                                {ingredient.name}
-                                                                {isLowStock && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" title="재고 부족" />}
+                                                        {/* Market Comparison Card (Subtle) */}
+                                                        {kamisMapping && (
+                                                            <div className="px-4 pt-4">
+                                                                <MarketPriceCard
+                                                                    itemCode={kamisMapping.code}
+                                                                    categoryCode={kamisMapping.category}
+                                                                    myPrice={ingredient.purchase_price}
+                                                                    unit={ingredient.purchase_unit}
+                                                                />
                                                             </div>
-                                                        </td>
-                                                        <td className="p-4 text-right">
-                                                            {formatNumber(ingredient.purchase_price)}원
-                                                            <span className="text-xs text-muted-foreground ml-1">/ {ingredient.purchase_unit}</span>
-                                                        </td>
-                                                        <td className={cn("p-4 text-right font-medium", isLowStock ? "text-red-500" : "")}>
-                                                            {formatNumber(ingredient.current_stock)} {ingredient.purchase_unit}
-                                                        </td>
-                                                        <td className="p-4 text-center text-muted-foreground">
-                                                            1 : {formatNumber(ingredient.conversion_factor)}
-                                                        </td>
-                                                        <td className="p-4 text-right font-bold text-primary">
-                                                            {formatNumber(((ingredient.purchase_price || 0) / (ingredient.conversion_factor || 1)) / (1 - (ingredient.loss_rate || 0)))}원
-                                                        </td>
-                                                        <td className="p-4 text-center">
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-8 w-8 text-primary hover:bg-primary/10"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation()
-                                                                        setAdjustmentId(ingredient.id)
-                                                                    }}
-                                                                >
-                                                                    <History className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation()
-                                                                        setDeleteItem({ id: ingredient.id, name: ingredient.name })
-                                                                    }}
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                </Button>
+                                                        )}
+
+                                                        <CardHeader className="pb-3 bg-secondary/10">
+                                                            <div className="flex justify-between items-start">
+                                                                <div>
+                                                                    <CardTitle className="text-lg flex items-center gap-2">
+                                                                        {ingredient.name}
+                                                                        {isLowStock && <span className="text-xs bg-rose-600 text-white px-2 py-0.5 rounded-full font-black animate-pulse shadow-[0_0_10px_rgba(225,29,72,0.4)]">부족</span>}
+                                                                        {forecasts[ingredient.id]?.daysRemaining !== null && forecasts[ingredient.id].daysRemaining! < 14 && (
+                                                                            <span className={cn(
+                                                                                "text-[10px] px-2 py-0.5 rounded-full font-black flex items-center gap-1",
+                                                                                forecasts[ingredient.id].daysRemaining! < 3 ? "bg-rose-500/20 text-rose-500" : "bg-amber-500/20 text-amber-500"
+                                                                            )}>
+                                                                                <Clock className="h-3 w-3" />
+                                                                                {Math.floor(forecasts[ingredient.id].daysRemaining!)}일 후 고갈
+                                                                            </span>
+                                                                        )}
+                                                                    </CardTitle>
+                                                                    <CardDescription className="text-xs mt-1">
+                                                                        구매: {formatNumber(ingredient.purchase_price)}원 / {ingredient.purchase_unit}
+                                                                    </CardDescription>
+                                                                </div>
+                                                                <div className="flex items-center gap-1">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-8 w-8 text-primary hover:bg-primary/10"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation()
+                                                                            setAdjustmentId(ingredient.id)
+                                                                        }}
+                                                                        title="재고 조정"
+                                                                    >
+                                                                        <History className="h-4 w-4" />
+                                                                    </Button>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation()
+                                                                            setDeleteItem({ id: ingredient.id, name: ingredient.name })
+                                                                        }}
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </Button>
+                                                                </div>
                                                             </div>
-                                                        </td>
-                                                    </tr>
+                                                        </CardHeader>
+                                                        <CardContent className="pt-4 text-sm space-y-2">
+                                                            <div className="flex justify-between">
+                                                                <span className="text-slate-300 font-bold">현재 재고</span>
+                                                                <span className={cn("font-black text-base", isLowStock ? "text-rose-400" : "text-white")}>
+                                                                    {formatNumber(ingredient.current_stock)} {ingredient.purchase_unit}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-slate-300 font-bold text-xs uppercase tracking-widest">환산 비율</span>
+                                                                <span className="font-black text-xs text-slate-300 italic">1 : {formatNumber(ingredient.conversion_factor)} ({ingredient.usage_unit})</span>
+                                                            </div>
+                                                            <div className="border-t border-slate-800 pt-2 mt-2 flex justify-between items-center">
+                                                                <span className="font-black text-xs text-indigo-400 uppercase tracking-widest bg-slate-800 px-2 py-0.5 rounded outline outline-1 outline-slate-700">실질 단가 ({ingredient.usage_unit})</span>
+                                                                <span className="text-lg font-black text-primary italic">
+                                                                    {formatNumber(((ingredient.purchase_price || 0) / (ingredient.conversion_factor || 1)) / (1 - (ingredient.loss_rate || 0)))}원
+                                                                </span>
+                                                            </div>
+                                                        </CardContent>
+                                                    </Card>
                                                 )
                                             })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-xl border border-white/10 overflow-hidden bg-card text-card-foreground shadow-sm">
+                                            <table className="w-full text-sm text-left">
+                                                <thead className="bg-slate-800 text-slate-300 font-black border-b border-slate-700">
+                                                    <tr>
+                                                        <th className="p-4 pl-6 uppercase tracking-widest text-xs">재료명</th>
+                                                        <th className="p-4 text-right uppercase tracking-widest text-xs">구매가 (단위)</th>
+                                                        <th className="p-4 text-right uppercase tracking-widest text-xs">현재 재고</th>
+                                                        <th className="p-4 text-center uppercase tracking-widest text-xs">환산비</th>
+                                                        <th className="p-4 text-right font-black text-primary uppercase tracking-widest text-xs">실질단가 ({ingredients[0]?.usage_unit || "단위"})</th>
+                                                        <th className="p-4 text-center w-[80px] uppercase tracking-widest text-xs">관리</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-white/10">
+                                                    {ingredients.map((ingredient) => {
+                                                        const isLowStock = (ingredient.current_stock || 0) <= (ingredient.safety_stock || 0)
+                                                        return (
+                                                            <tr
+                                                                key={ingredient.id}
+                                                                className="hover:bg-muted/50 transition-colors cursor-pointer"
+                                                                onClick={() => setEditingId(ingredient.id)}
+                                                            >
+                                                                <td className="p-4 pl-6 font-medium">
+                                                                    <div className="flex items-center gap-2">
+                                                                        {ingredient.name}
+                                                                        {isLowStock && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" title="재고 부족" />}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="p-4 text-right">
+                                                                    {formatNumber(ingredient.purchase_price)}원
+                                                                    <span className="text-xs text-muted-foreground ml-1">/ {ingredient.purchase_unit}</span>
+                                                                </td>
+                                                                <td className={cn("p-4 text-right font-medium", isLowStock ? "text-red-500" : "")}>
+                                                                    {formatNumber(ingredient.current_stock)} {ingredient.purchase_unit}
+                                                                </td>
+                                                                <td className="p-4 text-center text-muted-foreground">
+                                                                    1 : {formatNumber(ingredient.conversion_factor)}
+                                                                </td>
+                                                                <td className="p-4 text-right font-bold text-primary">
+                                                                    {formatNumber(((ingredient.purchase_price || 0) / (ingredient.conversion_factor || 1)) / (1 - (ingredient.loss_rate || 0)))}원
+                                                                </td>
+                                                                <td className="p-4 text-center">
+                                                                    <div className="flex items-center justify-center gap-1">
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8 text-primary hover:bg-primary/10"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation()
+                                                                                setAdjustmentId(ingredient.id)
+                                                                            }}
+                                                                        >
+                                                                            <History className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation()
+                                                                                setDeleteItem({ id: ingredient.id, name: ingredient.name })
+                                                                            }}
+                                                                        >
+                                                                            <Trash2 className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        )
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )
+                                )}
+                            </>
                         )}
+                    </CollapsibleCard>
 
-                        {/* Stock History View */}
-                        <div className="pt-8">
-                            <StockHistory logs={stockLogs} />
-                        </div>
-                    </>
-                )}
+                    {/* Stock History View */}
+                    <CollapsibleCard
+                        title="최근 재고 수불 내역"
+                        description="최근 50건의 재고 변동 이력입니다."
+                        icon={<History className="h-4 w-4" />}
+                        storageKey="ing-history-collapsible"
+                    >
+                        <StockHistory logs={stockLogs.slice(0, 50)} />
+                    </CollapsibleCard>
+                </div>
 
                 <Dialog
                     isOpen={isAddOpen || !!editingId}

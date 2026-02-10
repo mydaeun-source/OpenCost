@@ -6,7 +6,7 @@ export type PurchaseInsert = Database["public"]["Tables"]["purchases"]["Insert"]
 export type PurchaseItem = Database["public"]["Tables"]["purchase_items"]["Row"]
 export type PurchaseItemInsert = Database["public"]["Tables"]["purchase_items"]["Insert"]
 
-export const getPurchases = async (startDate?: string, endDate?: string) => {
+export const getPurchases = async (startDate?: string, endDate?: string, storeId?: string) => {
     let query = supabase
         .from("purchases")
         .select(`
@@ -17,6 +17,10 @@ export const getPurchases = async (startDate?: string, endDate?: string) => {
             )
         `)
         .order("purchase_date", { ascending: false })
+
+    if (storeId) {
+        query = query.eq("store_id", storeId)
+    }
 
     if (startDate) {
         query = query.gte("purchase_date", startDate)
@@ -31,36 +35,39 @@ export const getPurchases = async (startDate?: string, endDate?: string) => {
     return data
 }
 
-export const getSuppliers = async () => {
-    const { data, error } = await supabase
+export const getSuppliers = async (storeId?: string) => {
+    let query = supabase
         .from("purchases")
         .select("supplier_name")
         .not("supplier_name", "is", null)
         .order("supplier_name")
 
-    if (error) throw error
+    if (storeId) {
+        query = query.eq("store_id", storeId)
+    }
+
+    const { data, error } = await query
 
     // Return unique supplier names
     const uniqueSuppliers = Array.from(new Set(data.map(p => p.supplier_name)))
     return uniqueSuppliers as string[]
 }
 
-export const getPriceSpikes = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return []
+export const getPriceSpikes = async (storeId: string) => {
+    if (!storeId) return []
 
-    // 1. Get average price and latest price for ingredients from purchase_items
     const { data, error } = await supabase
         .from("purchase_items")
         .select(`
             price,
             ingredient_id,
             created_at,
-            ingredients(name)
+            ingredients!inner(name, store_id)
         `)
+        .eq("ingredients.store_id", storeId)
         .order("created_at", { ascending: false })
 
-    if (error) throw error
+    if (error || !data) throw error || new Error("데이터를 불러올 수 없습니다.")
 
     // 2. Process data to find spikes (price > avg by 10%+)
     const ingredientPrices: Record<string, { name: string, prices: { price: number, date: string }[] }> = {}
@@ -128,10 +135,12 @@ export const getPurchaseDetails = async (purchaseId: string) => {
 }
 
 export const createPurchase = async (
-    purchaseData: Omit<PurchaseInsert, "total_amount" | "user_id">,
-    items: { ingredientId: string, quantity: number, price: number }[]
+    purchaseData: Omit<PurchaseInsert, "total_amount" | "user_id" | "store_id">,
+    items: { ingredientId: string, quantity: number, price: number }[],
+    storeId: string
 ) => {
     try {
+        if (!storeId) throw new Error("사업장 정보가 없습니다.")
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error("로그인 필요")
 
@@ -140,7 +149,12 @@ export const createPurchase = async (
         // 1. Create Purchase Record
         const { data: purchase, error: pError } = await supabase
             .from("purchases")
-            .insert({ ...purchaseData, user_id: user.id, total_amount: totalAmount })
+            .insert({
+                ...purchaseData,
+                user_id: user.id,
+                store_id: storeId,
+                total_amount: totalAmount
+            })
             .select()
             .single()
 
@@ -219,6 +233,7 @@ export const createPurchase = async (
                 .from("expense_records")
                 .insert({
                     user_id: purchase.user_id,
+                    store_id: storeId,
                     category_id: categoryId,
                     amount: totalAmount,
                     expense_date: purchase.purchase_date,

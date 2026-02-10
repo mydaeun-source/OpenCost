@@ -5,7 +5,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { NAV_ITEMS } from "./nav-items"
-import { ChevronLeft, ChevronRight, LogOut } from "lucide-react"
+import { useStore } from "@/contexts/StoreContext"
+import { ChevronLeft, ChevronRight, LogOut, Store as StoreIcon, Building2 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 
 interface SidebarProps {
@@ -15,12 +16,77 @@ interface SidebarProps {
 
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     const pathname = usePathname()
+    const { activeStore, stores, businesses, setActiveStoreId, role, isAggregatedView } = useStore()
 
     return (
         <aside className={cn(
             "hidden md:flex h-screen flex-col fixed left-0 top-0 border-r border-white/5 bg-black/20 backdrop-blur-xl z-50 transition-all duration-300 overscroll-contain",
             isCollapsed ? "w-20" : "w-64"
         )}>
+            {/* Store Title & Selector Section */}
+            <div className={cn(
+                "flex h-24 flex-col justify-center transition-all duration-300 border-b border-white/5",
+                isCollapsed ? "px-0 items-center" : "px-6"
+            )}>
+                <div className="flex items-center gap-3">
+                    <div className="relative flex-shrink-0">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-primary to-purple-600 rounded-lg blur opacity-25"></div>
+                        <div className="relative h-10 w-10 bg-indigo-600/20 rounded-lg border border-white/10 flex items-center justify-center">
+                            <Building2 className="h-6 w-6 text-primary" />
+                        </div>
+                    </div>
+                    {!isCollapsed && (
+                        <div className="flex flex-col overflow-hidden">
+                            <span className="font-black text-lg tracking-tight text-white truncate">
+                                {activeStore?.name || "Open-Cost"}
+                            </span>
+                            <span className="text-[10px] uppercase tracking-widest text-primary/70 font-bold">
+                                {role === 'owner' ? '최고 경영자 (Owner)' : role === 'manager' ? '지점 점장 (Manager)' : '직원 (Staff)'}
+                            </span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Store Switcher (if multiple stores exist) */}
+            {!isCollapsed && (stores.length > 1 || role === 'owner' || role === 'super_admin') && (
+                <div className="px-6 py-4">
+                    <select
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-slate-300 outline-none focus:ring-1 focus:ring-primary/50 transition-all cursor-pointer"
+                        value={isAggregatedView ? "all" : activeStore?.id}
+                        onChange={(e) => setActiveStoreId(e.target.value)}
+                    >
+                        {(role === 'owner' || role === 'super_admin') && (
+                            <option value="all" className="bg-slate-900 font-bold text-primary">전체 지점 합계 보기</option>
+                        )}
+                        {businesses.map(biz => (
+                            <optgroup key={biz.id} label={biz.name} className="bg-slate-900 text-slate-500 text-[10px] uppercase font-black tracking-widest">
+                                {stores.filter(s => s.business_id === biz.id).map(s => (
+                                    <option key={s.id} value={s.id} className="bg-slate-900 text-slate-200 text-sm font-medium">
+                                        {s.name}
+                                    </option>
+                                ))}
+                            </optgroup>
+                        ))}
+                        {/* Fallback for stores without business_id if any */}
+                        {stores.filter(s => !s.business_id).length > 0 && (
+                            <optgroup label="기타 지점" className="bg-slate-900">
+                                {stores.filter(s => !s.business_id).map(s => (
+                                    <option key={s.id} value={s.id} className="bg-slate-900">{s.name}</option>
+                                ))}
+                            </optgroup>
+                        )}
+                    </select>
+                </div>
+            )}
+
+            {/* Indicator for switcher when collapsed */}
+            {isCollapsed && stores.length > 1 && (
+                <div className="py-2 flex justify-center">
+                    <div className="h-1 w-8 bg-primary/20 rounded-full" />
+                </div>
+            )}
+
             {/* Sophisticated Toggle Handle */}
             <button
                 onClick={onToggle}
@@ -40,25 +106,15 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 </div>
             </button>
 
-            <div className={cn(
-                "flex h-20 items-center transition-all duration-300",
-                isCollapsed ? "justify-center px-0" : "px-6"
-            )}>
-                <div className="relative">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-primary to-purple-600 rounded-lg blur opacity-25"></div>
-                    <span className={cn(
-                        "relative font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-white transition-all duration-300",
-                        isCollapsed ? "text-xl" : "text-xl"
-                    )}>
-                        {isCollapsed ? "O" : "Open-Cost.AI"}
-                    </span>
-                </div>
-            </div>
-
             <nav
                 className="flex-1 overflow-y-auto py-6 px-3 space-y-2 overflow-x-hidden overscroll-contain"
             >
-                {NAV_ITEMS.map((item) => {
+                {NAV_ITEMS.filter(item => {
+                    if ((item as any).adminOnly && role !== 'super_admin') return false
+                    // Hide store/staff management for regular staff
+                    if (role === 'staff' && (item.href.includes('/settings/stores') || item.href.includes('/settings/staff'))) return false
+                    return true
+                }).map((item) => {
                     const isActive = pathname === item.href
                     return (
                         <Link
@@ -103,8 +159,8 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                     </div>
                     {!isCollapsed && (
                         <div className="text-sm overflow-hidden">
-                            <p className="font-medium text-slate-200 truncate">Owner Account</p>
-                            <p className="text-xs text-primary/80 truncate">Premium Access</p>
+                            <p className="font-medium text-slate-200 truncate">Account Profile</p>
+                            <p className="text-xs text-primary/80 truncate">{activeStore?.name || "Premium Access"}</p>
                         </div>
                     )}
                 </div>

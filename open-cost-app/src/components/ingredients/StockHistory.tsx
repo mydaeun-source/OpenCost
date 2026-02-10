@@ -57,11 +57,11 @@ export function StockHistory({ logs }: StockHistoryProps) {
     }
 
     return (
-        <Card className="shadow-sm overflow-hidden">
-            <CardHeader className="bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
+        <Card className="bg-white/5 border-none shadow-none overflow-hidden">
+            <CardHeader className="bg-slate-800/30 border-b border-white/5">
                 <CardTitle className="text-sm font-black flex items-center gap-2">
                     <RefreshCcw className="h-4 w-4 text-indigo-500" />
-                    최근 재고 수불 내역 (최근 50건)
+                    수불 내역 상세
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-0">

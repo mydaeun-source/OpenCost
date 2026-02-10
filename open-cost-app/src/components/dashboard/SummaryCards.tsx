@@ -42,7 +42,7 @@ export function SummaryCards({
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {/* 1. Estimated Profit (Highlight) */}
             <Link href="/analysis/profit" className="block group">
-                <Card className="bg-primary/10 border-primary/30 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300 h-full">
+                <Card className="bg-primary/10 border-none shadow-none relative overflow-hidden group hover:scale-[1.02] transition-all duration-300 h-full">
                     <div className="absolute top-0 right-0 p-8 bg-indigo-500/10 blur-3xl rounded-full -mr-16 -mt-16" />
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-xs font-black tracking-widest text-indigo-400 uppercase">순이익 (예상)</CardTitle>
@@ -66,7 +66,7 @@ export function SummaryCards({
             </Link>
 
             {/* 2. Total Expenses */}
-            <Card className="group hover:scale-[1.02] transition-all duration-300">
+            <Card className="group hover:scale-[1.02] transition-all duration-300 border-none shadow-none bg-slate-50 dark:bg-slate-900/40">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-xs font-black tracking-widest text-white/80 uppercase">이번 달 총 지출</CardTitle>
                     <Banknote className="h-4 w-4 text-rose-500" />
@@ -80,7 +80,7 @@ export function SummaryCards({
             </Card>
 
             {/* 3. Margin Rate */}
-            <Card className="group hover:scale-[1.02] transition-all duration-300">
+            <Card className="group hover:scale-[1.02] transition-all duration-300 border-none shadow-none bg-slate-50 dark:bg-slate-900/40">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-xs font-black tracking-widest text-white/80 uppercase">평균 원가율/마진</CardTitle>
                     <TrendingUp className="h-4 w-4 text-emerald-500" />
@@ -94,7 +94,7 @@ export function SummaryCards({
             </Card>
 
             {/* 4. Active Menus */}
-            <Card className="group hover:scale-[1.02] transition-all duration-300">
+            <Card className="group hover:scale-[1.02] transition-all duration-300 border-none shadow-none bg-slate-50 dark:bg-slate-900/40">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-xs font-black tracking-widest text-white/80 uppercase">활성 메뉴</CardTitle>
                     <Utensils className="h-4 w-4 text-amber-500" />

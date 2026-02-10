@@ -1,9 +1,9 @@
 import { SupabaseClient } from "@supabase/supabase-js"
 import { subMonths, format, getDaysInMonth } from "date-fns"
 
-export const seedSales = async (supabase: SupabaseClient, userId: string) => {
-    // 1. Clean existing sales data
-    await supabase.from("sales_records").delete().eq("user_id", userId)
+export const seedSales = async (supabase: SupabaseClient, userId: string, storeId: string) => {
+    // 1. Clean existing sales data for this store
+    await supabase.from("sales_records").delete().eq("store_id", storeId)
 
     // 2. Generate 6 Months of Sales Records
     const records = []
@@ -43,6 +43,7 @@ export const seedSales = async (supabase: SupabaseClient, userId: string) => {
 
             records.push({
                 user_id: userId,
+                store_id: storeId,
                 sales_date: dateStr,
                 daily_revenue: dailyRevenue,
                 daily_cogs: dailyCogs,

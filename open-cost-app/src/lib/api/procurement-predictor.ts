@@ -12,9 +12,10 @@ export interface ForecastItem {
     unit: string
 }
 
-export const getProcurementForecast = async (userId: string): Promise<ForecastItem[]> => {
+export const getProcurementForecast = async (storeId: string): Promise<ForecastItem[]> => {
+    if (!storeId) return []
     // 1. Fetch Ingredients
-    const { data: ingredients } = await supabase.from("ingredients").select("*").eq("user_id", userId)
+    const { data: ingredients } = await supabase.from("ingredients").select("*").eq("store_id", storeId)
     if (!ingredients) return []
 
     // 2. Fetch Stock Logs for usage analysis (last 30 days for trend)

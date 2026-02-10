@@ -105,6 +105,24 @@ body {
   /* Vibrant Neon Cyan */
 }
 
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  50% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-progress-indeterminate {
+  animation: progress-indeterminate 2s infinite linear;
+}
+
 *::-webkit-scrollbar-thumb:hover {
   background-color: rgba(34, 211, 238, 0.9) !important;
 }

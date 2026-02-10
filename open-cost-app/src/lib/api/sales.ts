@@ -5,11 +5,11 @@ export type SalesRecord = Database["public"]["Tables"]["sales_records"]["Row"]
 export type SalesInsert = Database["public"]["Tables"]["sales_records"]["Insert"]
 export type SalesUpdate = Database["public"]["Tables"]["sales_records"]["Update"]
 
-export const fetchSalesRecords = async (userId: string, startDate: string, endDate: string) => {
+export const fetchSalesRecords = async (storeId: string, startDate: string, endDate: string) => {
     const { data, error } = await supabase
         .from("sales_records")
         .select("*")
-        .eq("user_id", userId)
+        .eq("store_id", storeId)
         .gte("sales_date", startDate)
         .lte("sales_date", endDate)
         .order("sales_date", { ascending: true })
@@ -18,20 +18,19 @@ export const fetchSalesRecords = async (userId: string, startDate: string, endDa
     return data
 }
 
-export const fetchMonthlySales = async (userId: string, year: number, month: number) => {
+export const fetchMonthlySales = async (storeId: string, year: number, month: number) => {
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`
-    // Last day of month logic
     const endDate = new Date(year, month, 0).toISOString().split('T')[0]
 
-    return fetchSalesRecords(userId, startDate, endDate)
+    return fetchSalesRecords(storeId, startDate, endDate)
 }
 
-export const upsertSalesRecord = async (record: SalesInsert) => {
-    // 1. Check if record exists for this date/user to avoid overwriting other fields (like daily_cogs)
+export const upsertSalesRecord = async (record: SalesInsert & { store_id: string }) => {
+    // 1. Check if record exists for this date/store to avoid overwriting other fields (like daily_cogs)
     const { data: existing } = await supabase
         .from("sales_records")
         .select("*")
-        .eq("user_id", record.user_id)
+        .eq("store_id", record.store_id)
         .eq("sales_date", record.sales_date)
         .single()
 

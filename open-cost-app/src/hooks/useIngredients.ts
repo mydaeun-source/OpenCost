@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase"
 import { Database } from "@/types/database.types"
 import { toast } from "./use-toast"
+import { useStore } from "@/contexts/StoreContext"
 
 type Ingredient = Database["public"]["Tables"]["ingredients"]["Row"]
 type NewIngredient = Database["public"]["Tables"]["ingredients"]["Insert"]
@@ -10,6 +11,7 @@ export function useIngredients() {
     const [ingredients, setIngredients] = useState<Ingredient[]>([])
     const [stockLogs, setStockLogs] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const { activeStore } = useStore()
 
     // Calculate total inventory value
     const totalInventoryValue = ingredients.reduce((sum, ing) => {
@@ -20,9 +22,12 @@ export function useIngredients() {
     const fetchIngredients = useCallback(async () => {
         try {
             setLoading(true)
+            if (!activeStore) return
+
             const { data, error } = await supabase
                 .from("ingredients")
                 .select("*")
+                .eq("store_id", activeStore.id)
                 .order("created_at", { ascending: false })
 
             if (error) {
@@ -45,12 +50,15 @@ export function useIngredients() {
     // Fetch stock logs
     const fetchStockLogs = useCallback(async (ingredientId?: string) => {
         try {
+            if (!activeStore) return
+
             let query = supabase
                 .from("stock_adjustment_logs")
                 .select(`
                     *,
-                    ingredient:ingredients(name, purchase_unit)
+                    ingredient:ingredients!inner(name, purchase_unit, store_id)
                 `)
+                .eq("ingredient.store_id", activeStore.id)
                 .order("created_at", { ascending: false })
                 .limit(50)
 
@@ -75,9 +83,11 @@ export function useIngredients() {
     // Add ingredient
     const addIngredient = async (newIngredient: NewIngredient) => {
         try {
+            if (!activeStore) throw new Error("사업장이 선택되지 않았습니다.")
+
             const { data, error } = await supabase
                 .from("ingredients")
-                .insert([newIngredient])
+                .insert([{ ...newIngredient, store_id: activeStore.id }])
                 .select()
                 .single()
 

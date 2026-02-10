@@ -10,11 +10,13 @@ import { Dialog } from "@/components/ui/Dialog"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { supabase } from "@/lib/supabase"
 import { toast } from "@/hooks/use-toast"
-import { Plus, Trash2, Calendar as CalendarIcon, Receipt, TrendingUp, Filter, ArrowRight, Wallet, ChevronRight } from "lucide-react"
+import { Plus, Trash2, Calendar as CalendarIcon, Receipt, TrendingUp, Filter, ArrowRight, Wallet, ChevronRight, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { format, startOfMonth, endOfMonth, parseISO } from "date-fns"
 import { useDashboard } from "@/hooks/useDashboard"
+import { useStore } from "@/contexts/StoreContext"
 import Link from "next/link"
+import { CollapsibleCard } from "@/components/dashboard/CollapsibleCard"
 
 // Types
 interface ExpenseCategory {
@@ -36,6 +38,7 @@ interface ExpenseRecord {
 export default function ExpensesPage() {
     const [activeTab, setActiveTab] = useState<'history' | 'items' | 'report'>('history')
     const [loading, setLoading] = useState(false)
+    const { activeStore } = useStore()
     const { summary, loading: dashboardLoading } = useDashboard()
 
     // Data State
@@ -63,9 +66,11 @@ export default function ExpensesPage() {
     }, [activeTab, selectedMonth])
 
     const fetchCategories = async () => {
+        if (!activeStore) return
         const { data, error } = await supabase
             .from("expense_categories")
             .select("*")
+            .eq("store_id", activeStore.id)
             .order("created_at", { ascending: true })
         if (data) setCategories(data)
     }
@@ -73,6 +78,7 @@ export default function ExpensesPage() {
     const fetchRecords = async (month: string) => {
         setLoading(true)
         try {
+            if (!activeStore) return
             // month is YYYY-MM
             const baseDate = parseISO(`${month}-01`)
             const startDate = format(startOfMonth(baseDate), "yyyy-MM-dd")
@@ -84,6 +90,7 @@ export default function ExpensesPage() {
                     *,
                     expense_categories (name)
                 `)
+                .eq("store_id", activeStore.id)
                 .gte("expense_date", startDate)
                 .lte("expense_date", endDate)
                 .order("expense_date", { ascending: false })
@@ -109,10 +116,11 @@ export default function ExpensesPage() {
     // ============================================================================================
     const handleAddCategory = async (name: string, defaultAmount: number, isFixed: boolean) => {
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
+        if (!user || !activeStore) return
 
         const { error } = await supabase.from("expense_categories").insert({
             user_id: user.id,
+            store_id: activeStore.id,
             name,
             default_amount: defaultAmount || null,
             is_fixed: isFixed
@@ -138,10 +146,11 @@ export default function ExpensesPage() {
     // ============================================================================================
     const handleAddRecord = async (date: string, categoryId: string, amount: number, memo: string) => {
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
+        if (!user || !activeStore) return
 
         const { error } = await supabase.from("expense_records").insert({
             user_id: user.id,
+            store_id: activeStore.id,
             expense_date: date,
             category_id: categoryId,
             amount,
@@ -191,100 +200,112 @@ export default function ExpensesPage() {
 
     return (
         <AppLayout>
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
+            <div className="max-w-6xl mx-auto space-y-6 pb-20">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/5 p-8 rounded-3xl border border-white/5 transition-all hover:bg-white/10">
                     <div>
-                        <h1 className="text-3xl font-black tracking-tight text-white italic">비용 관리</h1>
-                        <p className="text-slate-200 mt-1 font-black">매장 지출과 고정비를 체계적으로 관리합니다.</p>
+                        <h1 className="text-3xl font-black tracking-tight text-white italic">지출 관리 (EXPENSE)</h1>
+                        <p className="text-slate-500 mt-1 font-medium">매장 지출과 고정비를 체계적으로 관리합니다.</p>
                     </div>
                 </div>
 
                 {/* TABS */}
-                <div className="flex gap-2 border-b border-white/10 pb-1">
+                <div className="flex gap-2 border-b border-white/5 pb-0">
                     <button
                         onClick={() => setActiveTab('history')}
-                        className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-colors",
-                            activeTab === 'history' ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-white")}
+                        className={cn("px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all",
+                            activeTab === 'history' ? "border-indigo-500 text-indigo-400" : "border-transparent text-slate-500 hover:text-slate-300")}
                     >
-                        지출 내역 (History)
+                        지출 내역
                     </button>
                     <button
                         onClick={() => setActiveTab('items')}
-                        className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-colors",
-                            activeTab === 'items' ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-white")}
+                        className={cn("px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all",
+                            activeTab === 'items' ? "border-indigo-500 text-indigo-400" : "border-transparent text-slate-500 hover:text-slate-300")}
                     >
-                        비용 항목 설정 (Items)
+                        비용 항목 설정
                     </button>
                     <button
                         onClick={() => setActiveTab('report')}
-                        className={cn("px-4 py-2 text-sm font-medium border-b-2 transition-colors",
-                            activeTab === 'report' ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-white")}
+                        className={cn("px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all",
+                            activeTab === 'report' ? "border-indigo-500 text-indigo-400" : "border-transparent text-slate-500 hover:text-slate-300")}
                     >
-                        손익 리포트 (Report)
+                        손익 리포트
                     </button>
                 </div>
 
                 {/* ======================= TAB: HISTORY ======================= */}
                 {activeTab === 'history' && (
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center bg-muted/20 p-4 rounded-lg">
-                            <div className="flex items-center gap-4">
-                                <Input
-                                    type="month"
-                                    value={selectedMonth}
-                                    onChange={(e) => setSelectedMonth(e.target.value)}
-                                    className="w-40 bg-slate-800 border-slate-600 text-white font-black"
-                                />
-                                <div className="text-sm">
-                                    <span className="text-muted-foreground">총 지출:</span>
-                                    <span className="ml-2 text-xl font-bold text-white">{reportData.totalExpense.toLocaleString()}원</span>
+                        <div className="flex justify-between items-center bg-white/5 p-6 rounded-2xl border border-white/5 transition-all hover:bg-white/10">
+                            <div className="flex items-center gap-6">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">분석 대상 기간</p>
+                                    <Input
+                                        type="month"
+                                        value={selectedMonth}
+                                        onChange={(e) => setSelectedMonth(e.target.value)}
+                                        className="w-40 bg-slate-950 border-white/10 text-white font-black h-10 italic"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">해당 월 총 지출</p>
+                                    <div className="text-2xl font-black text-white italic">
+                                        {reportData.totalExpense.toLocaleString()}<span className="text-xs font-bold ml-1 opacity-50">원</span>
+                                    </div>
                                 </div>
                             </div>
-                            <Button onClick={() => setIsAddRecordOpen(true)}>
-                                <Plus className="mr-2 h-4 w-4" /> 지출 등록
+                            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 h-12 shadow-lg shadow-indigo-500/20 font-black text-xs uppercase tracking-widest" onClick={() => setIsAddRecordOpen(true)}>
+                                <Plus className="mr-2 h-4 w-4" /> 지출 내역 기록
                             </Button>
                         </div>
 
-                        <div className="rounded-xl border border-white/10 overflow-hidden bg-card">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-slate-800 text-slate-100 font-black border-b border-slate-700">
-                                    <tr>
-                                        <th className="p-4 w-[120px] uppercase tracking-widest text-xs">날짜</th>
-                                        <th className="p-4 w-[150px] uppercase tracking-widest text-xs">항목</th>
-                                        <th className="p-4 uppercase tracking-widest text-xs">내용 (메모)</th>
-                                        <th className="p-4 text-right w-[150px] uppercase tracking-widest text-xs font-black">금액</th>
-                                        <th className="p-4 text-center w-[80px] uppercase tracking-widest text-xs">관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/10">
-                                    {records.length === 0 ? (
+                        <CollapsibleCard
+                            title="전체 지출 로그"
+                            description={`${selectedMonth} 기간의 세부 지출 항목입니다.`}
+                            icon={<Receipt className="h-4 w-4" />}
+                            storageKey="expense-history"
+                        >
+                            <div className="rounded-xl border border-white/5 overflow-hidden bg-white/5">
+                                <table className="w-full text-xs text-left">
+                                    <thead className="bg-white/5 text-slate-500 font-black uppercase tracking-widest border-b border-white/5">
                                         <tr>
-                                            <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                                                지출 내역이 없습니다.
-                                            </td>
+                                            <th className="p-4 pl-6 w-[120px]">날짜</th>
+                                            <th className="p-4 w-[150px]">항목</th>
+                                            <th className="p-4">내용 (메모)</th>
+                                            <th className="p-4 text-right w-[150px] font-black">금액</th>
+                                            <th className="p-4 text-center w-[80px]">관리</th>
                                         </tr>
-                                    ) : (
-                                        records.map((record) => (
-                                            <tr key={record.id} className="hover:bg-muted/50 transition-colors">
-                                                <td className="p-4 font-mono font-black text-indigo-300 tracking-tighter">{record.expense_date}</td>
-                                                <td className="p-4">
-                                                    <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-bold">
-                                                        {record.category_name}
-                                                    </span>
-                                                </td>
-                                                <td className="p-4 text-slate-200 font-black">{record.memo}</td>
-                                                <td className="p-4 text-right font-medium">{Number(record.amount).toLocaleString()}원</td>
-                                                <td className="p-4 text-center">
-                                                    <button onClick={() => handleDeleteRecord(record.id)} className="text-muted-foreground hover:text-destructive">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {records.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={5} className="p-10 text-center text-slate-600 italic font-bold">
+                                                    지출 내역이 없습니다.
                                                 </td>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                        ) : (
+                                            records.map((record) => (
+                                                <tr key={record.id} className="hover:bg-white/5 transition-colors">
+                                                    <td className="p-4 pl-6 font-mono font-black text-indigo-400 tracking-tighter italic">{record.expense_date}</td>
+                                                    <td className="p-4">
+                                                        <span className="bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">
+                                                            {record.category_name}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4 text-slate-100 font-bold">{record.memo}</td>
+                                                    <td className="p-4 text-right font-black italic">{Number(record.amount).toLocaleString()}원</td>
+                                                    <td className="p-4 text-center">
+                                                        <button onClick={() => handleDeleteRecord(record.id)} className="text-slate-600 hover:text-rose-500 transition-colors">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </CollapsibleCard>
                     </div>
                 )}
 
@@ -292,26 +313,24 @@ export default function ExpensesPage() {
                 {activeTab === 'items' && (
                     <div className="space-y-4">
                         <div className="flex justify-end">
-                            <Button onClick={() => setIsAddCategoryOpen(true)}>
-                                <Plus className="mr-2 h-4 w-4" /> 항목 추가
+                            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 h-12 font-black text-xs uppercase tracking-widest" onClick={() => setIsAddCategoryOpen(true)}>
+                                <Plus className="mr-2 h-4 w-4" /> 새로운 항목 추가
                             </Button>
                         </div>
                         <div className="grid gap-4 md:grid-cols-3">
                             {categories.map((cat) => (
-                                <Card key={cat.id} className="relative group">
+                                <Card key={cat.id} className="relative group border-none bg-white/5 hover:bg-white/10 transition-all">
                                     <CardHeader className="pb-2">
-                                        <CardTitle className="flex justify-between items-center">
+                                        <CardTitle className="flex justify-between items-center text-white italic font-black">
                                             {cat.name}
-                                            {cat.is_fixed && <span className="text-xs font-black bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/40 uppercase tracking-widest">고정비</span>}
+                                            {cat.is_fixed && <span className="text-[9px] font-black bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/40 uppercase tracking-widest">고정비</span>}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <p className="text-sm text-muted-foreground">
-                                            기본 금액: {cat.default_amount ? `${cat.default_amount.toLocaleString()}원` : "미설정"}
-                                        </p>
+                                        기본 금액: {cat.default_amount ? `${cat.default_amount.toLocaleString()}원` : "없음"}
                                         <button
                                             onClick={() => handleDeleteCategory(cat.id)}
-                                            className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                            className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity text-slate-600 hover:text-rose-500"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </button>
@@ -325,35 +344,33 @@ export default function ExpensesPage() {
                 {/* ======================= TAB: REPORT ======================= */}
                 {activeTab === 'report' && (
                     <div className="space-y-6">
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <Card>
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <Card className="border-none bg-white/5">
                                 <CardHeader>
-                                    <CardTitle>이번 달 지출 분석 ({selectedMonth})</CardTitle>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">지출 비율 분석 ({selectedMonth})</p>
+                                    <CardTitle className="text-white italic font-black text-xl">카테고리별 지출 분석</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-4xl font-bold text-white mb-4">
-                                        {reportData.totalExpense.toLocaleString()}원
+                                    <div className="text-4xl font-black text-white italic mb-6 tracking-tighter">
+                                        {reportData.totalExpense.toLocaleString()}<span className="text-sm font-bold ml-1 opacity-50">원</span>
                                     </div>
-                                    <div className="space-y-3 pt-2">
+                                    <div className="space-y-4 pt-2 border-t border-white/5">
                                         {Object.entries(reportData.byCategory)
-                                            .sort((a, b) => Number(b[1]) - Number(a[1])) // Robust Sort
+                                            .sort((a, b) => Number(b[1]) - Number(a[1]))
                                             .map(([name, amount]) => (
-                                                <div key={name} className="flex items-center gap-4 text-xs">
-                                                    {/* Category Name (Fixed Width) */}
-                                                    <span className="w-24 shrink-0 text-slate-400 font-black truncate uppercase tracking-tighter">
+                                                <div key={name} className="flex items-center gap-4 text-xs font-black">
+                                                    <span className="w-24 shrink-0 text-slate-500 uppercase tracking-tighter truncate">
                                                         {name}
                                                     </span>
 
-                                                    {/* Bar (Flexible) */}
-                                                    <div className="flex-1 h-1.5 bg-slate-800/50 rounded-full overflow-hidden border border-white/5">
+                                                    <div className="flex-1 h-1.5 bg-slate-950 rounded-full overflow-hidden">
                                                         <div
-                                                            className="h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.4)] transition-all duration-700 ease-out"
+                                                            className="h-full bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all duration-1000 ease-out"
                                                             style={{ width: `${(amount / (reportData.totalExpense || 1)) * 100}%` }}
                                                         />
                                                     </div>
 
-                                                    {/* Amount (Fixed Width) */}
-                                                    <span className="w-24 shrink-0 text-right font-black text-white italic tracking-tight">
+                                                    <span className="w-24 shrink-0 text-right text-white italic">
                                                         {amount.toLocaleString()}원
                                                     </span>
                                                 </div>
@@ -361,31 +378,32 @@ export default function ExpensesPage() {
                                     </div>
                                 </CardContent>
                             </Card>
-                            <Card className="bg-indigo-600 border-0 shadow-xl shadow-indigo-500/20 relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-8 bg-white/10 blur-3xl rounded-full -mr-16 -mt-16" />
+
+                            <Card className="bg-indigo-600 border-none shadow-2xl shadow-indigo-500/20 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-12 bg-white/10 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-white/20 transition-all duration-500" />
                                 <CardHeader>
                                     <div className="flex items-center gap-2 mb-1">
                                         <Wallet className="h-4 w-4 text-white/70" />
-                                        <CardTitle className="text-white">순이익 분석 요약</CardTitle>
+                                        <CardTitle className="text-white italic font-black uppercase tracking-widest text-sm">수익성 인사이트</CardTitle>
                                     </div>
-                                    <CardDescription className="text-white/60">현재 설정 및 매출 기준 예상 데이터입니다.</CardDescription>
+                                    <CardDescription className="text-white/60 font-bold text-xs">현재 지출 내역 기반 실시간 분석 결과입니다.</CardDescription>
                                 </CardHeader>
-                                <CardContent className="space-y-6 relative z-10">
+                                <CardContent className="space-y-8 relative z-10 pt-4">
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">이번 달 예상 순이익</p>
-                                        <div className="text-3xl font-black text-white italic tracking-tighter">
+                                        <div className="text-4xl font-black text-white italic tracking-tighter">
                                             {dashboardLoading ? "불러오는 중..." : `${Math.round(summary.estimatedProfit).toLocaleString()}원`}
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between items-center text-xs text-white/80 font-bold border-t border-white/10 pt-4">
-                                        <span>평균 예상 마진율</span>
-                                        <span className="text-emerald-300">{summary.avgMarginRate}%</span>
+                                    <div className="flex justify-between items-center text-xs text-white uppercase font-black border-t border-white/10 pt-6">
+                                        <span className="opacity-70 tracking-widest">예상 마진율</span>
+                                        <span className="text-xl italic text-emerald-300">{summary.avgMarginRate}%</span>
                                     </div>
 
                                     <Link href="/analysis/profit" className="block">
-                                        <Button className="w-full bg-white text-indigo-600 hover:bg-slate-50 font-black text-[10px] uppercase tracking-widest">
-                                            상세 분석 및 시뮬레이션 <ChevronRight className="ml-2 h-3 w-3" />
+                                        <Button className="w-full bg-white text-indigo-600 hover:bg-slate-50 font-black text-[10px] uppercase tracking-widest h-14 rounded-2xl shadow-xl">
+                                            상세 분석 시뮬레이션 이동 <ChevronRight className="ml-2 h-4 w-4" />
                                         </Button>
                                     </Link>
                                 </CardContent>

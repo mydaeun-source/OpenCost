@@ -19,10 +19,10 @@ export function FinancialInsights({ insights }: FinancialInsightsProps) {
 
                 return (
                     <Card key={idx} className={cn(
-                        "relative overflow-hidden border-2 transition-all hover:scale-[1.02] cursor-default",
-                        isWarning ? "border-rose-500/20 bg-rose-500/5" :
-                            isSuccess ? "border-emerald-500/20 bg-emerald-500/5" :
-                                "border-indigo-500/20 bg-indigo-500/5"
+                        "relative overflow-hidden border-none shadow-none transition-all hover:scale-[1.02] cursor-default",
+                        isWarning ? "bg-rose-500/[0.08]" :
+                            isSuccess ? "bg-emerald-500/[0.08]" :
+                                "bg-indigo-500/[0.08]"
                     )}>
                         <CardContent className="p-4 flex items-start gap-4">
                             <div className={cn(

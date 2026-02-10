@@ -2,6 +2,7 @@ import { useState, useCallback } from "react"
 import { supabase } from "@/lib/supabase"
 import { Database } from "@/types/database.types"
 import { toast } from "./use-toast"
+import { useStore } from "@/contexts/StoreContext"
 
 type Category = Database["public"]["Tables"]["categories"]["Row"]
 type CategoryInsert = Database["public"]["Tables"]["categories"]["Insert"]
@@ -9,14 +10,18 @@ type CategoryInsert = Database["public"]["Tables"]["categories"]["Insert"]
 export function useCategories() {
     const [categories, setCategories] = useState<Category[]>([])
     const [loading, setLoading] = useState(false)
+    const { activeStore } = useStore()
 
     // Fetch categories by type (optional)
     const fetchCategories = useCallback(async (type?: 'menu' | 'ingredient' | 'prep') => {
         try {
             setLoading(true)
+            if (!activeStore) return
+
             let query = supabase
                 .from("categories")
                 .select("*")
+                .eq("store_id", activeStore.id)
                 .order("name")
 
             if (type) {
@@ -38,13 +43,16 @@ export function useCategories() {
     const ensureCategory = async (name: string, type: 'menu' | 'ingredient' | 'prep', retries = 3): Promise<string | null> => {
         for (let i = 0; i < retries; i++) {
             try {
+                if (!activeStore) return null
+
                 // 1. Check if exists
                 const { data: existing, error: fetchError } = await supabase
                     .from("categories")
                     .select("id")
                     .eq("name", name)
                     .eq("type", type)
-                    .single() // single() can throw if no rows, but returns error code PGRST116
+                    .eq("store_id", activeStore.id)
+                    .single()
 
                 // If found, return it
                 if (existing) return existing.id
@@ -57,7 +65,7 @@ export function useCategories() {
                 // 2. Create if not
                 const { data: created, error } = await supabase
                     .from("categories")
-                    .insert([{ name, type }])
+                    .insert([{ name, type, store_id: activeStore.id }])
                     .select("id")
                     .single()
 

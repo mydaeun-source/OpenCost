@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase"
 import { Database } from "@/types/database.types"
 import { toast } from "./use-toast"
 import { useRouter } from "next/navigation"
+import { useStore } from "@/contexts/StoreContext"
 
 type Recipe = Database["public"]["Tables"]["recipes"]["Row"]
 type RecipeInsert = Database["public"]["Tables"]["recipes"]["Insert"]
@@ -11,12 +12,15 @@ type RecipeIngredientInsert = Database["public"]["Tables"]["recipe_ingredients"]
 export function useRecipes() {
     const [recipes, setRecipes] = useState<Recipe[]>([])
     const [loading, setLoading] = useState(false)
+    const { activeStore } = useStore()
     const router = useRouter()
 
     // Fetch recipes
     const fetchRecipes = useCallback(async () => {
         try {
             setLoading(true)
+            if (!activeStore) return
+
             const { data, error } = await supabase
                 .from("recipes")
                 .select(`
@@ -31,6 +35,7 @@ export function useRecipes() {
                         quantity
                     )
                 `)
+                .eq("store_id", activeStore.id)
                 .order("created_at", { ascending: false })
 
             if (error) throw error
@@ -59,11 +64,12 @@ export function useRecipes() {
     ) => {
         try {
             setLoading(true)
+            if (!activeStore) throw new Error("사업장이 선택되지 않았습니다.")
 
             // 1. Insert Recipe
             const { data: recipe, error: recipeError } = await supabase
                 .from("recipes")
-                .insert([recipeData])
+                .insert([{ ...recipeData, store_id: activeStore.id }])
                 .select()
                 .single()
 

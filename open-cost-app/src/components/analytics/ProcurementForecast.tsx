@@ -34,15 +34,14 @@ export function ProcurementForecast() {
     if (criticalItems.length === 0) return null
 
     return (
-        <Card className="bg-slate-900/60 border-slate-700 shadow-2xl overflow-hidden border-t-4 border-t-amber-500">
+        <Card className="bg-white/5 border-none shadow-none overflow-hidden">
             <CardHeader className="bg-amber-500/10 pb-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-lg font-black text-amber-500 flex items-center gap-2">
-                            <AlertTriangle className="h-5 w-5" />
+                        <CardTitle className="text-sm font-black text-amber-500 flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4" />
                             스마트 구매 권장 리스트
                         </CardTitle>
-                        <p className="text-xs text-slate-400 mt-1">지난 30일간의 소모 패턴을 분석한 7일 내 구매 필요 품목입니다.</p>
                     </div>
                     <div className="px-3 py-1 bg-amber-500/20 rounded-full text-[10px] font-black text-amber-500 uppercase tracking-widest border border-amber-500/30">
                         Smart AI
