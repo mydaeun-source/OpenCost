@@ -1,0 +1,19 @@
+{
+  "period": {
+    "start": "2026-01-31",
+    "end": "2026-02-27"
+  },
+  "sales": {
+    "count": 0,
+    "totalRevenue": 0,
+    "totalCogs": 0
+  },
+  "expenses": {
+    "count": 0,
+    "totalExpenses": 0
+  },
+  "simulation": {
+    "estimatedProfit": 0,
+    "isUsingFallback": true
+  }
+}

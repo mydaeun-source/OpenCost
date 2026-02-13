@@ -47,6 +47,11 @@ export const NAV_ITEMS = [
         icon: BarChart3,
     },
     {
+        label: "식자재 분석",
+        href: "/analysis/food-cost",
+        icon: BarChart3,
+    },
+    {
         label: "메뉴 엔지니어링",
         href: "/analysis/menu",
         icon: PieChart,

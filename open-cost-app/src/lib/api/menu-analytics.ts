@@ -61,6 +61,7 @@ export async function getMenuPerformance(days: number = 30, storeId: string): Pr
             categories(name)
         `)
         .eq("store_id", storeId)
+        .eq("type", "menu")
 
     if (recipesError) {
         console.error("[Analytics] Recipes Fetch Error:", recipesError)
@@ -137,7 +138,12 @@ export async function getMenuPerformance(days: number = 30, storeId: string): Pr
     })
 
     // 5. Calculate Thresholds (Averages)
-    const activeMenus = performanceData.filter(m => m.salesVolume > 0)
+    // Double Filter: Exclude items that might be mislabeled as 'menu' but have '반제품' or 'Prep' in category
+    const activeMenus = performanceData.filter(m =>
+        m.salesVolume > 0 &&
+        !m.category.includes("반제품") &&
+        !m.category.toLowerCase().includes("prep")
+    )
 
     console.log(`[Analytics] Stats: Total=${performanceData.length}, Active=${activeMenus.length}`)
 
@@ -159,9 +165,14 @@ export async function getMenuPerformance(days: number = 30, storeId: string): Pr
         else m.quadrant = 'dog'
     })
 
+    const finalData = performanceData.filter(m =>
+        !m.category.includes("반제품") &&
+        !m.category.toLowerCase().includes("prep")
+    )
+
     console.log("[Analytics] Completed successfully")
     return {
-        data: performanceData.sort((a, b) => b.totalProfit - a.totalProfit),
+        data: finalData.sort((a, b) => b.totalProfit - a.totalProfit),
         metrics: { avgVolume, avgMargin }
     }
 }

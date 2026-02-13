@@ -37,16 +37,24 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
 
     const [recipeName, setRecipeName] = useState(initialData?.name || "")
     const [sellingPrice, setSellingPrice] = useState<number>(initialData?.selling_price || 0)
+    const [batchSize, setBatchSize] = useState<number>((initialData as any)?.batch_size || 1)
+    const [batchUnit, setBatchUnit] = useState<string>((initialData as any)?.batch_unit || "kg")
+    const [portionSize, setPortionSize] = useState<number>((initialData as any)?.portion_size || 0)
+    const [portionUnit, setPortionUnit] = useState<string>((initialData as any)?.portion_unit || "ea")
 
     // Drag & Drop Source Tab State
     const [activeTab, setActiveTab] = useState<'ingredient' | 'menu'>('ingredient')
     const [searchQuery, setSearchQuery] = useState("")
 
     const [menuType, setMenuType] = useState<'single' | 'set' | 'prep'>(() => {
+        // 1. Trust explicitly saved 'prep' type
         if (initialData?.type === 'prep') return 'prep'
+
+        // 2. Check for Real Menu ingredients (now accurately distinguished from Preps by parent component)
         if (initialData?.ingredients?.some(item => item.itemType === 'menu')) {
             return 'set'
         }
+
         return 'single'
     })
 
@@ -108,7 +116,8 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                     const rec = recipes.find(r => r.id === newItem.itemId)
                     if (rec) {
                         newItem.name = rec.name
-                        newItem.unit = "개"
+                        // Default to portion unit if available, else batch unit, else 'ea'
+                        newItem.unit = (rec.portion_unit && rec.portion_size) ? rec.portion_unit : (rec.batch_unit || "ea")
                     }
                 }
 
@@ -125,13 +134,24 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
     // For now, let's trust the render lookup for display and only use state for structure.
 
     // Helper to get item details for display
+    // Helper to get item details for display
     const getItemDetails = (itemId: string, itemType: 'ingredient' | 'menu') => {
         if (itemType === 'ingredient') {
             const ing = ingredients.find(i => i.id === itemId)
-            return { name: ing?.name || "Unknown", unit: ing?.usage_unit || "-" }
+            return {
+                name: ing?.name || "Unknown",
+                unit: ing?.usage_unit || "-",
+                isPrep: false,
+                prepDetails: null
+            }
         } else {
             const rec = recipes.find(r => r.id === itemId)
-            return { name: rec?.name || "Unknown", unit: "개" }
+            return {
+                name: rec?.name || "Unknown",
+                unit: rec?.batch_unit || "개",
+                isPrep: rec?.type === 'prep',
+                prepDetails: rec
+            }
         }
     }
 
@@ -140,6 +160,16 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
     const fetchMenuCost = async (recipeId: string): Promise<number> => {
         if (menuCosts[recipeId]) return menuCosts[recipeId]
 
+        // 1. Fetch recipe info for batch settings
+        const { data: recipe, error: recipeError } = await supabase
+            .from("recipes")
+            .select("batch_size, batch_unit, portion_size, portion_unit")
+            .eq("id", recipeId)
+            .single()
+
+        if (recipeError || !recipe) return 0
+
+        // 2. Fetch ingredients
         const { data: items, error } = await supabase
             .from("recipe_ingredients")
             .select("*")
@@ -163,8 +193,16 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
             }
         }
 
-        setMenuCosts(prev => ({ ...prev, [recipeId]: cost }))
-        return cost
+        const unitCost = cost / (recipe.batch_size || 1)
+
+        // Store cost by unit type (default batch unit, and optional portion unit)
+        setMenuCosts(prev => ({
+            ...prev,
+            [recipeId]: unitCost, // Default scalar cost (per batch unit)
+            [`${recipeId}_portion`]: recipe.portion_size && recipe.portion_unit ? (unitCost * recipe.portion_size) : 0
+        }))
+
+        return unitCost
     }
 
     // Effect to load costs
@@ -232,6 +270,13 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
         ))
     }
 
+    // Update Unit (for Preps)
+    const handleUpdateUnit = (tempId: string, unit: string) => {
+        setSelectedItems(prev => prev.map(item =>
+            item.tempId === tempId ? { ...item, unit } : item
+        ))
+    }
+
     // Calculate Total Cost
     const totalCost = useMemo(() => {
         return selectedItems.reduce((acc, item) => {
@@ -241,11 +286,22 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                 const unitCost = ((ingredient.purchase_price || 0) / (ingredient.conversion_factor || 1)) / (1 - (ingredient.loss_rate || 0))
                 return acc + (unitCost * (item.quantity || 0))
             } else {
-                const cost = menuCosts[item.itemId] || 0
-                return acc + (cost * (item.quantity || 0))
+                const cost = menuCosts[item.itemId] || 0 // This is cost per BATCH unit
+
+                // Check if using portion unit
+                const recipe = recipes.find(r => r.id === item.itemId)
+                let adjustedCost = cost
+
+                if (recipe && recipe.portion_unit && item.unit === recipe.portion_unit && recipe.portion_size) {
+                    // Cost per portion = Cost per batch unit * portion size
+                    // Example: 1kg cost = 1000. Portion = 0.2kg (200g). Portion Cost = 1000 * 0.2 = 200.
+                    adjustedCost = cost * recipe.portion_size
+                }
+
+                return acc + (adjustedCost * (item.quantity || 0))
             }
         }, 0)
-    }, [selectedItems, ingredients, menuCosts])
+    }, [selectedItems, ingredients, menuCosts, recipes])
 
     // Calculate Margin
     const margin = sellingPrice - totalCost
@@ -256,32 +312,54 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
         if (!recipeName) return alert("메뉴 이름을 입력해주세요")
         if (selectedItems.length === 0) return alert("재료를 하나 이상 추가해주세요")
 
-        let categoryName = '단품 (Single)'
-        if (menuType === 'set') categoryName = '세트 (Set)'
-        if (menuType === 'prep') categoryName = '반제품 (Prep)'
+        let categoryName = '단품 (SINGLE)'
+        if (menuType === 'set') categoryName = '세트 (SET)'
+        if (menuType === 'prep') categoryName = '반제품 (PREP)'
 
         const categoryId = await ensureCategory(categoryName, 'menu')
         if (!categoryId) return alert("카테고리 설정 실패")
 
-        const ingredientData = selectedItems.map(item => ({
-            item_id: item.itemId,
-            item_type: item.itemType,
-            quantity: item.quantity
-        }))
+        const ingredientData = selectedItems.map(item => {
+            let finalQuantity = item.quantity
+
+            // Convert Prep Portion Unit to Batch Unit for storage
+            if (item.itemType === 'menu') {
+                const rec = recipes.find(r => r.id === item.itemId)
+                if (rec && rec.type === 'prep' && rec.portion_unit && item.unit === rec.portion_unit && rec.portion_size) {
+                    // Example: User entered 500 (g). Batch Unit is kg. Portion Size is 0.001.
+                    // Saved Quantity = 500 * 0.001 = 0.5 (kg)
+                    finalQuantity = item.quantity * rec.portion_size
+                }
+            }
+
+            return {
+                item_id: item.itemId,
+                item_type: item.itemType,
+                quantity: finalQuantity
+            }
+        })
 
         if (isEditMode && initialData?.id) {
             await updateRecipe(initialData.id, {
                 name: recipeName,
                 type: menuType === 'prep' ? 'prep' : 'menu',
-                selling_price: sellingPrice,
-                category_id: categoryId
+                selling_price: menuType === 'prep' ? 0 : sellingPrice,
+                category_id: categoryId,
+                batch_size: menuType === 'prep' ? batchSize : 1,
+                batch_unit: menuType === 'prep' ? batchUnit : 'ea',
+                portion_size: menuType === 'prep' && portionSize > 0 ? portionSize : null,
+                portion_unit: menuType === 'prep' && portionSize > 0 ? portionUnit : null
             }, ingredientData)
         } else {
             await createRecipe({
                 name: recipeName,
                 type: menuType === 'prep' ? 'prep' : 'menu',
-                selling_price: sellingPrice,
-                category_id: categoryId
+                selling_price: menuType === 'prep' ? 0 : sellingPrice,
+                category_id: categoryId,
+                batch_size: menuType === 'prep' ? batchSize : 1,
+                batch_unit: menuType === 'prep' ? batchUnit : 'ea',
+                portion_size: menuType === 'prep' && portionSize > 0 ? portionSize : null,
+                portion_unit: menuType === 'prep' && portionSize > 0 ? portionUnit : null
             }, ingredientData)
         }
     }
@@ -297,6 +375,17 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
         }
     }, [activeTab, ingredients, recipes, searchQuery, initialData?.id])
 
+    const UNITS = [
+        { value: "g", label: "g" },
+        { value: "kg", label: "kg" },
+        { value: "ml", label: "ml" },
+        { value: "l", label: "L" },
+        { value: "ea", label: "ea" },
+        { value: "box", label: "Box" },
+        { value: "bag", label: "Bag" },
+        { value: "btl", label: "Bottle" },
+    ]
+
 
     return (
         <div className="grid gap-6 lg:grid-cols-3 h-[calc(100vh-100px)]">
@@ -304,7 +393,7 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
             <div className="lg:col-span-1 flex flex-col gap-4 h-full overflow-hidden">
                 <Card className="flex flex-col h-full bg-slate-950/50 border-white/10">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">라이브러리</CardTitle>
+                        <CardTitle className="text-lg">라이브러리 (LIBRARY)</CardTitle>
                         <CardDescription>드래그하여 오른쪽 목록에 추가하세요.</CardDescription>
                         {/* Tabs */}
                         <div className="flex gap-2 mt-2">
@@ -317,7 +406,7 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                                         : "border-transparent bg-white/5 hover:bg-white/10 text-muted-foreground"
                                 )}
                             >
-                                재료
+                                재료 (ING)
                             </button>
                             <button
                                 onClick={() => setActiveTab('menu')}
@@ -328,7 +417,7 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                                         : "border-transparent bg-white/5 hover:bg-white/10 text-muted-foreground"
                                 )}
                             >
-                                메뉴(단품)
+                                메뉴 (MENU)
                             </button>
                         </div>
                         {/* Search */}
@@ -360,7 +449,12 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                                 <div className="flex-1">
                                     <div className="font-medium text-sm">{item.name}</div>
                                     <div className="text-xs text-muted-foreground">
-                                        {activeTab === 'ingredient' ? `${formatNumber((item as any).purchase_price)}원` : `판매가: ${formatNumber((item as any).selling_price)}원`}
+                                        {activeTab === 'ingredient'
+                                            ? `${formatNumber((item as any).purchase_price)}원`
+                                            : (item as any).type === 'prep'
+                                                ? <span className="text-indigo-400">반제품 (PREP)</span>
+                                                : `판매가: ${formatNumber((item as any).selling_price)}원`
+                                        }
                                     </div>
                                 </div>
                                 <Plus className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
@@ -391,14 +485,16 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                                 onChange={e => setRecipeName(e.target.value)}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">판매 가격 (원)</label>
-                            <NumericInput
-                                placeholder="0"
-                                value={sellingPrice || 0}
-                                onChange={(val: number) => setSellingPrice(val)}
-                            />
-                        </div>
+                        {menuType !== 'prep' && (
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">판매 가격 (원)</label>
+                                <NumericInput
+                                    placeholder="0"
+                                    value={sellingPrice || 0}
+                                    onChange={(val: number) => setSellingPrice(val)}
+                                />
+                            </div>
+                        )}
                         <div className="col-span-2 space-y-2">
                             <label className="text-sm font-medium">구분</label>
                             <div className="flex flex-wrap gap-4">
@@ -409,10 +505,83 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                                     <input type="radio" checked={menuType === 'set'} onChange={() => setMenuType('set')} className="accent-primary" /> 세트
                                 </label>
                                 <label className={cn("flex items-center gap-2 cursor-pointer", menuType === 'prep' ? "text-indigo-500 font-bold" : "text-muted-foreground")}>
-                                    <input type="radio" checked={menuType === 'prep'} onChange={() => setMenuType('prep')} className="accent-primary" /> 반제품 (Prep)
+                                    <input type="radio" checked={menuType === 'prep'} onChange={() => setMenuType('prep')} className="accent-primary" /> 반제품 (PREP)
                                 </label>
                             </div>
                         </div>
+
+                        {/* Batch Yield Settings for Prep */}
+                        {menuType === 'prep' && (
+                            <div className="col-span-2 space-y-2 bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-md border border-indigo-100 dark:border-indigo-500/30 animate-in fade-in slide-in-from-top-2">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">배치 생산량 (YIELD)</span>
+                                </div>
+                                <div className="flex items-end gap-2">
+                                    <div className="space-y-1 flex-1">
+                                        <label className="text-xs font-semibold text-blue-600 dark:text-blue-400">생산량</label>
+                                        <NumericInput
+                                            value={batchSize}
+                                            onChange={setBatchSize}
+                                            className="bg-white dark:bg-slate-950"
+                                        />
+                                    </div>
+                                    <div className="space-y-1 w-24">
+                                        <label className="text-xs font-semibold text-blue-600 dark:text-blue-400">단위</label>
+                                        <select
+                                            className="flex h-10 w-full rounded-md border border-input bg-white dark:bg-slate-950 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-black dark:text-white"
+                                            value={batchUnit}
+                                            onChange={(e) => setBatchUnit(e.target.value)}
+                                        >
+                                            {UNITS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <p className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-1">
+                                    * 이 레시피(1회)를 만들면 <strong>{batchSize} {batchUnit}</strong>가 생산됩니다.
+                                    <br />
+                                    * 다른 메뉴에서 이 반제품을 사용할 때, <strong>1 {batchUnit}당 원가</strong>로 계산됩니다.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Portion Settings for Prep (Optional) */}
+                        {menuType === 'prep' && (
+                            <div className="col-span-2 space-y-2 bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-md border border-indigo-100 dark:border-indigo-500/30 animate-in fade-in slide-in-from-top-3">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">소분 관리 (PORTIONING)</span>
+                                </div>
+                                <div className="flex items-end gap-2">
+                                    <div className="space-y-1 w-24">
+                                        <label className="text-xs font-semibold text-blue-600 dark:text-blue-400">소분 단위</label>
+                                        <Input
+                                            value={portionUnit}
+                                            onChange={(e) => setPortionUnit(e.target.value)}
+                                            placeholder="예: bag"
+                                            className="bg-white dark:bg-slate-950"
+                                        />
+                                    </div>
+                                    <div className="space-y-1 text-center py-2 text-muted-foreground">
+                                        =
+                                    </div>
+                                    <div className="space-y-1 flex-1">
+                                        <label className="text-xs font-semibold text-blue-600 dark:text-blue-400">용량 ({batchUnit})</label>
+                                        <NumericInput
+                                            value={portionSize}
+                                            onChange={setPortionSize}
+                                            className="bg-white dark:bg-slate-950"
+                                            placeholder="예: 0.2 (200g)"
+                                        />
+                                    </div>
+                                </div>
+                                {portionSize > 0 && portionUnit && (
+                                    <p className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-1">
+                                        * <strong>1 {portionUnit}</strong>은 <strong>{portionSize} {batchUnit}</strong>에 해당합니다.
+                                        <br />
+                                        * 메뉴 구성 시 <strong>'{portionUnit}'</strong> 단위를 선택하여 사용할 수 있습니다.
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -428,7 +597,7 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                     )}>
                         <CardHeader>
                             <CardTitle className="flex justify-between items-center">
-                                <span>구성 요소</span>
+                                <span>구성 요소 (COMPOSITION)</span>
                                 <span className="text-sm font-normal text-muted-foreground">
                                     총 {selectedItems.length}개 항목
                                 </span>
@@ -470,7 +639,18 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                                                     className="w-20 text-right"
                                                     autoFocus={item.quantity === 0} // Auto focus on new items
                                                 />
-                                                <span className="text-sm text-muted-foreground w-8">{details.unit}</span>
+                                                {details.isPrep && details.prepDetails?.portion_unit ? (
+                                                    <select
+                                                        className="h-9 rounded-md border text-sm w-20 bg-background"
+                                                        value={item.unit}
+                                                        onChange={(e) => handleUpdateUnit(item.tempId, e.target.value)}
+                                                    >
+                                                        <option value={details.prepDetails.batch_unit}>{details.prepDetails.batch_unit}</option>
+                                                        <option value={details.prepDetails.portion_unit}>{details.prepDetails.portion_unit}</option>
+                                                    </select>
+                                                ) : (
+                                                    <span className="text-sm text-muted-foreground w-8">{item.unit || details.unit}</span>
+                                                )}
                                             </div>
                                             <Button
                                                 variant="ghost"
@@ -497,12 +677,21 @@ export function RecipeBuilder({ initialData }: RecipeBuilderProps) {
                                     <span className="text-muted-foreground block mb-1">총 원가</span>
                                     <span className="text-2xl font-bold">{formatNumber(totalCost)}원</span>
                                 </div>
-                                <div>
-                                    <span className="text-muted-foreground block mb-1">마진</span>
-                                    <span className={cn("text-2xl font-bold", margin > 0 ? "text-green-500" : "text-red-500")}>
-                                        {formatNumber(margin)}원 ({formatNumber(marginRate)}%)
-                                    </span>
-                                </div>
+                                {menuType === 'prep' ? (
+                                    <div>
+                                        <span className="text-muted-foreground block mb-1">단위 원가 (per {batchUnit})</span>
+                                        <span className="text-2xl font-bold text-indigo-500">
+                                            {formatNumber(totalCost / (batchSize || 1))}원
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <span className="text-muted-foreground block mb-1">마진</span>
+                                        <span className={cn("text-2xl font-bold", margin > 0 ? "text-green-500" : "text-red-500")}>
+                                            {formatNumber(margin)}원 ({formatNumber(marginRate)}%)
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                             <Button size="lg" className="w-full md:w-auto min-w-[200px]" onClick={handleSubmit} disabled={loading}>
                                 {isEditMode ? "저장하기" : "메뉴 생성하기"}

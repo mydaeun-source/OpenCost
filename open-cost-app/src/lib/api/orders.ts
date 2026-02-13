@@ -99,35 +99,42 @@ export const createOrder = async (
         for (const [ingId, qty] of usageMap.entries()) {
             const ing = allIngredients.find(i => i.id === ingId)
             if (ing) {
-                const newStock = (ing.current_stock || 0) - qty
-                await supabase
+                const factor = ing.conversion_factor || 1
+                const qtyPurchaseUnit = qty / factor
+                const newStock = (ing.current_stock || 0) - qtyPurchaseUnit
+                const { error: stockError } = await supabase
                     .from("ingredients")
-                    .update({ current_stock: newStock })
+                    .update({ current_stock: Math.max(0, newStock) })
                     .eq("id", ingId)
 
-                // Log Stock Adjustment
+                if (stockError) { /* Best effort, don't throw */ }
+
+                // Log Stock Adjustment (in PURCHASE units for consistency)
                 await supabase
                     .from("stock_adjustment_logs")
                     .insert({
                         ingredient_id: ingId,
                         adjustment_type: 'order',
-                        quantity: -qty,
+                        quantity: -qtyPurchaseUnit,
                         reason: `판매 소진 (주문 내역)`,
                         created_at: order.created_at // Sync with order date
                     })
             }
         }
+
         // 5. Update Sales Record (Daily Aggregation)
         const salesDate = customDate || new Date().toISOString().split('T')[0]
-        const { data: existingSales } = await supabase
+        const { data: existingSales, error: fetchSalesError } = await supabase
             .from("sales_records")
             .select("*")
             .eq("sales_date", salesDate)
             .eq("store_id", storeId)
             .single()
 
+        if (fetchSalesError && fetchSalesError.code !== 'PGRST116') { /* Best effort, don't throw */ }
+
         if (existingSales) {
-            await supabase
+            const { error: updateSalesError } = await supabase
                 .from("sales_records")
                 .update({
                     daily_revenue: Number(existingSales.daily_revenue) + Number(order.total_amount),
@@ -135,8 +142,11 @@ export const createOrder = async (
                     updated_at: new Date().toISOString()
                 })
                 .eq("id", existingSales.id)
+
+            if (updateSalesError) { /* Best effort, don't throw */ }
+
         } else {
-            await supabase
+            const { error: insertSalesError } = await supabase
                 .from("sales_records")
                 .insert({
                     user_id: order.user_id,
@@ -146,10 +156,12 @@ export const createOrder = async (
                     daily_cogs: totalCost,
                     memo: customDate ? "Manually entered sales" : "Auto-generated from POS"
                 })
+
+            if (insertSalesError) { /* Best effort, don't throw */ }
         }
 
         return order
-    } catch (error) {
+    } catch (error: any) {
         console.error("Create Order Error:", error)
         throw error
     }
@@ -226,7 +238,9 @@ export const cancelOrder = async (order: Order) => {
         for (const [ingId, qty] of usageMap.entries()) {
             const ing = allIngredients.find(i => i.id === ingId)
             if (ing) {
-                const newStock = (ing.current_stock || 0) + qty
+                const factor = ing.conversion_factor || 1
+                const qtyPurchaseUnit = qty / factor
+                const newStock = (ing.current_stock || 0) + qtyPurchaseUnit
                 await supabase
                     .from("ingredients")
                     .update({ current_stock: newStock })
@@ -238,7 +252,7 @@ export const cancelOrder = async (order: Order) => {
                     .insert({
                         ingredient_id: ingId,
                         adjustment_type: 'refund',
-                        quantity: qty,
+                        quantity: qtyPurchaseUnit,
                         reason: `주문 취소 (재고 복구)`
                     })
             }

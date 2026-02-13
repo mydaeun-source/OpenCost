@@ -7,6 +7,7 @@ import { useStore } from "@/contexts/StoreContext"
 import { ShieldAlert, Clock, LogOut, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { supabase } from "@/lib/supabase"
+import { useTheme } from "@/contexts/ThemeContext"
 
 interface AppLayoutProps {
     children: React.ReactNode
@@ -15,6 +16,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
     const [isCollapsed, setIsCollapsed] = useState(false)
     const [mounted, setMounted] = useState(false)
+    const { theme } = useTheme()
     useGlobalScrollbar()
 
     useEffect(() => {
@@ -48,33 +50,33 @@ export function AppLayout({ children }: AppLayoutProps) {
                     <div className="flex justify-center">
                         <div className="relative">
                             <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full animate-pulse" />
-                            <div className="relative bg-white/5 border border-white/10 p-6 rounded-full">
-                                <Clock className="h-16 w-16 text-indigo-400" />
+                            <div className="relative bg-card border border-border p-6 rounded-full shadow-xl">
+                                <Clock className="h-16 w-16 text-primary" />
                             </div>
                         </div>
                     </div>
 
                     <div className="space-y-4">
-                        <h1 className="text-4xl font-black italic text-white tracking-tighter uppercase">
+                        <h1 className="text-4xl font-black italic text-foreground tracking-tighter uppercase">
                             Approval Pending
                         </h1>
-                        <p className="text-slate-400 text-lg leading-relaxed">
+                        <p className="text-muted-foreground text-lg leading-relaxed">
                             관리자의 승인을 기다리고 있습니다.<br />
                             정상적인 이용을 위해 개발자의 최종 승인이 필요합니다.
                         </p>
                     </div>
 
                     <div className="pt-8 flex flex-col gap-4">
-                        <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-4 flex items-center gap-3 text-left">
-                            <ShieldAlert className="h-5 w-5 text-indigo-400 shrink-0" />
-                            <span className="text-sm text-indigo-200">
+                        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-center gap-3 text-left">
+                            <ShieldAlert className="h-5 w-5 text-primary shrink-0" />
+                            <span className="text-sm text-foreground/80">
                                 승인이 완료되면 페이지를 새로고침하거나 다시 로그인해 주세요.
                             </span>
                         </div>
 
                         <Button
                             variant="outline"
-                            className="bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
+                            className="bg-muted/50 border-border text-foreground hover:bg-muted"
                             onClick={async () => {
                                 await supabase.auth.signOut()
                                 window.location.href = "/login"
@@ -95,11 +97,13 @@ export function AppLayout({ children }: AppLayoutProps) {
 
     return (
         <div className="min-h-screen relative overflow-hidden">
-            {/* Background Glow Effects (Global) */}
-            <div className="fixed inset-0 z-[-1] bg-background">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px] animate-pulse" />
-                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-[128px]" />
-            </div>
+            {/* Background Glow Effects (Vibe Theme Only) */}
+            {theme === 'vibe' && (
+                <div className="fixed inset-0 z-[-1] bg-background">
+                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[128px] animate-pulse" />
+                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-[128px]" />
+                </div>
+            )}
 
             {/* Desktop Sidebar */}
             <Sidebar isCollapsed={isCollapsed} onToggle={toggleSidebar} />

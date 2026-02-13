@@ -21,8 +21,12 @@ export const clearAllData = async (userId: string) => {
     await supabase.from("expense_records").delete().eq("user_id", userId)
     await supabase.from("expense_categories").delete().eq("user_id", userId)
     await supabase.from("sales_records").delete().eq("user_id", userId)
+    await supabase.from("store_staff").delete().neq("id", "00000000-0000-0000-0000-000000000000")
+    await supabase.from("stores").delete().eq("owner_id", userId)
     // Clear store settings to allow fresh start
-    await supabase.from("store_settings").delete().eq("user_id", userId)
+    if (supabase.from("store_settings" as any)) {
+        await supabase.from("store_settings" as any).delete().eq("user_id", userId)
+    }
 
     console.log("All data cleared successfully.")
 }

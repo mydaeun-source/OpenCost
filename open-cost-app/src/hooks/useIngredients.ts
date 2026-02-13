@@ -4,8 +4,8 @@ import { Database } from "@/types/database.types"
 import { toast } from "./use-toast"
 import { useStore } from "@/contexts/StoreContext"
 
-type Ingredient = Database["public"]["Tables"]["ingredients"]["Row"]
-type NewIngredient = Database["public"]["Tables"]["ingredients"]["Insert"]
+export type Ingredient = Database["public"]["Tables"]["ingredients"]["Row"]
+export type NewIngredient = Database["public"]["Tables"]["ingredients"]["Insert"]
 
 export function useIngredients() {
     const [ingredients, setIngredients] = useState<Ingredient[]>([])
@@ -26,7 +26,10 @@ export function useIngredients() {
 
             const { data, error } = await supabase
                 .from("ingredients")
-                .select("*")
+                .select(`
+                    *,
+                    category:categories(id, name, type)
+                `)
                 .eq("store_id", activeStore.id)
                 .order("created_at", { ascending: false })
 
@@ -144,7 +147,7 @@ export function useIngredients() {
         try {
             const { data, error } = await supabase
                 .from("ingredients")
-                .update({ ...updates, updated_at: new Date().toISOString() } as any)
+                .update({ ...updates } as any)
                 .eq("id", id)
                 .select()
                 .single()
@@ -159,7 +162,7 @@ export function useIngredients() {
             })
             return data
         } catch (error) {
-            console.error("Error updating ingredient:", error)
+            console.error("Error updating ingredient:", JSON.stringify(error, null, 2))
             toast({
                 title: "수정 실패",
                 description: "재료 정보 수정 중 오류가 발생했습니다.",
@@ -176,7 +179,7 @@ export function useIngredients() {
             // 1. Update ingredient stock
             const { data, error } = await supabase
                 .from("ingredients")
-                .update({ current_stock: newStock, updated_at: new Date().toISOString() })
+                .update({ current_stock: newStock })
                 .eq("id", id)
                 .select()
                 .single()

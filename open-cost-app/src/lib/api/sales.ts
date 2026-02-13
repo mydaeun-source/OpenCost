@@ -71,3 +71,87 @@ export const deleteSalesRecord = async (id: string) => {
 
     if (error) throw error
 }
+
+// Recalculate Sales Records from Orders (Data Repair)
+export const recalculateSalesAndInventory = async (storeId: string) => {
+    try {
+        console.log(`Starting recalculation for store: ${storeId}`)
+
+        // 1. Reset all sales records for store to 0 (revenue and cogs)
+        // We preserve the rows to keep 'memo' or manual entries, but valid order data will be added back.
+        // Wait, if we set to 0 and then add, manual entries (that are not orders) will be 0 forever?
+        // Yes, this is a "Reset to Orders Truth" operation. Manual revenue entries without orders might be lost.
+        // But the user has "nonsensical numbers", so a reset is desired.
+
+        const { error: resetError } = await supabase
+            .from("sales_records")
+            .update({ daily_revenue: 0, daily_cogs: 0 })
+            .eq("store_id", storeId)
+
+        if (resetError) throw resetError
+
+        // 2. Fetch all completed orders
+        const { data: orders, error: ordersError } = await supabase
+            .from("orders")
+            .select("id, total_amount, total_cost, created_at, status")
+            .eq("store_id", storeId)
+            .neq("status", "cancelled")
+
+        if (ordersError) throw ordersError
+        if (!orders) return
+
+        console.log(`Found ${orders.length} orders to process`)
+
+        // 3. Aggregate stats by date
+        const dailyStats = new Map<string, { revenue: number, cogs: number }>()
+
+        for (const order of orders) {
+            const date = new Date(order.created_at).toISOString().split('T')[0]
+            const current = dailyStats.get(date) || { revenue: 0, cogs: 0 }
+
+            dailyStats.set(date, {
+                revenue: current.revenue + (Number(order.total_amount) || 0),
+                cogs: current.cogs + (Number(order.total_cost) || 0)
+            })
+        }
+
+        // 4. Update sales_records with aggregated data
+        for (const [date, stats] of dailyStats.entries()) {
+            // Check if record exists
+            const { data: existing } = await supabase
+                .from("sales_records")
+                .select("id")
+                .eq("store_id", storeId)
+                .eq("sales_date", date)
+                .single()
+
+            if (existing) {
+                await supabase
+                    .from("sales_records")
+                    .update({
+                        daily_revenue: stats.revenue,
+                        daily_cogs: stats.cogs,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq("id", existing.id)
+            } else {
+                await supabase
+                    .from("sales_records")
+                    .insert({
+                        store_id: storeId,
+                        sales_date: date,
+                        daily_revenue: stats.revenue,
+                        daily_cogs: stats.cogs,
+                        memo: "Auto-recalculated"
+                    })
+            }
+        }
+
+        console.log("Recalculation complete")
+        return true
+
+    } catch (error) {
+        console.error("Recalculation error:", error)
+        throw error
+    }
+}

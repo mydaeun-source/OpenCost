@@ -25,7 +25,7 @@ export const seedExpenses = async (supabase: SupabaseClient, userId: string, sto
     if (!existingCats) existingCats = []
 
     // Insert missing categories
-    const catsToInsert = categoriesData.filter(c => !existingCats.some((ec: any) => ec.name === c.name))
+    const catsToInsert = categoriesData.filter(c => !(existingCats || []).some((ec: any) => ec.name === c.name))
     if (catsToInsert.length > 0) {
         const { data: newCats, error } = await supabase
             .from("expense_categories")

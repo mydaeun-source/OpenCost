@@ -96,47 +96,50 @@ export default function BEPPage() {
 
     return (
         <AppLayout>
-            <div className="space-y-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">손익분기점(BEP) 계산기</h1>
-                    <p className="text-muted-foreground mt-1">
+            <div className="max-w-4xl mx-auto space-y-6 pb-20">
+                <div className="glass-panel p-8 rounded-3xl border border-border">
+                    <h1 className="text-3xl font-black italic tracking-tighter text-foreground flex items-center gap-2">
+                        <Calculator className="h-8 w-8 text-indigo-500" />
+                        손익분기점(BEP) 계산기
+                    </h1>
+                    <p className="text-sm font-black text-muted-foreground uppercase tracking-widest mt-2">
                         우리 매장은 얼마를 팔아야 본전일까요? 고정비를 입력하여 확인해보세요.
                     </p>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
                     {/* 입력 섹션 */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Calculator className="h-5 w-5" />
+                    <Card className="glass-panel border border-border shadow-none overflow-hidden">
+                        <CardHeader className="p-6 border-b border-border bg-muted/30">
+                            <CardTitle className="flex items-center gap-2 text-foreground font-black italic">
+                                <Calculator className="h-5 w-5 text-indigo-500" />
                                 매장 비용 입력
                             </CardTitle>
-                            <CardDescription>월 고정 지출과 마진율을 입력하세요.</CardDescription>
+                            <CardDescription className="text-xs font-bold text-muted-foreground uppercase tracking-widest">월 고정 지출과 마진율을 입력하세요.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">월 고정비 합계 (월세 + 인건비 + 관리비)</label>
+                        <CardContent className="p-6 space-y-6">
+                            <div className="space-y-3">
+                                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">월 고정비 합계 (월세 + 인건비 + 관리비)</label>
                                 <div className="relative">
-                                    <Banknote className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Banknote className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/50" />
                                     <Input
                                         type="number"
-                                        className="pl-9"
+                                        className="pl-12 h-12 bg-muted/50 border-border focus:ring-indigo-500/20 text-lg font-black italic"
                                         placeholder="예: 5000000"
                                         value={fixedCost || ""}
                                         onChange={(e) => setFixedCost(Number(e.target.value))}
                                     />
                                 </div>
-                                <p className="text-xs text-muted-foreground">숨만 쉬어도 나가는 돈의 총합입니다.</p>
+                                <p className="text-[10px] font-black text-muted-foreground/60 uppercase">숨만 쉬어도 나가는 돈의 총합입니다.</p>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">평균 객단가 (1인당 결제금액)</label>
+                            <div className="space-y-3">
+                                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">평균 객단가 (1인당 결제금액)</label>
                                 <div className="relative">
-                                    <Users className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/50" />
                                     <Input
                                         type="number"
-                                        className="pl-9"
+                                        className="pl-12 h-12 bg-muted/50 border-border focus:ring-indigo-500/20 text-lg font-black italic"
                                         placeholder="예: 10000"
                                         value={avgTicketPrice || ""}
                                         onChange={(e) => setAvgTicketPrice(Number(e.target.value))}
@@ -144,41 +147,44 @@ export default function BEPPage() {
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">평균 마진율 (%)</label>
+                            <div className="space-y-3">
+                                <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">평균 마진율 (%)</label>
                                 <div className="flex gap-2">
                                     <Input
                                         type="number"
+                                        className="h-12 bg-muted/50 border-border focus:ring-indigo-500/20 text-lg font-black italic"
                                         value={marginRate}
                                         onChange={(e) => setMarginRate(Number(e.target.value))}
                                     />
-                                    <Button variant="outline" onClick={() => setMarginRate(Math.round(summary.avgMarginRate || 30))}>
+                                    <Button variant="outline" className="h-12 px-6 font-black uppercase tracking-widest text-xs border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10" onClick={() => setMarginRate(Math.round(summary.avgMarginRate || 30))}>
                                         자동 가져오기
                                     </Button>
                                 </div>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest">
                                     대시보드 기준 현재 마진율: {summary.avgMarginRate ? Math.round(summary.avgMarginRate) : 0}%
                                 </p>
                             </div>
 
-                            <Button className="w-full mt-4 font-black" onClick={handleSave}>매장 기본 고정비 저장</Button>
+                            <Button className="w-full h-12 mt-4 font-black text-sm uppercase tracking-[0.2em] bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20" onClick={handleSave}>
+                                매장 기본 고정비 저장
+                            </Button>
                         </CardContent>
                     </Card>
 
                     {/* Simulation Section */}
-                    <Card className="border-indigo-500/30 bg-indigo-500/[0.02]">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-indigo-500">
+                    <Card className="glass-panel border border-indigo-500/20 bg-indigo-500/[0.02] shadow-none overflow-hidden">
+                        <CardHeader className="p-6 border-b border-indigo-500/10 bg-indigo-500/5">
+                            <CardTitle className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-black italic">
                                 <Target className="h-5 w-5" />
                                 수익 시뮬레이션
                             </CardTitle>
-                            <CardDescription>목표 수익을 달성하기 위한 판매량을 계산합니다.</CardDescription>
+                            <CardDescription className="text-xs font-bold text-indigo-600/60 dark:text-indigo-400/60 uppercase tracking-widest">목표 수익을 달성하기 위한 판매량을 계산합니다.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
+                        <CardContent className="p-6 space-y-8">
+                            <div className="space-y-4">
                                 <div className="flex justify-between items-end">
-                                    <label className="text-sm font-black text-slate-400 uppercase tracking-tighter">희망 월 순이익</label>
-                                    <span className="text-lg font-black text-indigo-500 italic">{(targetMonthlyProfit / 10000).toLocaleString()}만원</span>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">희망 월 순이익</label>
+                                    <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 italic">{(targetMonthlyProfit / 10000).toLocaleString()}만원</span>
                                 </div>
                                 <input
                                     type="range"
@@ -187,15 +193,15 @@ export default function BEPPage() {
                                     step="1000000"
                                     value={targetMonthlyProfit}
                                     onChange={(e) => setTargetMonthlyProfit(Number(e.target.value))}
-                                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                    className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer accent-indigo-600"
                                 />
-                                <p className="text-[10px] text-slate-400 font-bold font-mono">STEP: 100만원 단위</p>
+                                <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest">STEP: 100만원 단위</p>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-4">
                                 <div className="flex justify-between items-end">
-                                    <label className="text-sm font-black text-slate-400 uppercase tracking-tighter">월 영업 일수</label>
-                                    <span className="text-lg font-black text-indigo-500 italic">{operatingDays}일</span>
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">월 영업 일수</label>
+                                    <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 italic">{operatingDays}일</span>
                                 </div>
                                 <input
                                     type="range"
@@ -204,18 +210,18 @@ export default function BEPPage() {
                                     step="1"
                                     value={operatingDays}
                                     onChange={(e) => setOperatingDays(Number(e.target.value))}
-                                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                    className="w-full h-2 bg-muted rounded-full appearance-none cursor-pointer accent-indigo-600"
                                 />
-                                <p className="text-[10px] text-slate-400 font-bold font-mono text-right">정기 휴무를 제외한 영업일</p>
+                                <p className="text-[9px] text-muted-foreground/60 font-black uppercase tracking-widest text-right">정기 휴무를 제외한 영업일</p>
                             </div>
 
-                            <div className="p-4 bg-indigo-500/10 rounded-2xl border-2 border-indigo-500/20 mt-6 relative overflow-hidden group">
-                                <Rocket className="absolute -right-4 -bottom-4 h-24 w-24 text-indigo-500/10 -rotate-12 transition-transform group-hover:scale-110" />
+                            <div className="p-6 bg-indigo-500/10 rounded-3xl border border-indigo-500/20 mt-8 relative overflow-hidden group">
+                                <Rocket className="absolute -right-6 -top-6 h-32 w-32 text-indigo-500/10 -rotate-12 transition-transform duration-1000 group-hover:scale-110 group-hover:-rotate-45" />
                                 <div className="relative z-10">
-                                    <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase mb-1">PRO INSIGHT</p>
-                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-100 leading-snug">
-                                        현재 마진율(<span className="text-indigo-500">{marginRate}%</span>)을 유지할 때, <br />
-                                        매일 평균 <span className="text-indigo-500 font-black">{(salesPerDay / 10000).toFixed(1)}만원</span> 이상 매출 발생 시 목표 수익이 달성됩니다.
+                                    <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-2">PRO INSIGHT</p>
+                                    <p className="text-base font-bold text-foreground leading-relaxed italic">
+                                        현재 마진율(<span className="text-indigo-600 dark:text-indigo-400">{marginRate}%</span>)을 유지할 때, <br />
+                                        매일 평균 <span className="text-indigo-600 dark:text-indigo-400 font-black underline underline-offset-4 decoration-indigo-500/30">{(salesPerDay / 10000).toFixed(1)}만원</span> 이상 매출 발생 시 목표 수익이 달성됩니다.
                                     </p>
                                 </div>
                             </div>
@@ -223,60 +229,60 @@ export default function BEPPage() {
                     </Card>
 
                     {/* 결과 섹션 */}
-                    <Card className="md:col-span-2 bg-slate-900 border-indigo-500/20 shadow-2xl overflow-hidden relative">
-                        <div className="absolute top-0 right-0 p-4 opacity-10">
-                            <TrendingUp className="h-32 w-32 text-indigo-400" />
+                    <Card className="md:col-span-2 glass-panel border border-border shadow-2xl overflow-hidden relative group">
+                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 group-hover:rotate-6 transition-all duration-1000">
+                            <TrendingUp className="h-48 w-48 text-indigo-500" />
                         </div>
-                        <CardHeader className="border-b border-indigo-500/10">
-                            <CardTitle className="text-xl font-black italic text-white flex items-center gap-3">
-                                <TrendingUp className="h-6 w-6 text-indigo-500" />
-                                FINANCIAL ANALYSIS REPORT
+                        <CardHeader className="p-8 border-b border-border bg-muted/30">
+                            <CardTitle className="text-2xl font-black italic text-foreground flex items-center gap-3">
+                                <TrendingUp className="h-8 w-8 text-indigo-500" />
+                                경영 지표 분석 리포트
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
-                            <div className="grid md:grid-cols-2 divide-x divide-indigo-500/10">
-                                <div className="p-8 space-y-6">
-                                    <div className="space-y-1">
-                                        <p className="text-xs font-black text-slate-500 uppercase tracking-widest">본전(BEP) 매출액</p>
-                                        <div className="text-3xl font-black text-white italic">
-                                            {bepSalesOnly.toLocaleString()}<span className="text-sm font-normal ml-1 opacity-50">원 / 월</span>
+                            <div className="grid md:grid-cols-2 divide-x divide-border">
+                                <div className="p-10 space-y-10">
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">본전(BEP) 매출액</p>
+                                        <div className="text-4xl font-black text-foreground italic tracking-tighter">
+                                            {bepSalesOnly.toLocaleString()}<span className="text-sm font-black ml-2 text-muted-foreground uppercase opacity-50">원 / 월</span>
                                         </div>
                                     </div>
-                                    <div className="space-y-1 pt-4 border-t border-indigo-500/10">
-                                        <p className="text-xs font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
-                                            <Target className="h-3 w-3" /> 목표 달성 매출액 (Monthly Goal)
+                                    <div className="space-y-4 pt-10 border-t border-border">
+                                        <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-[0.3em] flex items-center gap-2">
+                                            <Target className="h-4 w-4" /> 목표 달성 매출액 (월 매출 목표)
                                         </p>
-                                        <div className="text-5xl font-black text-indigo-500 italic tracking-tighter">
-                                            {requiredSales.toLocaleString()}<span className="text-lg font-normal ml-2 opacity-50">원</span>
+                                        <div className="text-6xl font-black text-indigo-600 dark:text-indigo-400 italic tracking-tighter">
+                                            {requiredSales.toLocaleString()}<span className="text-xl font-black ml-3 text-indigo-500/50">원</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="p-8 bg-indigo-500/5 space-y-8">
-                                    <div className="flex justify-between items-center group">
+                                <div className="p-10 bg-indigo-500/[0.03] space-y-10">
+                                    <div className="flex justify-between items-center group/item transition-all">
                                         <div>
-                                            <p className="text-[10px] font-black text-slate-500 uppercase mb-1">일 평균 목표 매출</p>
-                                            <p className="text-2xl font-black text-white italic">{salesPerDay.toLocaleString()}원</p>
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">일 평균 목표 매출</p>
+                                            <p className="text-3xl font-black text-foreground italic">{salesPerDay.toLocaleString()}원</p>
                                         </div>
-                                        <div className="h-10 w-10 rounded-xl bg-slate-800 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
-                                            <Banknote className="h-5 w-5" />
+                                        <div className="h-14 w-14 rounded-2xl bg-muted border border-border flex items-center justify-center text-indigo-500 group-hover/item:border-indigo-500/50 transition-all">
+                                            <Banknote className="h-7 w-7" />
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between items-center group">
+                                    <div className="flex justify-between items-center group/item transition-all">
                                         <div>
-                                            <p className="text-[10px] font-black text-slate-500 uppercase mb-1">일 평균 목표 판매수량</p>
-                                            <p className="text-2xl font-black text-white italic">
-                                                {avgTicketPrice > 0 ? Math.ceil(salesPerDay / avgTicketPrice) : 0}<span className="text-sm font-normal ml-1 opacity-50">그릇</span>
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">일 평균 목표 판매수량</p>
+                                            <p className="text-3xl font-black text-foreground italic">
+                                                {avgTicketPrice > 0 ? Math.ceil(salesPerDay / avgTicketPrice) : 0}<span className="text-sm font-black ml-2 text-muted-foreground uppercase opacity-50">그릇</span>
                                             </p>
                                         </div>
-                                        <div className="h-10 w-10 rounded-xl bg-slate-800 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
-                                            <Users className="h-5 w-5" />
+                                        <div className="h-14 w-14 rounded-2xl bg-muted border border-border flex items-center justify-center text-indigo-500 group-hover/item:border-indigo-500/50 transition-all">
+                                            <Users className="h-7 w-7" />
                                         </div>
                                     </div>
 
-                                    <div className="bg-indigo-500/20 p-3 rounded-xl border border-indigo-500/30">
-                                        <p className="text-[9px] font-black text-indigo-300 uppercase leading-relaxed">
+                                    <div className="bg-indigo-600/10 p-5 rounded-2xl border border-indigo-500/20 backdrop-blur-sm">
+                                        <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-300 uppercase leading-relaxed tracking-wider">
                                             * 본 리포트는 입력된 고정비({fixedCost.toLocaleString()}원)와 <br />
                                             희망 수익({targetMonthlyProfit.toLocaleString()}원)을 기준으로 자동 계산되었습니다.
                                         </p>

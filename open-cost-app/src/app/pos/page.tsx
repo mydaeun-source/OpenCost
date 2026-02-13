@@ -3,19 +3,19 @@
 import { useState, useMemo } from "react"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { useRecipes } from "@/hooks/useRecipes"
-import { useCategories } from "@/hooks/useCategories" // Need to fetch categories? Or rely on recipes?
-// Actually categories are needed for tabs.
-import { useIngredients } from "@/hooks/useIngredients" // For stock check if needed
+import { useCategories } from "@/hooks/useCategories"
+import { useIngredients } from "@/hooks/useIngredients"
 import { createOrder } from "@/lib/api/orders"
 import { Card, CardContent } from "@/components/ui/Card"
 import { Button } from "@/components/ui/Button"
-import { Input } from "@/components/ui/Input" // For Quantity
+import { Input } from "@/components/ui/Input"
 import { Badge } from "@/components/ui/Badge"
 import { ShoppingCart, Plus, Minus, Trash2, CreditCard, Banknote, Upload, CheckCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { supabase } from "@/lib/supabase" // Direct use for user_id
+import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { haptic } from "@/lib/haptics"
+import { useStore } from "@/contexts/StoreContext"
 
 interface CartItem {
     tempId: string
@@ -26,17 +26,14 @@ interface CartItem {
 }
 
 export default function POSPage() {
+    const { activeStore } = useStore()
     const { recipes, loading: recipesLoading } = useRecipes()
-    const { categories } = useCategories() // Assuming available
+    const { categories } = useCategories()
     const { toast } = useToast()
 
     // Filter only 'menu' type recipes
     const menuItems = useMemo(() => recipes.filter(r => r.type === 'menu'), [recipes])
 
-    // Categories (derived from menus + existing categories)
-    // We want tabs for different categories.
-    // Let's get unique categories from menuItems? or Use categories hook?
-    // Using categories hook is safer for names.
     const menuCategories = useMemo(() => {
         // Get categories that have at least one menu item
         const activeCatIds = new Set(menuItems.map(m => m.category_id))
@@ -96,6 +93,16 @@ export default function POSPage() {
 
     const handleCheckout = async (method: 'card' | 'cash' | 'transfer') => {
         if (cart.length === 0) return
+
+        if (!activeStore) {
+            toast({
+                title: "오류",
+                description: "선택된 매장이 없어 주문을 처리할 수 없습니다.",
+                type: "destructive"
+            })
+            return
+        }
+
         setIsCheckingOut(true)
         try {
             const { data: { user } } = await supabase.auth.getUser()
@@ -113,7 +120,7 @@ export default function POSPage() {
                 menuId: item.menuId,
                 quantity: item.quantity,
                 price: item.price
-            })))
+            })), activeStore.id)
 
             haptic.success()
             toast({

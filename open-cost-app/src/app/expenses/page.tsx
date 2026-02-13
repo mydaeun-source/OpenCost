@@ -10,8 +10,8 @@ import { Dialog } from "@/components/ui/Dialog"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { supabase } from "@/lib/supabase"
 import { toast } from "@/hooks/use-toast"
-import { Plus, Trash2, Calendar as CalendarIcon, Receipt, TrendingUp, Filter, ArrowRight, Wallet, ChevronRight, Target } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Plus, Trash2, Calendar as CalendarIcon, Receipt, TrendingUp, Filter, ArrowRight, Wallet, ChevronRight, Target, DollarSign, Activity, PieChart } from "lucide-react"
+import { cn, formatNumber } from "@/lib/utils"
 import { format, startOfMonth, endOfMonth, parseISO } from "date-fns"
 import { useDashboard } from "@/hooks/useDashboard"
 import { useStore } from "@/contexts/StoreContext"
@@ -79,7 +79,6 @@ export default function ExpensesPage() {
         setLoading(true)
         try {
             if (!activeStore) return
-            // month is YYYY-MM
             const baseDate = parseISO(`${month}-01`)
             const startDate = format(startOfMonth(baseDate), "yyyy-MM-dd")
             const endDate = format(endOfMonth(baseDate), "yyyy-MM-dd")
@@ -159,16 +158,12 @@ export default function ExpensesPage() {
 
         if (!error) {
             toast({ title: "등록 완료", description: "지출 내역이 저장되었습니다." })
-
-            // If the added record is in the current viewing month, refresh
             if (date.startsWith(selectedMonth)) {
                 fetchRecords(selectedMonth)
             } else {
                 toast({ title: "참고", description: "등록된 날짜가 현재 보고 있는 달과 달라 리스트에 표시되지 않을 수 있습니다." })
-                // Optional: switch month to date's month
                 setSelectedMonth(date.slice(0, 7))
             }
-
             setIsAddRecordOpen(false)
         } else {
             toast({ title: "등록 실패", description: error.message, type: "destructive" })
@@ -181,80 +176,91 @@ export default function ExpensesPage() {
         if (!error) fetchRecords(selectedMonth)
     }
 
-
     // ============================================================================================
     // 4. Report Calculations
     // ============================================================================================
     const reportData = useMemo(() => {
         const totalExpense = records.reduce((sum, r) => sum + Number(r.amount), 0)
-        // Group by category
         const byCategory = records.reduce((acc, r) => {
             const name = r.category_name || "Unknown"
             acc[name] = (acc[name] || 0) + Number(r.amount)
             return acc
         }, {} as Record<string, number>)
 
-        return { totalExpense, byCategory }
+        const topCategoryEntry = Object.entries(byCategory).sort((a, b) => b[1] - a[1])[0]
+        const topCategory = topCategoryEntry ? topCategoryEntry[0] : "-"
+
+        return { totalExpense, byCategory, topCategory }
     }, [records])
 
 
     return (
         <AppLayout>
             <div className="max-w-6xl mx-auto space-y-6 pb-20">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/5 p-8 rounded-3xl border border-white/5 transition-all hover:bg-white/10">
-                    <div>
-                        <h1 className="text-3xl font-black tracking-tight text-white italic">지출 관리 (EXPENSE)</h1>
-                        <p className="text-slate-500 mt-1 font-medium">매장 지출과 고정비를 체계적으로 관리합니다.</p>
+                <div className="glass-panel p-8 rounded-3xl border border-border">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="space-y-1">
+                            <h1 className="text-4xl font-black tracking-tighter text-foreground italic flex items-center gap-3">
+                                <Wallet className="h-8 w-8 text-indigo-500" />
+                                지출 현황 관리 (EXPENSE TRACKER)
+                            </h1>
+                            <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest pl-1">
+                                월별 고정비 및 변동비 세부 지출 관리
+                            </p>
+                        </div>
+                        <Button
+                            onClick={() => setIsAddRecordOpen(true)}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-500/20 h-14 px-8 rounded-2xl font-black text-lg transition-all hover:scale-105"
+                        >
+                            <Plus className="mr-2 h-5 w-5" />
+                            지출 내역 등록
+                        </Button>
                     </div>
                 </div>
 
-                {/* TABS */}
-                <div className="flex gap-2 border-b border-white/5 pb-0">
-                    <button
-                        onClick={() => setActiveTab('history')}
-                        className={cn("px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all",
-                            activeTab === 'history' ? "border-indigo-500 text-indigo-400" : "border-transparent text-slate-500 hover:text-slate-300")}
-                    >
-                        지출 내역
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('items')}
-                        className={cn("px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all",
-                            activeTab === 'items' ? "border-indigo-500 text-indigo-400" : "border-transparent text-slate-500 hover:text-slate-300")}
-                    >
-                        비용 항목 설정
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('report')}
-                        className={cn("px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all",
-                            activeTab === 'report' ? "border-indigo-500 text-indigo-400" : "border-transparent text-slate-500 hover:text-slate-300")}
-                    >
-                        손익 리포트
-                    </button>
+                <div className="border-b border-border mb-4">
+                    <div className="flex gap-8">
+                        {(['history', 'items', 'report'] as const).map((t) => (
+                            <button
+                                key={t}
+                                onClick={() => setActiveTab(t)}
+                                className={cn(
+                                    "pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all relative",
+                                    activeTab === t
+                                        ? "text-indigo-600 dark:text-indigo-400"
+                                        : "text-muted-foreground hover:text-foreground"
+                                )}
+                            >
+                                {t === 'history' ? '지출 내역' : t === 'items' ? '비용 항목 설정' : '손익 리포트'}
+                                {activeTab === t && (
+                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-indigo-500 rounded-full" />
+                                )}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
-                {/* ======================= TAB: HISTORY ======================= */}
                 {activeTab === 'history' && (
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center bg-white/5 p-6 rounded-2xl border border-white/5 transition-all hover:bg-white/10">
+                        <div className="flex justify-between items-center glass-panel p-6 rounded-2xl border border-border transition-all">
                             <div className="flex items-center gap-6">
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">분석 대상 기간</p>
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">분석 대상 기간</p>
                                     <Input
                                         type="month"
                                         value={selectedMonth}
                                         onChange={(e) => setSelectedMonth(e.target.value)}
-                                        className="w-40 bg-slate-950 border-white/10 text-white font-black h-10 italic"
+                                        className="w-40 bg-muted border-border text-foreground font-black h-10 italic"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">해당 월 총 지출</p>
-                                    <div className="text-2xl font-black text-white italic">
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">해당 월 총 지출</p>
+                                    <div className="text-2xl font-black text-foreground italic">
                                         {reportData.totalExpense.toLocaleString()}<span className="text-xs font-bold ml-1 opacity-50">원</span>
                                     </div>
                                 </div>
                             </div>
-                            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 h-12 shadow-lg shadow-indigo-500/20 font-black text-xs uppercase tracking-widest" onClick={() => setIsAddRecordOpen(true)}>
+                            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-8 h-12 shadow-lg shadow-indigo-500/20 font-black text-xs uppercase tracking-widest" onClick={() => setIsAddRecordOpen(true)}>
                                 <Plus className="mr-2 h-4 w-4" /> 지출 내역 기록
                             </Button>
                         </div>
@@ -265,9 +271,9 @@ export default function ExpensesPage() {
                             icon={<Receipt className="h-4 w-4" />}
                             storageKey="expense-history"
                         >
-                            <div className="rounded-xl border border-white/5 overflow-hidden bg-white/5">
+                            <div className="rounded-xl border border-border overflow-hidden bg-card">
                                 <table className="w-full text-xs text-left">
-                                    <thead className="bg-white/5 text-slate-500 font-black uppercase tracking-widest border-b border-white/5">
+                                    <thead className="bg-muted text-muted-foreground font-black uppercase tracking-widest border-b border-border">
                                         <tr>
                                             <th className="p-4 pl-6 w-[120px]">날짜</th>
                                             <th className="p-4 w-[150px]">항목</th>
@@ -276,26 +282,26 @@ export default function ExpensesPage() {
                                             <th className="p-4 text-center w-[80px]">관리</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-white/5">
+                                    <tbody className="divide-y divide-border">
                                         {records.length === 0 ? (
                                             <tr>
-                                                <td colSpan={5} className="p-10 text-center text-slate-600 italic font-bold">
+                                                <td colSpan={5} className="p-10 text-center text-muted-foreground italic font-bold">
                                                     지출 내역이 없습니다.
                                                 </td>
                                             </tr>
                                         ) : (
                                             records.map((record) => (
-                                                <tr key={record.id} className="hover:bg-white/5 transition-colors">
-                                                    <td className="p-4 pl-6 font-mono font-black text-indigo-400 tracking-tighter italic">{record.expense_date}</td>
+                                                <tr key={record.id} className="hover:bg-muted/30 transition-colors">
+                                                    <td className="p-4 pl-6 font-mono font-black text-indigo-600 dark:text-indigo-400 tracking-tighter italic">{record.expense_date}</td>
                                                     <td className="p-4">
-                                                        <span className="bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">
+                                                        <span className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">
                                                             {record.category_name}
                                                         </span>
                                                     </td>
-                                                    <td className="p-4 text-slate-100 font-bold">{record.memo}</td>
+                                                    <td className="p-4 text-foreground font-bold">{record.memo}</td>
                                                     <td className="p-4 text-right font-black italic">{Number(record.amount).toLocaleString()}원</td>
                                                     <td className="p-4 text-center">
-                                                        <button onClick={() => handleDeleteRecord(record.id)} className="text-slate-600 hover:text-rose-500 transition-colors">
+                                                        <button onClick={() => handleDeleteRecord(record.id)} className="text-muted-foreground hover:text-rose-500 transition-colors">
                                                             <Trash2 className="h-4 w-4" />
                                                         </button>
                                                     </td>
@@ -309,28 +315,27 @@ export default function ExpensesPage() {
                     </div>
                 )}
 
-                {/* ======================= TAB: ITEMS ======================= */}
                 {activeTab === 'items' && (
                     <div className="space-y-4">
                         <div className="flex justify-end">
-                            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 h-12 font-black text-xs uppercase tracking-widest" onClick={() => setIsAddCategoryOpen(true)}>
+                            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-8 h-12 font-black text-xs uppercase tracking-widest" onClick={() => setIsAddCategoryOpen(true)}>
                                 <Plus className="mr-2 h-4 w-4" /> 새로운 항목 추가
                             </Button>
                         </div>
                         <div className="grid gap-4 md:grid-cols-3">
                             {categories.map((cat) => (
-                                <Card key={cat.id} className="relative group border-none bg-white/5 hover:bg-white/10 transition-all">
+                                <Card key={cat.id} className="relative group glass-panel border border-border hover:border-indigo-500 transition-all">
                                     <CardHeader className="pb-2">
-                                        <CardTitle className="flex justify-between items-center text-white italic font-black">
+                                        <CardTitle className="flex justify-between items-center text-foreground italic font-black">
                                             {cat.name}
-                                            {cat.is_fixed && <span className="text-[9px] font-black bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/40 uppercase tracking-widest">고정비</span>}
+                                            {cat.is_fixed && <span className="text-[9px] font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 uppercase tracking-widest">고정비</span>}
                                         </CardTitle>
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className="text-muted-foreground font-medium text-sm">
                                         기본 금액: {cat.default_amount ? `${cat.default_amount.toLocaleString()}원` : "없음"}
                                         <button
                                             onClick={() => handleDeleteCategory(cat.id)}
-                                            className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity text-slate-600 hover:text-rose-500"
+                                            className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-rose-500"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </button>
@@ -341,36 +346,68 @@ export default function ExpensesPage() {
                     </div>
                 )}
 
-                {/* ======================= TAB: REPORT ======================= */}
                 {activeTab === 'report' && (
                     <div className="space-y-6">
-                        <div className="grid gap-6 md:grid-cols-2">
-                            <Card className="border-none bg-white/5">
-                                <CardHeader>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">지출 비율 분석 ({selectedMonth})</p>
-                                    <CardTitle className="text-white italic font-black text-xl">카테고리별 지출 분석</CardTitle>
+                        <div className="grid gap-6 md:grid-cols-3">
+                            <Card className="glass-panel border-none shadow-none group transition-all">
+                                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                                    <CardTitle className="text-xs font-black text-indigo-500 uppercase tracking-widest">이번 달 총 지출</CardTitle>
+                                    <DollarSign className="h-4 w-4 text-indigo-500" />
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-4xl font-black text-white italic mb-6 tracking-tighter">
+                                    <div className="text-3xl font-black text-foreground italic tracking-tighter">{formatNumber(reportData.totalExpense)}원</div>
+                                    <p className="text-[10px] text-muted-foreground font-black mt-2 bg-muted/50 w-fit px-2 py-0.5 rounded uppercase">월간 누적 (MONTHLY AGGREGATE)</p>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="glass-panel border-none shadow-none group transition-all">
+                                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                                    <CardTitle className="text-xs font-black text-emerald-500 uppercase tracking-widest">일평균 지출</CardTitle>
+                                    <Activity className="h-4 w-4 text-emerald-500" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-3xl font-black text-foreground italic tracking-tighter">{formatNumber(Math.round(reportData.totalExpense / 30))}원</div>
+                                    <p className="text-[10px] text-muted-foreground font-black mt-2 bg-muted/50 w-fit px-2 py-0.5 rounded uppercase">일 평균 추산 (DAILY AVERAGE EST.)</p>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="glass-panel border-none shadow-none group transition-all">
+                                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                                    <CardTitle className="text-xs font-black text-amber-500 uppercase tracking-widest">최다 지출 카테고리</CardTitle>
+                                    <PieChart className="h-4 w-4 text-amber-500" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-3xl font-black text-foreground italic tracking-tighter truncate">{reportData.topCategory}</div>
+                                    <p className="text-[10px] text-muted-foreground font-black mt-2 bg-muted/50 w-fit px-2 py-0.5 rounded uppercase">최대 지출 항목 (PRIMARY COST DRIVER)</p>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        <div className="grid gap-6 md:grid-cols-2">
+                            <Card className="border-none bg-muted/20">
+                                <CardHeader>
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">지출 비율 분석 ({selectedMonth})</p>
+                                    <CardTitle className="text-foreground italic font-black text-xl">카테고리별 지출 분석</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-4xl font-black text-foreground italic mb-6 tracking-tighter">
                                         {reportData.totalExpense.toLocaleString()}<span className="text-sm font-bold ml-1 opacity-50">원</span>
                                     </div>
-                                    <div className="space-y-4 pt-2 border-t border-white/5">
+                                    <div className="space-y-4 pt-2 border-t border-border">
                                         {Object.entries(reportData.byCategory)
                                             .sort((a, b) => Number(b[1]) - Number(a[1]))
                                             .map(([name, amount]) => (
                                                 <div key={name} className="flex items-center gap-4 text-xs font-black">
-                                                    <span className="w-24 shrink-0 text-slate-500 uppercase tracking-tighter truncate">
+                                                    <span className="w-24 shrink-0 text-muted-foreground uppercase tracking-tighter truncate">
                                                         {name}
                                                     </span>
-
-                                                    <div className="flex-1 h-1.5 bg-slate-950 rounded-full overflow-hidden">
+                                                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                                                         <div
                                                             className="h-full bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all duration-1000 ease-out"
                                                             style={{ width: `${(amount / (reportData.totalExpense || 1)) * 100}%` }}
                                                         />
                                                     </div>
-
-                                                    <span className="w-24 shrink-0 text-right text-white italic">
+                                                    <span className="w-24 shrink-0 text-right text-foreground italic">
                                                         {amount.toLocaleString()}원
                                                     </span>
                                                 </div>
@@ -379,7 +416,7 @@ export default function ExpensesPage() {
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-indigo-600 border-none shadow-2xl shadow-indigo-500/20 relative overflow-hidden group">
+                            <Card className="bg-indigo-600 border-none shadow-2xl shadow-indigo-500/20 relative overflow-hidden group rounded-3xl">
                                 <div className="absolute top-0 right-0 p-12 bg-white/10 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-white/20 transition-all duration-500" />
                                 <CardHeader>
                                     <div className="flex items-center gap-2 mb-1">
@@ -395,12 +432,10 @@ export default function ExpensesPage() {
                                             {dashboardLoading ? "불러오는 중..." : `${Math.round(summary.estimatedProfit).toLocaleString()}원`}
                                         </div>
                                     </div>
-
                                     <div className="flex justify-between items-center text-xs text-white uppercase font-black border-t border-white/10 pt-6">
                                         <span className="opacity-70 tracking-widest">예상 마진율</span>
                                         <span className="text-xl italic text-emerald-300">{summary.avgMarginRate}%</span>
                                     </div>
-
                                     <Link href="/analysis/profit" className="block">
                                         <Button className="w-full bg-white text-indigo-600 hover:bg-slate-50 font-black text-[10px] uppercase tracking-widest h-14 rounded-2xl shadow-xl">
                                             상세 분석 시뮬레이션 이동 <ChevronRight className="ml-2 h-4 w-4" />
@@ -412,7 +447,6 @@ export default function ExpensesPage() {
                     </div>
                 )}
 
-                {/* MODALS */}
                 <AddCategoryDialog
                     isOpen={isAddCategoryOpen}
                     onClose={() => setIsAddCategoryOpen(false)}
@@ -479,7 +513,7 @@ function AddRecordDialog({ isOpen, onClose, categories, onSubmit }: any) {
         if (!catId) return alert("항목을 선택하세요")
         if (!amount) return alert("금액을 입력하세요")
         onSubmit(date, catId, Number(amount), memo)
-        setAmount(""); setMemo(""); // Keep date/catId for convenience?
+        setAmount(""); setMemo("");
     }
 
     return (

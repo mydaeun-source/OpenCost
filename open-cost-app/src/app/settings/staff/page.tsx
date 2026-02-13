@@ -126,106 +126,106 @@ export default function StaffManagementPage() {
     return (
         <AppLayout>
             <div className="space-y-6">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-black text-white tracking-tight">직원 관리</h1>
-                        <p className="text-slate-400 font-medium">{activeStore?.name || "사업장"}의 운영 팀을 관리합니다.</p>
+                        <h1 className="text-3xl font-black text-foreground tracking-tighter italic uppercase">운영진 관리 (STAFF PROTOCOL)</h1>
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-1 ml-0.5">{activeStore?.name || "ENTITY"} 운영 팀을 관리합니다.</p>
                     </div>
                     <Button
                         onClick={() => setIsInviting(true)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl px-6 py-3 flex items-center gap-2"
+                        className="bg-primary hover:bg-primary/90 text-white font-black rounded-xl px-8 h-12 flex items-center gap-2 shadow-lg shadow-primary/20 transition-all uppercase text-[10px] tracking-widest"
                     >
-                        <UserPlus className="h-5 w-5" />
-                        직원 초대
+                        <UserPlus className="h-4 w-4" />
+                        새 운영진 등록 (PROVISION)
                     </Button>
                 </div>
 
                 {isInviting && (
                     <CollapsibleCard
                         title="운영진 초대"
-                        icon={<Mail className="h-6 w-6 text-primary" />}
+                        icon={<Mail className="h-4 w-4 text-primary" />}
                         storageKey="staff-invite-form"
                     >
-                        <div className="p-6 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">계정 이메일</label>
+                        <div className="p-8 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-60">Authentication: Email</label>
                                     <input
                                         type="email"
                                         value={inviteEmail}
                                         onChange={(e) => setInviteEmail(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                                        placeholder="invite@example.com"
+                                        className="w-full bg-muted/30 border border-border rounded-2xl px-5 py-4 text-foreground font-black tracking-tight focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:opacity-30"
+                                        placeholder="invite@open-cost.com"
                                     />
                                 </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">역할 설정</label>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-60">Security Level: Role</label>
                                     <select
                                         value={inviteRole}
                                         onChange={(e) => setInviteRole(e.target.value as any)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                                        className="w-full bg-muted/30 border border-border rounded-2xl px-5 py-4 text-foreground font-black tracking-tight focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer"
                                     >
-                                        <option value="manager" className="bg-slate-900">매니저 (수정 권한)</option>
-                                        <option value="staff" className="bg-slate-900">일반 직원 (조회 권한)</option>
+                                        <option value="manager" className="bg-card text-foreground">MANAGER (Full R/W Access)</option>
+                                        <option value="staff" className="bg-card text-foreground">STAFF (Read-Only Access)</option>
                                     </select>
                                 </div>
                             </div>
-                            <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
-                                <Button onClick={() => setIsInviting(false)} className="bg-white/5 hover:bg-white/10 text-white font-bold rounded-2xl px-6">취소</Button>
-                                <Button onClick={handleInvite} className="bg-primary hover:bg-primary/90 text-white font-bold rounded-2xl px-8">초대장 발송</Button>
+                            <div className="flex justify-end gap-3 pt-8 border-t border-border/10">
+                                <Button onClick={() => setIsInviting(false)} variant="ghost" className="text-muted-foreground font-black text-[10px] uppercase tracking-widest h-12 px-6">취소 (Abort)</Button>
+                                <Button onClick={handleInvite} className="bg-primary text-white font-black text-[10px] uppercase tracking-widest h-12 px-10 shadow-lg shadow-primary/20">초대 발송 (DISPATCH)</Button>
                             </div>
                         </div>
                     </CollapsibleCard>
                 )}
 
-                <div className="bg-black/20 border border-white/5 rounded-[2.5rem] overflow-hidden">
-                    <div className="p-8">
+                <div className="glass-panel border-none rounded-[3rem] bg-card overflow-hidden">
+                    <div className="p-10">
                         {loading ? (
-                            <div className="text-center py-20 text-slate-500 font-bold">로딩 중...</div>
+                            <div className="text-center py-24 text-muted-foreground font-black uppercase tracking-[0.2em] italic opacity-40 animate-pulse">Initializing Staff Records...</div>
                         ) : staff.length === 0 ? (
-                            <div className="text-center py-20">
-                                <Users className="h-16 w-16 text-slate-700 mx-auto mb-4" />
-                                <p className="text-slate-500 font-bold">등록된 직원이 없습니다.</p>
+                            <div className="text-center py-24">
+                                <Users className="h-20 w-20 text-muted-foreground mx-auto mb-6 opacity-20" />
+                                <p className="text-muted-foreground font-black uppercase tracking-widest text-xs opacity-50 italic">No staff members identified for this entity.</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
                                 {staff.map(member => (
                                     <div
                                         key={member.id}
-                                        className="flex items-center justify-between p-6 bg-white/5 hover:bg-white/10 rounded-3xl border border-transparent transition-all hover:border-white/10 group"
+                                        className="flex items-center justify-between p-7 bg-muted/20 hover:bg-muted/40 rounded-[2rem] border border-border/50 transition-all group"
                                     >
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-6">
                                             <div className={cn(
-                                                "h-12 w-12 rounded-2xl flex items-center justify-center",
-                                                member.role === 'owner' ? "bg-amber-500/20 text-amber-500" :
-                                                    member.role === 'manager' ? "bg-blue-500/20 text-blue-500" :
-                                                        "bg-slate-500/20 text-slate-400"
+                                                "h-14 w-14 rounded-2xl flex items-center justify-center border shadow-inner transition-all",
+                                                member.role === 'owner' ? "bg-amber-500/10 border-amber-500/20 text-amber-500" :
+                                                    member.role === 'manager' ? "bg-indigo-500/10 border-indigo-500/20 text-primary" :
+                                                        "bg-muted border-border/50 text-muted-foreground"
                                             )}>
-                                                {member.role === 'owner' ? <Shield className="h-6 w-6" /> : <User className="h-6 w-6" />}
+                                                {member.role === 'owner' ? <Shield className="h-7 w-7" /> : <User className="h-7 w-7" />}
                                             </div>
                                             <div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-bold text-white uppercase tracking-tight">
-                                                        {member.profiles?.full_name || "이름 미설정"}
+                                                <div className="flex items-center gap-3">
+                                                    <span className="font-black text-foreground italic uppercase tracking-tighter text-lg">
+                                                        {member.profiles?.full_name || "NOT SPECIFIED"}
                                                     </span>
                                                     <span className={cn(
-                                                        "text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter",
-                                                        member.role === 'owner' ? "bg-amber-500/20 text-amber-500" :
-                                                            member.role === 'manager' ? "bg-blue-500/20 text-blue-500" :
-                                                                "bg-white/10 text-slate-400"
+                                                        "text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border",
+                                                        member.role === 'owner' ? "bg-amber-500/10 border-amber-500/20 text-amber-500" :
+                                                            member.role === 'manager' ? "bg-indigo-500/10 border-indigo-500/20 text-primary" :
+                                                                "bg-muted border-border/50 text-muted-foreground"
                                                     )}>
                                                         {member.role}
                                                     </span>
                                                 </div>
-                                                <p className="text-xs text-slate-400 font-bold mb-0.5">{member.profiles?.email}</p>
-                                                <p className="text-[10px] text-slate-500 font-medium tracking-tighter uppercase">Joined: {new Date(member.created_at).toLocaleDateString()}</p>
+                                                <p className="text-xs text-muted-foreground font-black tracking-tight mt-0.5 opacity-60 italic">{member.profiles?.email}</p>
+                                                <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] mt-1.5 opacity-40">COMMENCED: {new Date(member.created_at).toLocaleDateString()}</p>
                                             </div>
                                         </div>
 
                                         {member.role !== 'owner' && (
                                             <button
                                                 onClick={() => handleRemove(member.id)}
-                                                className="p-3 hover:bg-red-500/20 rounded-xl text-slate-500 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                                                className="p-4 hover:bg-rose-500/10 rounded-2xl text-muted-foreground hover:text-rose-500 transition-all opacity-0 group-hover:opacity-100"
                                             >
                                                 <Trash2 className="h-5 w-5" />
                                             </button>

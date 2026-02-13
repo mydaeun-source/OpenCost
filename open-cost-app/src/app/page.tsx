@@ -24,6 +24,7 @@ import {
   RotateCcw
 } from "lucide-react"
 
+import { useStore } from "@/contexts/StoreContext"
 const DEFAULT_WIDGET_ORDER = [
   "dash-insights",
   "dash-inventory",
@@ -35,8 +36,11 @@ const DEFAULT_WIDGET_ORDER = [
   "dash-recent"
 ]
 
+
+
 export default function DashboardPage() {
   const { summary, recentIngredients, topMenus, chartData, loading, refresh } = useDashboard()
+  const { activeStore, isAggregatedView } = useStore()
   const [widgetOrder, setWidgetOrder] = useState<string[]>([])
   const [draggedWidgetId, setDraggedWidgetId] = useState<string | null>(null)
 
@@ -96,7 +100,7 @@ export default function DashboardPage() {
         return (
           <CollapsibleCard
             key={id}
-            title="경영 인사이트 (AI Insights)"
+            title="경영 인사이트 (AI 분석)"
             description="AI가 분석한 현재 매장의 핵심 전략 리포트입니다."
             icon={<Lightbulb className="h-4 w-4" />}
             storageKey="dash-insights"
@@ -113,7 +117,7 @@ export default function DashboardPage() {
         return (
           <CollapsibleCard
             key={id}
-            title="재고 분석 (Inventory Analytics)"
+            title="재고 분석 (인벤토리)"
             description="로스율 및 소진 예측을 통한 정밀 재료 관리입니다."
             icon={<Package className="h-4 w-4" />}
             storageKey="dash-inventory"
@@ -134,7 +138,7 @@ export default function DashboardPage() {
         return (
           <CollapsibleCard
             key={id}
-            title="구매 최적화 (Sourcing Optimization)"
+            title="구매 최적화 (소싱 전략)"
             description="시장 시세 기반 구매 전략 제안입니다."
             icon={<Zap className="h-4 w-4" />}
             storageKey="dash-sourcing"
@@ -154,7 +158,7 @@ export default function DashboardPage() {
         return (
           <CollapsibleCard
             key={id}
-            title="핵심 요약 지표 (Key Metrics)"
+            title="핵심 요약 지표 (원가/수익)"
             description="주요 원가 및 수익 지표 현황입니다."
             icon={<LayoutDashboard className="h-4 w-4" />}
             storageKey="dash-summary"
@@ -250,22 +254,22 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">대시보드</h1>
-            <p className="text-muted-foreground mt-1 text-sm md:text-base">
-              현재 매장의 원가 및 메뉴 현황입니다.
+            <h1 className="text-3xl font-black tracking-tighter">대시보드</h1>
+            <p className="text-muted-foreground mt-1 text-xs font-black uppercase tracking-widest leading-relaxed">
+              ({isAggregatedView ? "전체 매장" : (activeStore?.name || "매장")})의 원가 및 메뉴 현황 리포트
             </p>
           </div>
           <div className="flex items-center gap-4">
             <button
               onClick={resetOrder}
-              className="flex items-center gap-1 text-xs font-black text-slate-400 hover:text-indigo-500 transition-colors uppercase tracking-widest"
+              className="flex items-center gap-1 text-[10px] font-black text-muted-foreground hover:text-foreground transition-colors uppercase tracking-[0.2em] border-b border-transparent hover:border-foreground"
               title="순서 초기화"
             >
-              <RotateCcw className="h-3.5 w-3.5" /> 배치 초기화
+              <RotateCcw className="h-3 w-3" /> 배치 초기화
             </button>
             <button
               onClick={refresh}
-              className="text-sm font-black text-primary hover:underline disabled:opacity-50"
+              className="h-10 px-4 rounded-xl text-xs font-black bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all uppercase tracking-widest"
               disabled={loading}
             >
               {loading ? "업데이트 중..." : "새로고침"}

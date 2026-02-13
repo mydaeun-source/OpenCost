@@ -9,7 +9,7 @@ export function BottomNav() {
     const pathname = usePathname()
 
     return (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 border-t border-white/5 bg-black/20 backdrop-blur-xl z-50 pb-safe">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 border-t border-border bg-card/80 backdrop-blur-xl z-50 pb-safe">
             <div className="flex justify-around items-center h-16">
                 {NAV_ITEMS.filter(item => ["대시보드", "판매 (POS)", "매입 관리", "순이익 분석", "설정"].includes(item.label)).map((item) => {
                     const isActive = pathname === item.href
@@ -20,15 +20,15 @@ export function BottomNav() {
                             className={cn(
                                 "flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-300 relative overflow-hidden",
                                 isActive
-                                    ? "text-white"
-                                    : "text-slate-300 hover:text-white"
+                                    ? "text-primary dark:text-white"
+                                    : "text-muted-foreground hover:text-foreground"
                             )}
                         >
                             {isActive && (
                                 <div className="absolute top-0 w-8 h-1 bg-primary shadow-[0_0_10px_rgba(34,211,238,0.8)] rounded-b-full" />
                             )}
-                            <item.icon className={cn("h-5 w-5 transition-transform duration-300", isActive ? "scale-110 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" : "")} />
-                            <span className={cn("text-xs font-black tracking-tight mt-0.5", isActive ? "text-white" : "text-slate-300")}>{item.label}</span>
+                            <item.icon className={cn("h-5 w-5 transition-transform duration-300", isActive ? "scale-110 drop-shadow-[0_0_5px_rgba(var(--primary),0.5)]" : "")} />
+                            <span className={cn("text-xs font-black tracking-tight mt-0.5", isActive ? "text-primary dark:text-white" : "text-muted-foreground")}>{item.label}</span>
                         </Link>
                     )
                 })}

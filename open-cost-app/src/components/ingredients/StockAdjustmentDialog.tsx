@@ -61,7 +61,7 @@ export function StockAdjustmentDialog({ isOpen, onClose, ingredient, onAdjust }:
                         onClick={() => { setType('purchase'); if (amount < 0) setAmount(Math.abs(amount)); }}
                         className={cn(
                             "flex flex-col items-center gap-2 p-3 rounded-lg border transition-all",
-                            type === 'purchase' ? "bg-primary/10 border-primary text-primary" : "border-white/5 bg-white/5 text-muted-foreground hover:bg-white/10"
+                            type === 'purchase' ? "bg-primary/10 border-primary text-primary" : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
                         )}
                     >
                         <ShoppingCart className="h-5 w-5" />
@@ -71,7 +71,7 @@ export function StockAdjustmentDialog({ isOpen, onClose, ingredient, onAdjust }:
                         onClick={() => { setType('spoilage'); if (amount > 0) setAmount(-amount); }}
                         className={cn(
                             "flex flex-col items-center gap-2 p-3 rounded-lg border transition-all",
-                            type === 'spoilage' ? "bg-red-500/10 border-red-500 text-red-500" : "border-white/5 bg-white/5 text-muted-foreground hover:bg-white/10"
+                            type === 'spoilage' ? "bg-red-500/10 border-red-500 text-red-500" : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
                         )}
                     >
                         <Trash2 className="h-5 w-5" />
@@ -81,7 +81,7 @@ export function StockAdjustmentDialog({ isOpen, onClose, ingredient, onAdjust }:
                         onClick={() => setType('correction')}
                         className={cn(
                             "flex flex-col items-center gap-2 p-3 rounded-lg border transition-all",
-                            type === 'correction' ? "bg-amber-500/10 border-amber-500 text-amber-500" : "border-white/5 bg-white/5 text-muted-foreground hover:bg-white/10"
+                            type === 'correction' ? "bg-amber-500/10 border-amber-500 text-amber-500" : "border-border bg-muted/50 text-muted-foreground hover:bg-muted"
                         )}
                     >
                         <Edit3 className="h-5 w-5" />
@@ -105,8 +105,8 @@ export function StockAdjustmentDialog({ isOpen, onClose, ingredient, onAdjust }:
                             autoFocus
                         />
                         <div className="flex flex-col gap-1">
-                            <Button variant="outline" size="sm" className="h-7 px-3 text-xs font-black border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700" onClick={() => setAmount(prev => prev + 1)}>+1</Button>
-                            <Button variant="outline" size="sm" className="h-7 px-3 text-xs font-black border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700" onClick={() => setAmount(prev => prev - 1)}>-1</Button>
+                            <Button variant="outline" size="sm" className="h-7 px-3 text-xs font-black border-border bg-muted text-foreground hover:bg-muted/80" onClick={() => setAmount(prev => prev + 1)}>+1</Button>
+                            <Button variant="outline" size="sm" className="h-7 px-3 text-xs font-black border-border bg-muted text-foreground hover:bg-muted/80" onClick={() => setAmount(prev => prev - 1)}>-1</Button>
                         </div>
                     </div>
                 </div>

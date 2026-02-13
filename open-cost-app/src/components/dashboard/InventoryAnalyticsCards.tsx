@@ -42,7 +42,7 @@ export function InventoryAnalyticsCards({ lossReport, depletionPredictions, noWr
                         </div>
                     )}
                     {topLossItems.length === 0 ? (
-                        <div className="py-4 text-center text-slate-400 text-xs font-bold italic">
+                        <div className="py-4 text-center text-muted-foreground text-xs font-bold italic">
                             감지된 특이 로스가 없습니다.
                         </div>
                     ) : (
@@ -86,7 +86,7 @@ export function InventoryAnalyticsCards({ lossReport, depletionPredictions, noWr
                         </div>
                     )}
                     {criticalStock.length === 0 ? (
-                        <div className="py-4 text-center text-slate-400 text-xs font-bold italic">
+                        <div className="py-4 text-center text-muted-foreground text-xs font-bold italic">
                             소진 예정 품목 없음
                         </div>
                     ) : (

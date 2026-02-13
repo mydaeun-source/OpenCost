@@ -9,6 +9,7 @@ import { ko } from "date-fns/locale"
 import { SalesInsert, upsertSalesRecord, deleteSalesRecord } from "@/lib/api/sales"
 import { Loader2, Trash2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { useStore } from "@/contexts/StoreContext"
 
 interface SalesDialogProps {
     isOpen: boolean
@@ -21,6 +22,7 @@ interface SalesDialogProps {
 }
 
 export function SalesDialog({ isOpen, onClose, date, initialAmount = 0, initialMemo = "", recordId, onSaved }: SalesDialogProps) {
+    const { activeStore } = useStore()
     const [amount, setAmount] = useState("")
     const [memo, setMemo] = useState("")
     const [loading, setLoading] = useState(false)
@@ -36,6 +38,10 @@ export function SalesDialog({ isOpen, onClose, date, initialAmount = 0, initialM
 
     const handleSave = async () => {
         if (!amount && !recordId) return
+        if (!activeStore) {
+            alert("선택된 매장이 없습니다.")
+            return
+        }
 
         setLoading(true)
         try {
@@ -47,6 +53,7 @@ export function SalesDialog({ isOpen, onClose, date, initialAmount = 0, initialM
 
             const payload: SalesInsert = {
                 user_id: user.id,
+                store_id: activeStore.id, // Added store_id
                 sales_date: format(date, "yyyy-MM-dd"),
                 daily_revenue: Number(amount) || 0,
                 memo: memo,
@@ -54,7 +61,8 @@ export function SalesDialog({ isOpen, onClose, date, initialAmount = 0, initialM
             }
             if (recordId) payload.id = recordId
 
-            await upsertSalesRecord(payload)
+            // Cast payload to satisfy the intersection type requirement in upsertSalesRecord
+            await upsertSalesRecord(payload as SalesInsert & { store_id: string })
             onSaved()
             onClose()
         } catch (e) {

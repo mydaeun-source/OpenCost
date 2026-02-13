@@ -92,18 +92,18 @@ export default function StoreManagementPage() {
     return (
         <AppLayout>
             <div className="space-y-10">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-black text-white tracking-tight">사업장 및 지점 관리</h1>
-                        <p className="text-slate-400 font-medium whitespace-nowrap">법인/사업장(Headquarters) 하위의 지점(Branch)들을 계층적으로 관리합니다.</p>
+                        <h1 className="text-3xl font-black text-foreground tracking-tighter italic uppercase">사업 구조 관리 (BUSINESS ARCHITECTURE)</h1>
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-1 ml-0.5">법인/사업장 하위의 지점들을 계층적으로 관리합니다.</p>
                     </div>
                     {role === 'super_admin' && (
                         <Button
                             onClick={() => { setIsAddingBiz(true); setEditingBizId(null); setBizFormData({ name: "", registration_number: "" }) }}
-                            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl px-6 py-3 flex items-center gap-2"
+                            className="bg-primary hover:bg-primary/90 text-white font-black rounded-xl px-8 h-12 flex items-center gap-2 shadow-lg shadow-primary/20 transition-all uppercase text-[10px] tracking-widest"
                         >
-                            <Building2 className="h-5 w-5" />
-                            신규 사업장 등록
+                            <Building2 className="h-4 w-4" />
+                            새 사업장 등록 (PROVISION)
                         </Button>
                     )}
                 </div>
@@ -112,29 +112,35 @@ export default function StoreManagementPage() {
                 {isAddingBiz && role === 'super_admin' && (
                     <CollapsibleCard
                         title="사업장(법인) 정보 입력"
-                        icon={<Building2 className="text-primary" />}
+                        icon={<Building2 className="text-primary h-4 w-4" />}
                         storageKey="biz-form"
                     >
-                        <div className="p-6 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <input
-                                    type="text"
-                                    value={bizFormData.name}
-                                    onChange={(e) => setBizFormData({ ...bizFormData, name: e.target.value })}
-                                    className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white"
-                                    placeholder="사업장(법인) 명칭"
-                                />
-                                <input
-                                    type="text"
-                                    value={bizFormData.registration_number}
-                                    onChange={(e) => setBizFormData({ ...bizFormData, registration_number: e.target.value })}
-                                    className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white"
-                                    placeholder="법인/사업자 등록번호"
-                                />
+                        <div className="p-8 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Entity Name</label>
+                                    <input
+                                        type="text"
+                                        value={bizFormData.name}
+                                        onChange={(e) => setBizFormData({ ...bizFormData, name: e.target.value })}
+                                        className="w-full bg-muted/30 border border-border rounded-2xl px-5 py-4 text-foreground font-black tracking-tight focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                        placeholder="사업장(법인) 명칭"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Registration #</label>
+                                    <input
+                                        type="text"
+                                        value={bizFormData.registration_number}
+                                        onChange={(e) => setBizFormData({ ...bizFormData, registration_number: e.target.value })}
+                                        className="w-full bg-muted/30 border border-border rounded-2xl px-5 py-4 text-foreground font-black tracking-tight focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                        placeholder="법인/사업자 등록번호"
+                                    />
+                                </div>
                             </div>
-                            <div className="flex justify-end gap-2">
-                                <Button onClick={() => setIsAddingBiz(false)} className="bg-white/5 text-slate-400">취소</Button>
-                                <Button onClick={handleSaveBiz} className="bg-primary text-white px-8">저장</Button>
+                            <div className="flex justify-end gap-3 pt-6 border-t border-border/10">
+                                <Button onClick={() => setIsAddingBiz(false)} variant="ghost" className="text-muted-foreground font-black text-[10px] uppercase tracking-widest rounded-xl px-6 h-12">취소 (Cancel)</Button>
+                                <Button onClick={handleSaveBiz} className="bg-primary text-white font-black text-[10px] uppercase tracking-widest rounded-xl px-10 h-12 shadow-lg shadow-primary/20">사업장 등록 (COMMIT)</Button>
                             </div>
                         </div>
                     </CollapsibleCard>
@@ -143,18 +149,18 @@ export default function StoreManagementPage() {
                 {/* Business & Branch List */}
                 <div className="space-y-8">
                     {!loading && businesses.length === 0 && (
-                        <div className="text-center py-20 bg-white/5 rounded-[3rem] border border-white/5">
-                            <Building2 className="h-16 w-16 text-slate-600 mx-auto mb-4" />
-                            <p className="text-slate-400 font-bold">등록된 사업장이 없습니다.</p>
+                        <div className="text-center py-32 bg-muted/20 rounded-[3rem] border border-border/50 border-dashed">
+                            <Building2 className="h-20 w-20 text-muted-foreground mx-auto mb-6 opacity-20" />
+                            <p className="text-muted-foreground font-black uppercase tracking-widest text-xs opacity-50 italic">No registered entities found in system core.</p>
                         </div>
                     )}
 
                     {businesses.map(biz => (
                         <div key={biz.id} className="space-y-4">
-                            <div className="flex justify-between items-end px-4">
+                            <div className="flex justify-between items-end px-6 border-l-4 border-primary/30">
                                 <div>
-                                    <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                                        <Building2 className="h-6 w-6 text-indigo-400" />
+                                    <h2 className="text-2xl font-black text-foreground flex items-center gap-3 italic uppercase tracking-tighter">
+                                        <Building2 className="h-7 w-7 text-primary" />
                                         {biz.name}
                                         <Button
                                             variant="ghost"
@@ -164,12 +170,12 @@ export default function StoreManagementPage() {
                                                 setIsAddingBiz(true)
                                                 setBizFormData({ name: biz.name, registration_number: biz.registration_number || "" })
                                             }}
-                                            className="text-slate-500 hover:text-indigo-400 p-0 h-auto"
+                                            className="text-muted-foreground hover:text-primary p-0 h-auto transition-colors"
                                         >
                                             <Edit2 className="h-4 w-4" />
                                         </Button>
                                     </h2>
-                                    <p className="text-slate-500 text-sm font-bold">등록번호: {biz.registration_number || "미입력"}</p>
+                                    <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest mt-1 opacity-60">REGISTRY: {biz.registration_number || "NOT SPECIFIED"}</p>
                                 </div>
                                 <Button
                                     onClick={() => {
@@ -177,66 +183,78 @@ export default function StoreManagementPage() {
                                         setEditingStoreId(null);
                                         setStoreFormData({ name: "", business_number: "", address: "", contact: "", monthly_fixed_cost: 0, monthly_target_sales_count: 1000 })
                                     }}
-                                    className="bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold px-4 rounded-xl flex items-center gap-2"
+                                    className="bg-muted/50 hover:bg-primary/10 text-muted-foreground hover:text-primary text-[9px] font-black uppercase tracking-widest px-6 h-10 rounded-xl border border-border/50 transition-all flex items-center gap-2"
                                 >
-                                    <Plus className="h-4 w-4" />
-                                    이 사업장에 지점 추가
+                                    <Plus className="h-3.5 w-3.5" />
+                                    새 지점 추가 (DEPLOY BRANCH)
                                 </Button>
                             </div>
 
                             {/* Branch Creation Form (Inline for the business) */}
                             {isAddingBranch === biz.id && (
-                                <div className="mx-4 p-8 bg-indigo-600/5 border border-indigo-500/20 rounded-[2.5rem] animate-in fade-in slide-in-from-top-4">
-                                    <h3 className="text-lg font-black text-white mb-6">[{biz.name}] 하위에 새로운 지점 등록</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-4">
-                                            <input
-                                                type="text"
-                                                placeholder="지점 명칭 (예: 연남점)"
-                                                value={storeFormData.name}
-                                                onChange={(e) => setStoreFormData({ ...storeFormData, name: e.target.value })}
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="지점 주소"
-                                                value={storeFormData.address}
-                                                onChange={(e) => setStoreFormData({ ...storeFormData, address: e.target.value })}
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white outline-none"
-                                            />
+                                <div className="mx-6 p-10 bg-primary/5 border border-primary/20 rounded-[2.5rem] animate-in fade-in slide-in-from-top-4 glass-panel">
+                                    <h3 className="text-xl font-black text-foreground mb-8 italic uppercase tracking-tighter">[{biz.name}] 하위에 새로운 지점 등록</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-60">Branch Detail: Name</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="지점 명칭 (예: 연남점)"
+                                                    value={storeFormData.name}
+                                                    onChange={(e) => setStoreFormData({ ...storeFormData, name: e.target.value })}
+                                                    className="w-full bg-card border border-border rounded-2xl px-5 py-4 text-foreground font-black tracking-tight focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-60">Branch Detail: Address</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="지점 주소"
+                                                    value={storeFormData.address}
+                                                    onChange={(e) => setStoreFormData({ ...storeFormData, address: e.target.value })}
+                                                    className="w-full bg-card border border-border rounded-2xl px-5 py-4 text-foreground font-black tracking-tight focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="space-y-4">
-                                            <NumericInput
-                                                value={storeFormData.monthly_fixed_cost}
-                                                onChange={(v) => setStoreFormData({ ...storeFormData, monthly_fixed_cost: v })}
-                                                className="w-full"
-                                            />
-                                            <NumericInput
-                                                value={storeFormData.monthly_target_sales_count}
-                                                onChange={(v) => setStoreFormData({ ...storeFormData, monthly_target_sales_count: v })}
-                                                className="w-full"
-                                            />
+                                        <div className="space-y-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-60">Fixed Operating Cost (Monthly)</label>
+                                                <NumericInput
+                                                    value={storeFormData.monthly_fixed_cost}
+                                                    onChange={(v) => setStoreFormData({ ...storeFormData, monthly_fixed_cost: v })}
+                                                    className="w-full"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 opacity-60">Target Transaction Volume</label>
+                                                <NumericInput
+                                                    value={storeFormData.monthly_target_sales_count}
+                                                    onChange={(v) => setStoreFormData({ ...storeFormData, monthly_target_sales_count: v })}
+                                                    className="w-full"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-white/5">
-                                        <Button onClick={() => setIsAddingBranch(null)} className="bg-transparent text-slate-400">취소</Button>
-                                        <Button onClick={() => handleSaveBranch(biz.id)} className="bg-primary text-white px-8">지점 저장</Button>
+                                    <div className="flex justify-end gap-3 mt-10 pt-8 border-t border-border/10">
+                                        <Button onClick={() => setIsAddingBranch(null)} variant="ghost" className="text-muted-foreground font-black text-[10px] uppercase tracking-widest h-12 px-6">취소 (Abort)</Button>
+                                        <Button onClick={() => handleSaveBranch(biz.id)} className="bg-primary text-white font-black text-[10px] uppercase tracking-widest h-12 px-10 shadow-lg shadow-primary/20">지점 등록 (COMMIT)</Button>
                                     </div>
                                 </div>
                             )}
 
                             {/* Branches Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4 pb-12">
                                 {stores.filter(s => s.business_id === biz.id).map(store => (
                                     <div
                                         key={store.id}
                                         className={cn(
-                                            "relative group p-6 rounded-[2.5rem] border transition-all duration-300",
-                                            activeStore?.id === store.id ? "bg-indigo-600/10 border-primary shadow-lg" : "bg-black/20 border-white/5 hover:border-white/20"
+                                            "relative group p-8 rounded-[3rem] border transition-all duration-500 glass-panel",
+                                            activeStore?.id === store.id ? "bg-primary/10 border-primary/50 shadow-2xl scale-[1.02]" : "bg-card border-border/50 hover:border-primary/30 hover:shadow-xl"
                                         )}
                                     >
-                                        <div className="flex justify-between items-start mb-1">
-                                            <h3 className="text-xl font-black text-white">{store.name}</h3>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h3 className="text-2xl font-black text-foreground italic tracking-tighter uppercase">{store.name}</h3>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -252,21 +270,21 @@ export default function StoreManagementPage() {
                                                         monthly_target_sales_count: store.monthly_target_sales_count || 1000
                                                     })
                                                 }}
-                                                className="text-slate-500 hover:text-indigo-400 p-0 h-auto"
+                                                className="text-muted-foreground hover:text-primary p-0 h-auto transition-colors"
                                             >
                                                 <Edit2 className="h-4 w-4" />
                                             </Button>
                                         </div>
-                                        <p className="text-xs text-slate-500 mb-4">{store.address || "주소 정보 없음"}</p>
+                                        <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-6 opacity-60 truncate">{store.address || "LOCATION NOT SPECIFIED"}</p>
 
-                                        <div className="flex justify-between items-center bg-white/5 rounded-2xl p-4 mb-6">
-                                            <div className="text-center flex-1 border-r border-white/5">
-                                                <p className="text-[10px] font-bold text-slate-500 uppercase">고정비</p>
-                                                <p className="text-sm font-black text-white">₩{store.monthly_fixed_cost?.toLocaleString()}</p>
+                                        <div className="grid grid-cols-2 gap-px bg-border/20 rounded-2xl overflow-hidden border border-border/50 mb-8 backdrop-blur-sm">
+                                            <div className="bg-muted/30 p-4 text-center">
+                                                <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1 opacity-50">Fixed Cost</p>
+                                                <p className="text-sm font-black text-foreground italic tracking-tight">₩{store.monthly_fixed_cost?.toLocaleString()}</p>
                                             </div>
-                                            <div className="text-center flex-1">
-                                                <p className="text-[10px] font-bold text-slate-500 uppercase">목표판매</p>
-                                                <p className="text-sm font-black text-white">{store.monthly_target_sales_count?.toLocaleString()}개</p>
+                                            <div className="bg-muted/30 p-4 text-center">
+                                                <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-1 opacity-50">Target Vol</p>
+                                                <p className="text-sm font-black text-foreground italic tracking-tight">{store.monthly_target_sales_count?.toLocaleString()} UNIT</p>
                                             </div>
                                         </div>
 
@@ -274,11 +292,11 @@ export default function StoreManagementPage() {
                                             onClick={() => setActiveStoreId(store.id)}
                                             disabled={activeStore?.id === store.id}
                                             className={cn(
-                                                "w-full font-bold rounded-2xl h-12",
-                                                activeStore?.id === store.id ? "bg-primary text-white" : "bg-white/5 text-slate-400"
+                                                "w-full font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl h-14 transition-all",
+                                                activeStore?.id === store.id ? "bg-primary text-white shadow-lg shadow-primary/30" : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground border border-border/50"
                                             )}
                                         >
-                                            {activeStore?.id === store.id ? "선택됨" : "지점 선택"}
+                                            {activeStore?.id === store.id ? "현재 선택됨" : "이 지점으로 접속 (AUTHENTICATE)"}
                                         </Button>
                                     </div>
                                 ))}

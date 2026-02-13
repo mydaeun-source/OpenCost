@@ -23,18 +23,18 @@ export function RecentIngredients({ ingredients, noWrapper = false }: RecentIngr
                 ) : (
                     ingredients.map((ing) => (
                         <div key={ing.id} className="flex items-center">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-                                <Package className="h-4 w-4 text-slate-500" />
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
+                                <Package className="h-4 w-4 text-muted-foreground" />
                             </div>
                             <div className="ml-4 space-y-1">
-                                <p className="text-sm font-medium leading-none">{ing.name}</p>
+                                <p className="text-sm font-medium leading-none text-foreground">{ing.name}</p>
                                 <div className="flex items-baseline gap-1">
-                                    <div className="text-sm font-black text-slate-800 dark:text-slate-100">{formatNumber(ing.purchase_price)}원</div>
-                                    <div className="text-xs font-black text-slate-300 italic">/{ing.purchase_unit}</div>
+                                    <div className="text-sm font-black text-foreground">{formatNumber(ing.purchase_price)}원</div>
+                                    <div className="text-xs font-black text-muted-foreground/60 italic">/{ing.purchase_unit}</div>
                                 </div>
                             </div>
-                            <div className="ml-auto font-black text-sm text-indigo-500">
-                                {formatNumber(ing.conversion_factor)}<span className="text-[10px] ml-0.5 text-slate-400">{ing.usage_unit}</span>
+                            <div className="ml-auto font-black text-sm text-primary">
+                                {formatNumber(ing.conversion_factor)}<span className="text-[10px] ml-0.5 text-muted-foreground">{ing.usage_unit}</span>
                             </div>
                         </div>
                     ))

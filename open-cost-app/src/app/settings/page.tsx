@@ -188,71 +188,74 @@ export default function SettingsPage() {
 
                 <div className="grid gap-6">
                     {/* Store & Staff Management Shortcuts */}
+                    {/* Store & Staff Management Shortcuts */}
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        <Card className="border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 cursor-pointer transition-all" onClick={() => window.location.href = '/settings/stores'}>
-                            <CardHeader>
-                                <div className="flex items-center gap-2">
-                                    <Database className="h-5 w-5 text-indigo-500" />
-                                    <CardTitle>사업장(매장) 관리</CardTitle>
+                        <Card className="glass-panel border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 cursor-pointer transition-all group" onClick={() => window.location.href = '/settings/stores'}>
+                            <CardHeader className="p-6">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Database className="h-6 w-6 text-indigo-500" />
+                                    <CardTitle className="text-foreground font-black italic">사업장(매장) 관리</CardTitle>
                                 </div>
-                                <CardDescription>여러 개의 사업장을 등록하고 각 매장별 목표 및 고정비를 설정합니다.</CardDescription>
+                                <CardDescription className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">여러 개의 사업장을 등록하고 각 매장별 목표 및 고정비를 설정합니다.</CardDescription>
                             </CardHeader>
                         </Card>
-                        <Card className="border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 cursor-pointer transition-all" onClick={() => window.location.href = '/settings/staff'}>
-                            <CardHeader>
-                                <div className="flex items-center gap-2">
-                                    <User className="h-5 w-5 text-blue-500" />
-                                    <CardTitle>직원 및 권한 관리</CardTitle>
+                        <Card className="glass-panel border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 cursor-pointer transition-all group" onClick={() => window.location.href = '/settings/staff'}>
+                            <CardHeader className="p-6">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <User className="h-6 w-6 text-blue-500" />
+                                    <CardTitle className="text-foreground font-black italic">직원 및 권한 관리</CardTitle>
                                 </div>
-                                <CardDescription>함께 운영할 관리자와 직원을 초대하고 접근 권한을 관리합니다.</CardDescription>
+                                <CardDescription className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">함께 운영할 관리자와 직원을 초대하고 접근 권한을 관리합니다.</CardDescription>
                             </CardHeader>
                         </Card>
                         {role === 'super_admin' && (
-                            <Card className="border-red-500/30 bg-red-500/5 hover:bg-red-500/10 cursor-pointer transition-all" onClick={() => window.location.href = '/settings/admin'}>
-                                <CardHeader>
-                                    <div className="flex items-center gap-2">
-                                        <ShieldAlert className="h-5 w-5 text-red-500" />
-                                        <CardTitle>Admin Console</CardTitle>
+                            <Card className="glass-panel border-red-500/20 bg-red-500/5 hover:bg-red-500/10 cursor-pointer transition-all group" onClick={() => window.location.href = '/settings/admin'}>
+                                <CardHeader className="p-6">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <ShieldAlert className="h-6 w-6 text-red-500" />
+                                        <CardTitle className="text-foreground font-black italic">개발자 관리 콘솔 (ADMIN)</CardTitle>
                                     </div>
-                                    <CardDescription>시스템 관리자 전용 메뉴입니다. 전체 데이터 및 데모 관리가 가능합니다.</CardDescription>
+                                    <CardDescription className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-relaxed">시스템 관리자 전용 메뉴입니다. 전체 데이터 및 데모 관리가 가능합니다.</CardDescription>
                                 </CardHeader>
                             </Card>
                         )}
                     </div>
 
                     {/* KAMIS API Settings */}
-                    <Card>
-                        <CardHeader>
+                    <Card className="glass-panel border border-border shadow-none overflow-hidden">
+                        <CardHeader className="p-6 border-b border-border bg-muted/30">
                             <div className="flex items-center gap-2">
-                                <Key className="h-5 w-5 text-indigo-500" />
-                                <CardTitle>KAMIS 시장 시세 설정</CardTitle>
+                                <Key className="h-6 w-6 text-indigo-500" />
+                                <CardTitle className="text-foreground font-black italic">KAMIS 시장 시세 설정</CardTitle>
                             </div>
-                            <CardDescription>
+                            <CardDescription className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-relaxed mt-2">
                                 농수산물 유통정보(KAMIS) 오픈 API를 연동하여 전국 평균 시세를 실시간으로 비교합니다.
-                                <a href="https://www.kamis.or.kr/service/price/xml.do?action=interfaceGuide" target="_blank" className="text-indigo-500 hover:underline ml-1">발급 안내</a>
+                                <a href="https://www.kamis.or.kr/service/price/xml.do?action=interfaceGuide" target="_blank" className="text-indigo-600 dark:text-indigo-400 hover:underline ml-2">발급 안내</a>
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">KAMIS API Key (인증키)</label>
+                        <CardContent className="p-6 space-y-6">
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <div className="space-y-3">
+                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">KAMIS API Key (인증키)</label>
                                     <Input
                                         placeholder="인증키를 입력하세요"
+                                        className="h-12 bg-muted/50 border-border focus:ring-indigo-500/20 text-foreground font-bold"
                                         value={kamisKey}
                                         onChange={(e) => setKamisKey(e.target.value)}
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">KAMIS User ID (요청자 ID)</label>
+                                <div className="space-y-3">
+                                    <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">KAMIS User ID (요청자 ID)</label>
                                     <Input
                                         placeholder="사용자 ID를 입력하세요"
+                                        className="h-12 bg-muted/50 border-border focus:ring-indigo-500/20 text-foreground font-bold"
                                         value={kamisId}
                                         onChange={(e) => setKamisId(e.target.value)}
                                     />
                                 </div>
                             </div>
-                            <div className="flex justify-end">
-                                <Button onClick={saveKamisSettings} variant="outline" className="border-indigo-500 text-indigo-500 hover:bg-indigo-500/10">
+                            <div className="flex justify-end pt-2">
+                                <Button onClick={saveKamisSettings} variant="outline" className="h-12 px-8 font-black uppercase tracking-widest text-xs border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 transition-all">
                                     API 설정 저장
                                 </Button>
                             </div>
@@ -261,26 +264,26 @@ export default function SettingsPage() {
 
                     {/* 2. System Management (Data Seeding) - Restricted to Super Admin Only */}
                     {role === 'super_admin' && (
-                        <Card>
-                            <CardHeader>
+                        <Card className="glass-panel border border-border shadow-none overflow-hidden">
+                            <CardHeader className="p-6 border-b border-border bg-muted/30">
                                 <div className="flex items-center gap-2">
-                                    <Database className="h-5 w-5 text-primary" />
-                                    <CardTitle>데이터 관리</CardTitle>
+                                    <Database className="h-6 w-6 text-foreground" />
+                                    <CardTitle className="text-foreground font-black italic">데이터 관리</CardTitle>
                                 </div>
+                                <CardDescription className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-2">시스템 데이터 초기화 및 샘플 생성을 관리합니다.</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="font-medium">6개월 샘플 데이터 시뮬레이션 (추천)</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            기본 자료(재료+메뉴)와 함께 <b>지난 6개월간의 매입, 매출, 지출, 재고 로그</b>를 실감나게 생성합니다.
+                            <CardContent className="p-6 space-y-8">
+                                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                                    <div className="flex-1 space-y-2">
+                                        <p className="font-black text-foreground italic">6개월 샘플 데이터 시뮬레이션 (추천)</p>
+                                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-tight leading-relaxed">
+                                            기본 자료(재료+메뉴)와 함께 <b className="text-indigo-600 dark:text-indigo-400">지난 6개월간의 매입, 매출, 지출, 재고 로그</b>를 실감나게 생성합니다.
                                         </p>
                                     </div>
-                                    <div className="flex flex-col gap-2">
+                                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                                         <Button
                                             variant="outline"
                                             onClick={async () => {
-                                                // activeStore is captured from component scope
                                                 if (!activeStore) {
                                                     alert("선택된 지점이 없습니다.")
                                                     return
@@ -301,7 +304,7 @@ export default function SettingsPage() {
                                                 }
                                             }}
                                             disabled={seedLoading}
-                                            className="border-indigo-500/50 text-indigo-400 hover:bg-indigo-500/10 font-bold"
+                                            className="h-12 px-6 border-indigo-500/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 font-black text-xs uppercase tracking-widest flex-1 transition-all"
                                         >
                                             {seedLoading ? "생성 중..." : "① 현재 지점 6개월 샘플 생성"}
                                         </Button>
@@ -310,9 +313,9 @@ export default function SettingsPage() {
                                             variant="outline"
                                             onClick={handleGenerateAllData}
                                             disabled={seedLoading}
-                                            className="border-rose-500/50 text-rose-500 hover:bg-rose-500/10 font-bold"
+                                            className="h-12 px-6 border-rose-500/50 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 font-black text-xs uppercase tracking-widest flex-1 transition-all"
                                         >
-                                            {seedLoading ? "초기화 중..." : "② 전체 초기화 (모든 데이터 삭제)"}
+                                            {seedLoading ? "초기화 중..." : "② 전체 초기화 (ALL DATA)"}
                                         </Button>
                                     </div>
                                 </div>
@@ -321,104 +324,112 @@ export default function SettingsPage() {
                     )}
 
                     {/* 3. User Account */}
-                    <Card>
-                        <CardHeader>
+                    <Card className="glass-panel border border-border shadow-none overflow-hidden">
+                        <CardHeader className="p-6 border-b border-border bg-muted/30">
                             <div className="flex items-center gap-2">
-                                <User className="h-5 w-5 text-primary" />
-                                <CardTitle>내 계정</CardTitle>
+                                <User className="h-6 w-6 text-foreground" />
+                                <CardTitle className="text-foreground font-black italic">내 계정 정보</CardTitle>
                             </div>
+                            <CardDescription className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-2">프로필 및 보안 설정을 관리합니다.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
+                        <CardContent className="p-6 space-y-10">
                             {/* Profile Info */}
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">이름 (실명)</label>
-                                    <Input
-                                        placeholder="이름을 입력하세요"
-                                        value={fullName}
-                                        onChange={(e) => setFullName(e.target.value)}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">이메일 계정</label>
-                                    <Input
-                                        placeholder="이메일을 입력하세요"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex justify-end">
-                                <Button onClick={handleUpdateProfile} disabled={profileLoading} className="bg-primary text-white">
-                                    {profileLoading ? "업데이트 중..." : "프로필 정보 저장"}
-                                </Button>
-                            </div>
-
-                            <hr className="border-white/5" />
-
-                            {/* Password Change */}
-                            <div className="space-y-4">
-                                <p className="font-medium">비밀번호 변경</p>
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="relative">
+                            <div className="space-y-6">
+                                <div className="grid gap-6 md:grid-cols-2">
+                                    <div className="space-y-3">
+                                        <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">이름 (실명)</label>
                                         <Input
-                                            type={showPasswords ? "text" : "password"}
-                                            placeholder="새 비밀번호"
-                                            value={newPassword}
-                                            onChange={(e) => setNewPassword(e.target.value)}
-                                            className="pr-10"
+                                            placeholder="이름을 입력하세요"
+                                            className="h-12 bg-muted/50 border-border focus:ring-indigo-500/20 font-bold text-foreground"
+                                            value={fullName}
+                                            onChange={(e) => setFullName(e.target.value)}
                                         />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPasswords(!showPasswords)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                                        >
-                                            {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                        </button>
                                     </div>
-                                    <div className="relative">
+                                    <div className="space-y-3">
+                                        <label className="text-xs font-black text-muted-foreground uppercase tracking-widest">이메일 계정</label>
                                         <Input
-                                            type={showPasswords ? "text" : "password"}
-                                            placeholder="새 비밀번호 확인"
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                            className="pr-10"
+                                            placeholder="이메일을 입력하세요"
+                                            className="h-12 bg-muted/50 border-border focus:ring-indigo-500/20 font-bold text-foreground"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
                                         />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPasswords(!showPasswords)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
-                                        >
-                                            {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                        </button>
                                     </div>
                                 </div>
-                                <div className="flex justify-end">
-                                    <Button onClick={handleUpdatePassword} disabled={passwordLoading} variant="outline" className="border-red-500/50 text-red-500 hover:bg-red-500/10">
-                                        {passwordLoading ? "변경 중..." : "비밀번호 변경"}
+                                <div className="flex justify-end pt-2">
+                                    <Button onClick={handleUpdateProfile} disabled={profileLoading} className="h-12 px-8 font-black uppercase tracking-widest text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 transition-all">
+                                        {profileLoading ? "업데이트 중..." : "프로필 정보 저장"}
                                     </Button>
                                 </div>
                             </div>
 
-                            <hr className="border-white/5" />
+                            <hr className="border-border opacity-50" />
 
-                            <div className="flex items-center justify-between">
+                            {/* Password Change */}
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-2">
+                                    <Key className="h-4 w-4 text-indigo-500" />
+                                    <p className="text-sm font-black text-foreground uppercase tracking-widest italic">비밀번호 보안 설정</p>
+                                </div>
+                                <div className="grid gap-6 md:grid-cols-2">
+                                    <div className="relative">
+                                        <Input
+                                            type={showPasswords ? "text" : "password"}
+                                            placeholder="새 비밀번호 입력"
+                                            className="h-12 bg-muted/50 border-border focus:ring-indigo-500/20 font-bold text-foreground pr-12"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPasswords(!showPasswords)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                    <div className="relative">
+                                        <Input
+                                            type={showPasswords ? "text" : "password"}
+                                            placeholder="비밀번호 재확인"
+                                            className="h-12 bg-muted/50 border-border focus:ring-indigo-500/20 font-bold text-foreground pr-12"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPasswords(!showPasswords)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="flex justify-end pt-2">
+                                    <Button onClick={handleUpdatePassword} disabled={passwordLoading} variant="outline" className="h-12 px-8 font-black uppercase tracking-widest text-xs border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-all">
+                                        {passwordLoading ? "변경 중..." : "비밀번호 즉시 변경"}
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <hr className="border-border opacity-50" />
+
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 p-6 bg-muted/30 rounded-2xl border border-border/50">
                                 <div>
-                                    <p className="font-medium">로그인 정보</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        안전한 데이터 관리를 위해 로그아웃할 수 있습니다.
+                                    <p className="font-black text-foreground italic">계정 보안 가이드라인</p>
+                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1 leading-relaxed">
+                                        타인에게 비밀번호를 노출하지 마십시오. 작업 완료 후에는 반드시 로그아웃하세요.
                                     </p>
                                 </div>
                                 <Button
                                     variant="outline"
-                                    size="sm"
+                                    className="h-12 px-8 font-black uppercase tracking-widest text-xs border-border hover:bg-muted text-foreground transition-all w-full sm:w-auto"
                                     onClick={async () => {
                                         await import("@/lib/supabase").then(m => m.supabase.auth.signOut())
                                         window.location.href = "/login"
                                     }}
                                 >
-                                    <LogOut className="mr-2 h-4 w-4" />
-                                    로그아웃
+                                    <LogOut className="mr-3 h-5 w-5" />
+                                    로그아웃 (EXIT)
                                 </Button>
                             </div>
                         </CardContent>
@@ -426,23 +437,25 @@ export default function SettingsPage() {
 
                     {/* 4. Danger Zone - Restricted to Owner/Admin */}
                     {(role === 'owner' || role === 'super_admin') && (
-                        <Card className="border-red-500/30 bg-red-500/5">
-                            <CardHeader>
-                                <div className="flex items-center gap-2">
-                                    <Trash2 className="h-5 w-5 text-red-500" />
-                                    <CardTitle className="text-red-500">위험 구역</CardTitle>
+                        <Card className="glass-panel border border-rose-500/30 bg-rose-500/5 shadow-none overflow-hidden">
+                            <CardHeader className="p-8 border-b border-rose-500/10 bg-rose-500/5">
+                                <div className="flex items-center gap-3">
+                                    <Trash2 className="h-6 w-6 text-rose-600 dark:text-rose-400" />
+                                    <CardTitle className="text-rose-600 dark:text-rose-400 font-black italic tracking-tighter">DANGER ZONE (CRITICAL)</CardTitle>
                                 </div>
+                                <CardDescription className="text-xs font-bold text-rose-600/60 dark:text-rose-400/60 uppercase tracking-widest leading-relaxed mt-2">주의: 아래 작업은 되돌릴 수 없습니다.</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="font-medium">회원 탈퇴 (계정 삭제)</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            모든 데이터(설정, 레시피, 재료 등)를 영구적으로 삭제하고 로그아웃합니다.
+                            <CardContent className="p-8 space-y-4">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-8">
+                                    <div className="flex-1">
+                                        <p className="font-black text-foreground italic">회원 탈퇴 (DELETE ACCOUNT)</p>
+                                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-2 leading-relaxed">
+                                            모든 데이터(설정, 레시피, 재료 등)를 영구적으로 삭제하고 로그아웃합니다. 매장 관련 모든 정보가 소멸됩니다.
                                         </p>
                                     </div>
                                     <Button
                                         variant="destructive"
+                                        className="h-12 px-10 font-black uppercase tracking-[0.2em] text-xs bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/20 w-full sm:w-auto transition-all"
                                         onClick={async () => {
                                             if (!confirm("🚨 정말로 탈퇴하시겠습니까?\n\n이 작업은 되돌릴 수 없으며, 작성하신 모든 레시피와 원가 데이터가 즉시 삭제됩니다.")) return
 
@@ -470,7 +483,7 @@ export default function SettingsPage() {
                                             }
                                         }}
                                     >
-                                        회원 탈퇴
+                                        회원 탈퇴 (EXECUTE)
                                     </Button>
                                 </div>
                             </CardContent>

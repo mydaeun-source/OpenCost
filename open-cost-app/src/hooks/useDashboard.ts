@@ -77,27 +77,31 @@ export function useDashboard() {
             // Parallel Fetching
             const [
                 ingredientsResult,
-                recipesResult,
+                recipesDataResult,
                 recentIngResult,
                 expensesResult,
-                storesResult,
-                allRecipes // Need all to calc avg price
+                storesResult
             ] = await Promise.all([
                 supabase.from("ingredients").select("id", { count: "exact" }).in("store_id", targetStoreIds),
-                supabase.from("recipes").select("id", { count: "exact" }).in("store_id", targetStoreIds),
+                supabase.from("recipes").select("id, selling_price, type, categories(name)").in("store_id", targetStoreIds).eq("type", "menu"),
                 supabase.from("ingredients").select("*").in("store_id", targetStoreIds).order("created_at", { ascending: false }).limit(5),
                 supabase.from("expense_records")
                     .select("amount")
                     .in("store_id", targetStoreIds)
                     .gte("expense_date", startStr)
                     .lte("expense_date", endStr),
-                supabase.from("stores").select("*").in("id", targetStoreIds),
-                supabase.from("recipes").select("selling_price").in("store_id", targetStoreIds)
+                supabase.from("stores").select("*").in("id", targetStoreIds)
             ])
 
-            // 1. Counts
+            // 1. Counts & Avg Price with Double Filtering
+            const rawRecipes = recipesDataResult.data || []
+            const validRecipes = rawRecipes.filter(r => {
+                const catName = (r.categories as any)?.name || ""
+                return !catName.includes("반제품") && !catName.toLowerCase().includes("prep")
+            })
+
             const ingredientCount = ingredientsResult.count || 0
-            const recipeCount = recipesResult.count || 0
+            const recipeCount = validRecipes.length
 
             // 2. Recent Ingredients
             const recentIngs = recentIngResult.data || []
@@ -109,9 +113,8 @@ export function useDashboard() {
             const targetSalesCount = storesResult.data?.reduce((sum, s) => sum + (s.monthly_target_sales_count || 0), 0) || 1000 // Default aggregation
 
             // Calc Avg Selling Price
-            const recipes = allRecipes.data || []
-            const totalSellingPrice = recipes.reduce((sum, r) => sum + (r.selling_price || 0), 0)
-            const avgSellingPrice = recipes.length > 0 ? totalSellingPrice / recipes.length : 0
+            const totalSellingPrice = validRecipes.reduce((sum, r) => sum + (r.selling_price || 0), 0)
+            const avgSellingPrice = validRecipes.length > 0 ? totalSellingPrice / validRecipes.length : 0
 
             // Target Revenue (Benchmark)
             const targetRevenue = targetSalesCount * avgSellingPrice
@@ -178,13 +181,19 @@ export function useDashboard() {
                 })
             }
 
-            // 5. Top Menus (Fetch latest 5 from any store)
-            const { data: latestRecipes } = await supabase
+            // 5. Top Menus (Fetch latest 20 then filter top 5)
+            const { data: rawLatestRecipes } = await supabase
                 .from("recipes")
-                .select("*")
+                .select("*, categories(name)")
                 .in("store_id", targetStoreIds)
+                .eq("type", "menu")
                 .order("created_at", { ascending: false })
-                .limit(5)
+                .limit(20)
+
+            const latestRecipes = (rawLatestRecipes || []).filter(r => {
+                const catName = (r.categories as any)?.name || ""
+                return !catName.includes("반제품") && !catName.toLowerCase().includes("prep")
+            }).slice(0, 5)
 
             // 6. Insights & Analytics
             let insights: Insight[] = []

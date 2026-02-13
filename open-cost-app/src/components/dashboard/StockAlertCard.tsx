@@ -38,20 +38,20 @@ export function StockAlertCard({ noWrapper = false }: StockAlertCardProps) {
         <CardContent className={noWrapper ? "p-0" : ""}>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {lowStockItems.slice(0, 6).map(item => (
-                    <div key={item.id} className="flex items-center justify-between p-2 rounded bg-background/50 border-none shadow-sm">
+                    <div key={item.id} className="flex items-center justify-between p-2 rounded bg-muted/30 border border-border/50 shadow-sm">
                         <div className="flex items-center gap-2">
                             <Package className="h-4 w-4 text-muted-foreground" />
                             <div className="flex flex-col">
-                                <span className="text-sm font-black text-slate-200">{item.name}</span>
+                                <span className="text-sm font-black text-foreground">{item.name}</span>
                             </div>
                         </div>
                         <div className="text-right">
-                            <div className="text-sm font-black text-white">
+                            <div className="text-sm font-black text-foreground">
                                 <span className="text-rose-500">{formatNumber(item.current_stock)}</span>
-                                <span className="text-slate-500 mx-1">/</span>
-                                <span className="text-slate-300">{formatNumber(item.safety_stock)}</span>
+                                <span className="text-muted-foreground mx-1">/</span>
+                                <span className="text-muted-foreground/70">{formatNumber(item.safety_stock)}</span>
                             </div>
-                            <div className="text-[10px] text-slate-500 font-black uppercase">
+                            <div className="text-[10px] text-muted-foreground font-black uppercase">
                                 {item.purchase_unit || '개'}
                             </div>
                         </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { ChevronDown, ChevronUp, GripVertical } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card"
+import { Tooltip } from "@/components/ui/Tooltip"
 import { cn } from "@/lib/utils"
 
 interface CollapsibleCardProps {
@@ -80,7 +81,7 @@ export function CollapsibleCard({
                 <div className="flex items-center gap-4">
                     {draggable && (
                         <div
-                            className="p-1 -ml-1 text-slate-500 hover:text-indigo-400 cursor-grab active:cursor-grabbing transition-colors"
+                            className="p-1 -ml-1 text-muted-foreground hover:text-primary cursor-grab active:cursor-grabbing transition-colors"
                             onClick={(e) => e.stopPropagation()}
                             onMouseEnter={() => setIsDragEnabled(true)}
                             onMouseLeave={() => setIsDragEnabled(false)}
@@ -89,24 +90,26 @@ export function CollapsibleCard({
                         </div>
                     )}
                     {icon && (
-                        <div className={cn(
-                            "h-10 w-10 flex items-center justify-center transition-all duration-300",
-                            isCollapsed
-                                ? "text-slate-300"
-                                : "text-indigo-400 scale-110 drop-shadow-[0_0_8px_rgba(79,70,229,0.3)]"
-                        )}>
-                            {icon}
-                        </div>
+                        <Tooltip content={description || title}>
+                            <div className={cn(
+                                "h-10 w-10 flex items-center justify-center transition-all duration-300",
+                                isCollapsed
+                                    ? "text-muted-foreground"
+                                    : "text-primary scale-110 drop-shadow-[0_0_8px_rgba(79,70,229,0.3)]"
+                            )}>
+                                {icon}
+                            </div>
+                        </Tooltip>
                     )}
                     <div className="flex flex-col">
                         <CardTitle className={cn(
                             "text-lg font-black tracking-tight transition-colors duration-300",
-                            "text-white"
+                            "text-foreground"
                         )}>
                             {title}
                         </CardTitle>
                         {description && !isCollapsed && (
-                            <CardDescription className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mt-1">
+                            <CardDescription className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mt-1">
                                 {description}
                             </CardDescription>
                         )}
@@ -121,8 +124,8 @@ export function CollapsibleCard({
                     )}
                     <div className={cn(
                         "h-8 w-8 rounded-full flex items-center justify-center transition-all duration-300",
-                        "bg-transparent hover:bg-slate-500/10 dark:hover:bg-white/10",
-                        isCollapsed ? "text-slate-300" : "text-indigo-400"
+                        "bg-transparent hover:bg-muted",
+                        isCollapsed ? "text-muted-foreground" : "text-primary"
                     )}>
                         <div className={cn(
                             "transition-transform duration-500",

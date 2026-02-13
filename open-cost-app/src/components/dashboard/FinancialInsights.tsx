@@ -20,14 +20,14 @@ export function FinancialInsights({ insights }: FinancialInsightsProps) {
                 return (
                     <Card key={idx} className={cn(
                         "relative overflow-hidden border-none shadow-none transition-all hover:scale-[1.02] cursor-default",
-                        isWarning ? "bg-rose-500/[0.08]" :
+                        isWarning ? "bg-rose-500" :
                             isSuccess ? "bg-emerald-500/[0.08]" :
                                 "bg-indigo-500/[0.08]"
                     )}>
                         <CardContent className="p-4 flex items-start gap-4">
                             <div className={cn(
                                 "h-10 w-10 shrink-0 rounded-xl flex items-center justify-center shadow-lg",
-                                isWarning ? "bg-rose-500 text-white shadow-rose-500/20" :
+                                isWarning ? "bg-white/20 text-white shadow-none" :
                                     isSuccess ? "bg-emerald-500 text-white shadow-emerald-500/20" :
                                         "bg-indigo-500 text-white shadow-indigo-500/20"
                             )}>
@@ -40,30 +40,33 @@ export function FinancialInsights({ insights }: FinancialInsightsProps) {
                                 <div className="flex items-center justify-between">
                                     <h3 className={cn(
                                         "text-xs font-black uppercase tracking-tighter",
-                                        isWarning ? "text-rose-500" :
-                                            isSuccess ? "text-emerald-500" :
-                                                "text-indigo-500"
+                                        isWarning ? "text-white" :
+                                            isSuccess ? "text-emerald-600 dark:text-emerald-500" :
+                                                "text-primary"
                                     )}>
                                         {insight.title}
                                     </h3>
                                     {insight.value && (
                                         <span className={cn(
                                             "text-[10px] font-black px-1.5 py-0.5 rounded-full inline-flex items-center gap-1",
-                                            isWarning ? "bg-rose-500/10 text-rose-500" :
-                                                isSuccess ? "bg-emerald-500/10 text-emerald-500" :
-                                                    "bg-indigo-500/10 text-indigo-500"
+                                            isWarning ? "bg-white/20 text-white" :
+                                                isSuccess ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-500" :
+                                                    "bg-primary/10 text-primary"
                                         )}>
                                             {insight.value}
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                                <p className={cn(
+                                    "text-sm font-bold leading-snug",
+                                    isWarning ? "text-white" : "text-foreground"
+                                )}>
                                     {insight.description}
                                 </p>
                             </div>
 
                             {/* Decorative background icon */}
-                            {isWarning && <TrendingUp className="absolute -right-2 -bottom-2 h-16 w-16 text-rose-500/10 -rotate-12" />}
+                            {isWarning && <TrendingUp className="absolute -right-2 -bottom-2 h-16 w-16 text-white/10 -rotate-12" />}
                             {isSuccess && <TrendingUp className="absolute -right-2 -bottom-2 h-16 w-16 text-emerald-500/10 -rotate-12" />}
                             {!isWarning && !isSuccess && <Lightbulb className="absolute -right-2 -bottom-2 h-16 w-16 text-indigo-500/10 -rotate-12" />}
                         </CardContent>

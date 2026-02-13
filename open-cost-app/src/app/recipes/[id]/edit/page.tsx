@@ -39,6 +39,21 @@ export default function EditRecipePage({ params }: { params: Promise<{ id: strin
 
             if (itemsError) throw itemsError
 
+            // 3. Fetch Sub-Recipe Details (to know if they are Preps)
+            const subRecipeIds = itemsData
+                .filter((item: any) => item.item_type === 'menu' || item.item_type === 'prep')
+                .map((item: any) => item.item_id)
+
+            let subRecipeMap = new Map<string, any>()
+            if (subRecipeIds.length > 0) {
+                const { data: subRecipes } = await supabase
+                    .from("recipes")
+                    .select("id, type, batch_size, batch_unit, portion_size, portion_unit")
+                    .in("id", subRecipeIds)
+
+                subRecipes?.forEach(r => subRecipeMap.set(r.id, r))
+            }
+
             console.log("EditPage Loaded Items:", itemsData) // Debug Log
 
             setInitialData({
@@ -46,11 +61,21 @@ export default function EditRecipePage({ params }: { params: Promise<{ id: strin
                 name: recipeData.name,
                 type: recipeData.type,
                 selling_price: recipeData.selling_price || 0,
-                ingredients: itemsData?.map((item: any) => ({
-                    itemId: item.item_id, // Standardized prop name
-                    itemType: item.item_type,
-                    quantity: item.quantity
-                })) || []
+                ingredients: itemsData?.map((item: any) => {
+                    const subInfo = subRecipeMap.get(item.item_id)
+                    // If it's a menu but the referenced recipe is actually a prep, treat it as prep (or ensure type is passed)
+                    // We will override itemType to 'prep' if database says it is a prep, even if `recipe_ingredients` says 'menu' (legacy data)
+                    const realType = (item.item_type === 'menu' && subInfo?.type === 'prep') ? 'prep' : item.item_type
+
+                    return {
+                        itemId: item.item_id,
+                        itemType: realType,
+                        quantity: item.quantity,
+                        // Pass extra info for unit conversion if needed (not strict requirement for this fix but helpful)
+                        batchUnit: subInfo?.batch_unit,
+                        portionUnit: subInfo?.portion_unit
+                    }
+                }) || []
             })
         } catch (error) {
             console.error("Error fetching recipe:", error)

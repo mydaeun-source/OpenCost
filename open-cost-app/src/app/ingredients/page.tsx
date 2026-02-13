@@ -79,11 +79,11 @@ export default function IngredientsPage() {
             <div className="space-y-6 pb-20">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-black tracking-tight">재료 및 자산 관리</h1>
+                        <h1 className="text-3xl font-black tracking-tight">재료 및 자산 관리 (INGREDIENTS & ASSET)</h1>
                         <p className="text-muted-foreground mt-1">식자재의 구매 가격, 재고 및 총 가치를 실시간으로 관리합니다.</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="flex bg-muted/20 p-1 rounded-lg border border-white/5 mx-2">
+                        <div className="flex bg-muted/40 p-1 rounded-lg border border-border mx-2">
                             <button
                                 onClick={() => setViewMode('grid')}
                                 className={cn(
@@ -104,10 +104,7 @@ export default function IngredientsPage() {
                                 <List className="h-4 w-4" />
                             </button>
                         </div>
-                        <Button onClick={() => setIsAddOpen(true)} className="rounded-xl shadow-lg shadow-indigo-500/20">
-                            <Plus className="mr-2 h-4 w-4" />
-                            재료 추가
-                        </Button>
+
                     </div>
                 </div>
 
@@ -132,33 +129,33 @@ export default function IngredientsPage() {
                         className="w-full"
                     >
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            <Card className="bg-white/5 dark:bg-slate-900/40 border-none shadow-none group hover:bg-white/10 transition-all">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-[10px] font-black tracking-widest text-indigo-400 uppercase">총 재고 가치</CardTitle>
-                                    <Banknote className="h-4 w-4 text-indigo-400 opacity-70" />
+                            <Card className="glass-panel border border-border shadow-none group hover:bg-muted/10 transition-all">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-2">
+                                    <CardTitle className="text-[10px] font-black tracking-widest text-primary uppercase">총 재고 자산 (TOTAL ASSET)</CardTitle>
+                                    <Banknote className="h-4 w-4 text-primary opacity-70" />
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-black text-white italic tracking-tight">{formatNumber(totalInventoryValue)}원</div>
+                                <CardContent className="p-6 pt-0">
+                                    <div className="text-2xl font-black text-foreground italic tracking-tighter">{formatNumber(totalInventoryValue)}원</div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-white/5 dark:bg-slate-900/40 border-none shadow-none group hover:bg-white/10 transition-all">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-[10px] font-black tracking-widest text-emerald-400 uppercase">재료 품목 수</CardTitle>
-                                    <Package className="h-4 w-4 text-emerald-400 opacity-70" />
+                            <Card className="glass-panel border border-border shadow-none group hover:bg-muted/10 transition-all">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-2">
+                                    <CardTitle className="text-[10px] font-black tracking-widest text-emerald-600 dark:text-emerald-400 uppercase">보유 품목 수</CardTitle>
+                                    <Package className="h-4 w-4 text-emerald-600 dark:text-emerald-400 opacity-70" />
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-black text-white italic tracking-tight">{ingredients.length}개</div>
+                                <CardContent className="p-6 pt-0">
+                                    <div className="text-2xl font-black text-foreground italic tracking-tighter">{ingredients.length}개</div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-white/5 dark:bg-slate-900/40 border-none shadow-none group hover:bg-white/10 transition-all">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-[10px] font-black tracking-widest text-rose-400 uppercase">재고 부족 품목</CardTitle>
-                                    <AlertCircle className="h-4 w-4 text-rose-400 opacity-70" />
+                            <Card className="glass-panel border border-border shadow-none group hover:bg-muted/10 transition-all">
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6 pb-2">
+                                    <CardTitle className="text-[10px] font-black tracking-widest text-rose-600 dark:text-rose-400 uppercase">재고 부족 경고 (STOCK ALERT)</CardTitle>
+                                    <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400 opacity-70" />
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-black text-white italic tracking-tight">
+                                <CardContent className="p-6 pt-0">
+                                    <div className="text-2xl font-black text-foreground italic tracking-tighter">
                                         {ingredients.filter(i => (i.current_stock || 0) <= (i.safety_stock || 0)).length}개
                                     </div>
                                 </CardContent>
@@ -172,6 +169,12 @@ export default function IngredientsPage() {
                         description={`총 ${ingredients.length}개의 재료가 관리되고 있습니다.`}
                         icon={<List className="h-4 w-4" />}
                         storageKey="ing-list-collapsible"
+                        headerAction={
+                            <Button onClick={() => setIsAddOpen(true)} size="sm" className="h-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white border border-indigo-500 shadow-sm">
+                                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                                재료 추가
+                            </Button>
+                        }
                     >
                         {loading ? (
                             <div className="flex items-center justify-center h-64">
@@ -196,7 +199,7 @@ export default function IngredientsPage() {
                                                 return (
                                                     <Card
                                                         key={ingredient.id}
-                                                        className={cn("overflow-hidden transition-all hover:border-primary/50 cursor-pointer", isLowStock && "border-red-500/50 bg-red-500/5")}
+                                                        className={cn("glass-panel overflow-hidden transition-all hover:border-primary border border-border/50 cursor-pointer", isLowStock && "border-rose-500/50 bg-rose-500/5")}
                                                         onClick={() => setEditingId(ingredient.id)}
                                                     >
                                                         {/* Market Comparison Card (Subtle) */}
@@ -211,31 +214,22 @@ export default function IngredientsPage() {
                                                             </div>
                                                         )}
 
-                                                        <CardHeader className="pb-3 bg-secondary/10">
+                                                        <CardHeader className="p-4 pb-3 border-b border-border/10 bg-muted/20">
                                                             <div className="flex justify-between items-start">
                                                                 <div>
-                                                                    <CardTitle className="text-lg flex items-center gap-2">
+                                                                    <CardTitle className="text-base font-black flex items-center gap-2 text-foreground italic">
                                                                         {ingredient.name}
-                                                                        {isLowStock && <span className="text-xs bg-rose-600 text-white px-2 py-0.5 rounded-full font-black animate-pulse shadow-[0_0_10px_rgba(225,29,72,0.4)]">부족</span>}
-                                                                        {forecasts[ingredient.id]?.daysRemaining !== null && forecasts[ingredient.id].daysRemaining! < 14 && (
-                                                                            <span className={cn(
-                                                                                "text-[10px] px-2 py-0.5 rounded-full font-black flex items-center gap-1",
-                                                                                forecasts[ingredient.id].daysRemaining! < 3 ? "bg-rose-500/20 text-rose-500" : "bg-amber-500/20 text-amber-500"
-                                                                            )}>
-                                                                                <Clock className="h-3 w-3" />
-                                                                                {Math.floor(forecasts[ingredient.id].daysRemaining!)}일 후 고갈
-                                                                            </span>
-                                                                        )}
+                                                                        {isLowStock && <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded-full font-black animate-pulse shadow-[0_0_10px_rgba(225,29,72,0.4)]">보충 필요 (ALERT)</span>}
                                                                     </CardTitle>
-                                                                    <CardDescription className="text-xs mt-1">
-                                                                        구매: {formatNumber(ingredient.purchase_price)}원 / {ingredient.purchase_unit}
+                                                                    <CardDescription className="text-xs mt-1 font-black text-muted-foreground uppercase tracking-widest">
+                                                                        {formatNumber(ingredient.purchase_price)}원 / {ingredient.purchase_unit}
                                                                     </CardDescription>
                                                                 </div>
                                                                 <div className="flex items-center gap-1">
                                                                     <Button
                                                                         variant="ghost"
                                                                         size="icon"
-                                                                        className="h-8 w-8 text-primary hover:bg-primary/10"
+                                                                        className="h-8 w-8 text-indigo-500 hover:bg-indigo-500/10"
                                                                         onClick={(e) => {
                                                                             e.stopPropagation()
                                                                             setAdjustmentId(ingredient.id)
@@ -247,7 +241,7 @@ export default function IngredientsPage() {
                                                                     <Button
                                                                         variant="ghost"
                                                                         size="icon"
-                                                                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                                        className="h-8 w-8 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10"
                                                                         onClick={(e) => {
                                                                             e.stopPropagation()
                                                                             setDeleteItem({ id: ingredient.id, name: ingredient.name })
@@ -258,22 +252,36 @@ export default function IngredientsPage() {
                                                                 </div>
                                                             </div>
                                                         </CardHeader>
-                                                        <CardContent className="pt-4 text-sm space-y-2">
-                                                            <div className="flex justify-between">
-                                                                <span className="text-slate-300 font-bold">현재 재고</span>
-                                                                <span className={cn("font-black text-base", isLowStock ? "text-rose-400" : "text-white")}>
-                                                                    {formatNumber(ingredient.current_stock)} {ingredient.purchase_unit}
-                                                                </span>
+                                                        <CardContent className="p-4 pt-4 text-sm space-y-4">
+                                                            <div className="flex justify-between items-end">
+                                                                <div className="space-y-1">
+                                                                    <span className="text-muted-foreground font-black text-[10px] uppercase tracking-[0.2em] block">현재 재고 수준 (LEVEL)</span>
+                                                                    <span className={cn("font-black text-xl italic tracking-tighter block", isLowStock ? "text-rose-600 dark:text-rose-400" : "text-foreground")}>
+                                                                        {formatNumber(ingredient.current_stock)} {ingredient.purchase_unit}
+                                                                    </span>
+                                                                </div>
+                                                                {forecasts[ingredient.id]?.daysRemaining !== null && forecasts[ingredient.id].daysRemaining! < 14 && (
+                                                                    <div className={cn(
+                                                                        "text-[10px] px-2 py-1 rounded border font-black flex items-center gap-1 uppercase tracking-widest",
+                                                                        forecasts[ingredient.id].daysRemaining! < 3 ? "bg-rose-500/10 text-rose-600 border-rose-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                                                    )}>
+                                                                        <Clock className="h-3 w-3" />
+                                                                        {Math.floor(forecasts[ingredient.id].daysRemaining!)}일분 남음 (DAYS LEFT)
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                            <div className="flex justify-between">
-                                                                <span className="text-slate-300 font-bold text-xs uppercase tracking-widest">환산 비율</span>
-                                                                <span className="font-black text-xs text-slate-300 italic">1 : {formatNumber(ingredient.conversion_factor)} ({ingredient.usage_unit})</span>
-                                                            </div>
-                                                            <div className="border-t border-slate-800 pt-2 mt-2 flex justify-between items-center">
-                                                                <span className="font-black text-xs text-indigo-400 uppercase tracking-widest bg-slate-800 px-2 py-0.5 rounded outline outline-1 outline-slate-700">실질 단가 ({ingredient.usage_unit})</span>
-                                                                <span className="text-lg font-black text-primary italic">
-                                                                    {formatNumber(((ingredient.purchase_price || 0) / (ingredient.conversion_factor || 1)) / (1 - (ingredient.loss_rate || 0)))}원
-                                                                </span>
+
+                                                            <div className="bg-muted/30 p-3 rounded-xl border border-border/50">
+                                                                <div className="flex justify-between items-center mb-1">
+                                                                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">사용 규격 (USAGE)</span>
+                                                                    <span className="font-black text-xs text-foreground italic">1 : {formatNumber(ingredient.conversion_factor)} {ingredient.usage_unit}</span>
+                                                                </div>
+                                                                <div className="flex justify-between items-center">
+                                                                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">실질 계산 단가</span>
+                                                                    <span className="text-lg font-black text-primary italic tracking-tighter">
+                                                                        {formatNumber(((ingredient.purchase_price || 0) / (ingredient.conversion_factor || 1)) / (1 - (ingredient.loss_rate || 0)))}원
+                                                                    </span>
+                                                                </div>
                                                             </div>
                                                         </CardContent>
                                                     </Card>
@@ -281,9 +289,9 @@ export default function IngredientsPage() {
                                             })}
                                         </div>
                                     ) : (
-                                        <div className="rounded-xl border border-white/10 overflow-hidden bg-card text-card-foreground shadow-sm">
+                                        <div className="rounded-xl border border-border overflow-hidden bg-card text-card-foreground shadow-sm">
                                             <table className="w-full text-sm text-left">
-                                                <thead className="bg-slate-800 text-slate-300 font-black border-b border-slate-700">
+                                                <thead className="bg-muted text-foreground font-black border-b border-border">
                                                     <tr>
                                                         <th className="p-4 pl-6 uppercase tracking-widest text-xs">재료명</th>
                                                         <th className="p-4 text-right uppercase tracking-widest text-xs">구매가 (단위)</th>
@@ -293,13 +301,13 @@ export default function IngredientsPage() {
                                                         <th className="p-4 text-center w-[80px] uppercase tracking-widest text-xs">관리</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className="divide-y divide-white/10">
+                                                <tbody className="divide-y divide-border">
                                                     {ingredients.map((ingredient) => {
                                                         const isLowStock = (ingredient.current_stock || 0) <= (ingredient.safety_stock || 0)
                                                         return (
                                                             <tr
                                                                 key={ingredient.id}
-                                                                className="hover:bg-muted/50 transition-colors cursor-pointer"
+                                                                className="hover:bg-muted/50 transition-colors cursor-pointer group"
                                                                 onClick={() => setEditingId(ingredient.id)}
                                                             >
                                                                 <td className="p-4 pl-6 font-medium">

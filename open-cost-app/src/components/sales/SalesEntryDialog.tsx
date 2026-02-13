@@ -253,14 +253,16 @@ export function SalesEntryDialog({ isOpen, onClose, onSuccess }: SalesEntryDialo
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <div className="flex items-center">
-                                                <Input
-                                                    type="number"
-                                                    className="w-16 h-10 text-center font-black rounded-lg border-slate-200 dark:border-slate-700"
-                                                    value={item.quantity}
-                                                    onChange={e => updateItemQty(item.recipeId, Number(e.target.value))}
-                                                    min="1"
-                                                />
-                                                <span className="ml-2 text-sm font-black text-slate-200 uppercase tracking-widest">개</span>
+                                                <div className="flex items-center">
+                                                    <Input
+                                                        type="number"
+                                                        className="w-32 h-12 text-center text-xl font-black rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:bg-white dark:focus:bg-slate-900 transition-colors"
+                                                        value={item.quantity}
+                                                        onChange={e => updateItemQty(item.recipeId, Number(e.target.value))}
+                                                        min="1"
+                                                    />
+                                                    <span className="ml-3 text-lg font-black text-slate-400 uppercase tracking-widest">개</span>
+                                                </div>
                                             </div>
                                             <Button
                                                 variant="ghost"

@@ -12,6 +12,7 @@ import { cn, formatNumber } from "@/lib/utils"
 // Import Database Types
 import { Database } from "@/types/database.types"
 import { getRecipeSalesWeights } from "@/lib/api/orders"
+import { useStore } from "@/contexts/StoreContext"
 
 // Types
 type IngredientRow = Database["public"]["Tables"]["ingredients"]["Row"]
@@ -44,6 +45,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
     // Next.js 15+ params handling
     const { id } = use(params)
     const router = useRouter()
+    const { activeStore } = useStore()
 
     const [recipe, setRecipe] = useState<RecipeDetail | null>(null)
     const [overheadCost, setOverheadCost] = useState(0)
@@ -51,8 +53,10 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        fetchRecipeData()
-    }, [id])
+        if (activeStore) {
+            fetchRecipeData()
+        }
+    }, [id, activeStore]) // Add activeStore to dependency
 
     const fetchRecipeData = async () => {
         try {
@@ -73,16 +77,18 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
 
                     // Advanced: Try to get actual sales weight
                     try {
-                        const { weights, totalQty } = await getRecipeSalesWeights(30)
-                        if (totalQty > 0) {
-                            // If we have actual sales, per unit cost = fixed / totalQty
-                            // (Because weighted per menu = (fixed * (qtyA/totalQty)) / qtyA = fixed / totalQty)
-                            setOverheadCost(Math.round(fixed / totalQty))
-                            setIsWeighted(true)
-                        } else {
-                            // Fallback to target
-                            setOverheadCost(Math.round(fixed / target))
-                            setIsWeighted(false)
+                        if (activeStore?.id) {
+                            const { weights, totalQty } = await getRecipeSalesWeights(activeStore.id, 30)
+                            if (totalQty > 0) {
+                                // If we have actual sales, per unit cost = fixed / totalQty
+                                // (Because weighted per menu = (fixed * (qtyA/totalQty)) / qtyA = fixed / totalQty)
+                                setOverheadCost(Math.round(fixed / totalQty))
+                                setIsWeighted(true)
+                            } else {
+                                // Fallback to target
+                                setOverheadCost(Math.round(fixed / target))
+                                setIsWeighted(false)
+                            }
                         }
                     } catch (err) {
                         console.error("Failed to fetch weights, using fallback", err)
@@ -200,14 +206,20 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                         }
                     })
 
+                    // Calculate Cost Per Unit (for Prep/Menu)
+                    // menuUnitCost currently holds the Total Batch Cost
+                    const batchCost = menuUnitCost
+                    const batchSize = menu.batch_size || 1
+                    const realUnitCost = batchCost / batchSize
+
                     return {
                         id: menu.id,
                         name: menu.name,
-                        type: itemType as 'menu' | 'prep',
+                        type: menu.type === 'prep' ? 'prep' : 'menu',
                         quantity: quantity,
-                        usage_unit: '개',
-                        unit_cost: menuUnitCost,
-                        total_cost: menuUnitCost * quantity,
+                        usage_unit: menu.batch_unit || '개', // Display the base unit
+                        unit_cost: realUnitCost,
+                        total_cost: realUnitCost * quantity,
                         subItems: subItems
                     }
                 }
@@ -295,27 +307,27 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                     <div className={cn(
                         "px-4 py-3 rounded-xl flex items-center text-sm border-2",
                         isWeighted
-                            ? "bg-indigo-50 border-indigo-100 text-indigo-700 dark:bg-indigo-950/20 dark:border-indigo-900/30 dark:text-indigo-400"
-                            : "bg-blue-50 border-blue-100 text-blue-700 dark:bg-blue-950/20 dark:border-blue-900/30 dark:text-blue-400"
+                            ? "bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-950/20 dark:border-indigo-900/30 dark:text-indigo-400"
+                            : "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950/20 dark:border-blue-900/30 dark:text-blue-400"
                     )}>
                         <Banknote className="h-4 w-4 mr-2" />
                         <span>
                             <b className="font-black uppercase tracking-tight mr-1">
-                                {isWeighted ? "현장 데이터 기반 배분:" : "목표치 기반 배분:"}
+                                {isWeighted ? "현장 데이터 기반 배분 (WEIGHTED):" : "목표치 기반 배분 (TARGET):"}
                             </b>
                             최근 30일 데이터 기준, 개당 <b>{formatNumber(overheadCost)}원</b>의 고정비가 할당되었습니다.
                         </span>
                     </div>
                 ) : (
-                    <div className="bg-amber-950/30 border-2 border-amber-500/30 text-amber-400 px-4 py-3 rounded-xl flex items-center justify-between text-sm backdrop-blur-sm">
+                    <div className="bg-amber-50 border-2 border-amber-200 text-amber-700 dark:bg-amber-950/30 dark:border-amber-500/30 dark:text-amber-400 px-4 py-3 rounded-xl flex items-center justify-between text-sm backdrop-blur-sm">
                         <div className="flex items-center">
                             <Coins className="h-4 w-4 mr-2 text-amber-500" />
                             <span>
-                                <b className="text-amber-300">고정비 배분 미설정:</b> 고정 지출을 반영하면 <b>실질적인 순수익</b>을 파악할 수 있습니다.
+                                <b className="text-amber-800 dark:text-amber-300">고정비 배분 미설정:</b> 고정 지출을 반영하면 <b>실질적인 순수익</b>을 파악할 수 있습니다.
                             </span>
                         </div>
                         <Link href="/settings">
-                            <Button variant="outline" size="sm" className="bg-amber-500/10 border-2 border-amber-500/50 hover:bg-amber-500/20 text-amber-400 h-8 font-black text-xs">
+                            <Button variant="outline" size="sm" className="bg-amber-500/10 border-2 border-amber-500/50 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 h-8 font-black text-xs">
                                 <Settings className="h-3 w-3 mr-2" /> 설정 바로가기
                             </Button>
                         </Link>
@@ -326,7 +338,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                 <div className="grid gap-6 md:grid-cols-3">
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">판매가</CardTitle>
+                            <CardTitle className="text-sm font-medium text-muted-foreground">판매가 (SALES PRICE)</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{formatNumber(recipe.selling_price)}원</div>
@@ -334,7 +346,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                     </Card>
                     <Card>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">총 원가 (재료비+배분비용)</CardTitle>
+                            <CardTitle className="text-sm font-medium text-muted-foreground">총 원가 (MATERIAL + OVERHEAD)</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold text-red-500">
@@ -354,7 +366,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                     </Card>
                     <Card className={cn(marginRate < 20 ? "bg-red-50 dark:bg-red-900/10" : "bg-green-50 dark:bg-green-900/10")}>
                         <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">최종 순이익 (Net Profit)</CardTitle>
+                            <CardTitle className="text-sm font-medium text-muted-foreground">최종 순이익 (NET PROFIT)</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className={cn("text-2xl font-bold", marginRate < 20 ? "text-red-600" : "text-green-600")}>
@@ -372,7 +384,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <ChefHat className="h-5 w-5 text-primary" />
-                            원가 상세 구성
+                            원가 상세 구성 (COMPOSITION)
                         </CardTitle>
                         <CardDescription>
                             재료비와 배분 비용이 어떻게 구성되어 있는지 확인하세요.
@@ -387,7 +399,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                                 </div>
                                 <div>
                                     <p className={cn("font-bold", overheadCost > 0 ? "text-blue-700" : "text-amber-700")}>
-                                        고정비 배분 (Overhead)
+                                        고정비 배분 (OVERHEAD)
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         {overheadCost > 0 ? "매장 설정에 따른 자동 할당" : "설정되지 않음 (0원 적용)"}
@@ -398,7 +410,7 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                                 {overheadCost > 0 ? (
                                     <>
                                         <p className="font-medium text-blue-700">{formatNumber(overheadCost)}원</p>
-                                        <div className="w-24 h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
+                                        <div className="w-24 h-1.5 bg-muted rounded-full mt-1 overflow-hidden">
                                             <div
                                                 className="h-full bg-blue-400"
                                                 style={{ width: `${Math.min((overheadCost / totalCost) * 100, 100)}%` }}
@@ -417,21 +429,21 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
 
                         {/* List Items */}
                         {recipe.ingredients.map((item) => (
-                            <div key={item.id} className="border-b last:border-0 border-white/10 pb-4 last:pb-0">
+                            <div key={item.id} className="border-b last:border-0 border-border pb-4 last:pb-0">
                                 {/* Main Item Row */}
                                 <div className="flex items-center justify-between py-2 px-2">
                                     <div className="flex items-center gap-3">
                                         {/* Badge / Icon */}
                                         {item.type === 'menu' ? (
-                                            <div className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">세트메뉴</div>
+                                            <div className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30">세트메뉴</div>
                                         ) : item.type === 'prep' ? (
-                                            <div className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">반제품(Prep)</div>
+                                            <div className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30">반제품(Prep)</div>
                                         ) : (
-                                            <div className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-700 text-slate-300">재료</div>
+                                            <div className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground border border-border">재료</div>
                                         )}
 
                                         <div>
-                                            <p className="font-medium text-slate-200">{item.name}</p>
+                                            <p className="font-medium text-foreground">{item.name}</p>
                                             <p className="text-xs text-muted-foreground">
                                                 {formatNumber(item.quantity)} {item.usage_unit}
                                                 {item.unit_cost > 0 && ` × ${formatNumber(item.unit_cost)}원`}
@@ -439,19 +451,19 @@ export default function RecipeDetailPage({ params }: { params: Promise<{ id: str
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-medium text-slate-200">{formatNumber(item.total_cost)}원</p>
+                                        <p className="font-medium text-foreground">{formatNumber(item.total_cost)}원</p>
                                     </div>
                                 </div>
 
                                 {/* Sub Items (Nested View) */}
                                 {(item.type === 'menu' || item.type === 'prep') && item.subItems && item.subItems.length > 0 && (
-                                    <div className="ml-10 mt-1 p-3 bg-slate-900/50 rounded-lg border border-white/5 space-y-1">
+                                    <div className="ml-10 mt-1 p-3 bg-muted/30 rounded-lg border border-border space-y-1">
                                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 flex items-center font-bold">
                                             <span className="w-1 h-1 bg-purple-500 rounded-full mr-2"></span>
-                                            Composition
+                                            구성 상세 (COMPOSITION)
                                         </p>
                                         {item.subItems.map(sub => (
-                                            <div key={sub.id} className="flex justify-between items-center text-xs text-slate-400 border-b border-white/5 last:border-0 py-1">
+                                            <div key={sub.id} className="flex justify-between items-center text-xs text-muted-foreground border-b border-border last:border-0 py-1">
                                                 <span>{sub.name} ({formatNumber(sub.quantity)} {sub.usage_unit})</span>
                                                 <span className="font-mono">{formatNumber(sub.total_cost)}</span>
                                             </div>

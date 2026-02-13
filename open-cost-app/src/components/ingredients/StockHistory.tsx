@@ -57,17 +57,17 @@ export function StockHistory({ logs }: StockHistoryProps) {
     }
 
     return (
-        <Card className="bg-white/5 border-none shadow-none overflow-hidden">
-            <CardHeader className="bg-slate-800/30 border-b border-white/5">
-                <CardTitle className="text-sm font-black flex items-center gap-2">
-                    <RefreshCcw className="h-4 w-4 text-indigo-500" />
+        <Card className="bg-card border-none shadow-none overflow-hidden">
+            <CardHeader className="bg-muted/50 border-b border-border">
+                <CardTitle className="text-sm font-black flex items-center gap-2 text-foreground">
+                    <RefreshCcw className="h-4 w-4 text-primary" />
                     수불 내역 상세
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                <div className="divide-y divide-border">
                     {logs.map((log) => (
-                        <div key={log.id} className="p-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                        <div key={log.id} className="p-4 hover:bg-muted/30 transition-colors">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className={cn("p-2 rounded-lg", getTypeColor(log.adjustment_type))}>
@@ -75,19 +75,19 @@ export function StockHistory({ logs }: StockHistoryProps) {
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <span className="font-bold text-white">
+                                            <span className="font-bold text-foreground">
                                                 {log.ingredient?.name || "알 수 없는 재료"}
                                             </span>
-                                            <Badge variant="outline" className={cn("text-xs h-4 font-black", getTypeColor(log.adjustment_type))}>
+                                            <Badge variant="outline" className={cn("text-[10px] h-4 font-black", getTypeColor(log.adjustment_type))}>
                                                 {getTypeLabel(log.adjustment_type)}
                                             </Badge>
                                         </div>
-                                        <div className="text-xs text-slate-400 mt-1 font-black flex items-center gap-2">
-                                            <span>{format(new Date(log.created_at), "yyyy년 MM월 dd일 HH:mm", { locale: ko })}</span>
+                                        <div className="text-xs text-muted-foreground mt-1 font-black flex items-center gap-2">
+                                            <span className="opacity-70">{format(new Date(log.created_at), "yyyy년 MM월 dd일 HH:mm", { locale: ko })}</span>
                                             {log.reason && !log.reason.startsWith('Seed Purchase') && (
                                                 <>
-                                                    <span className="opacity-40">|</span>
-                                                    <span className="text-white bg-slate-800 px-1.5 py-0.5 rounded italic">{log.reason}</span>
+                                                    <span className="opacity-20">|</span>
+                                                    <span className="text-foreground bg-muted px-1.5 py-0.5 rounded italic text-[10px]">{log.reason}</span>
                                                 </>
                                             )}
                                         </div>
@@ -95,10 +95,10 @@ export function StockHistory({ logs }: StockHistoryProps) {
                                 </div>
                                 <div className="text-right">
                                     <div className={cn(
-                                        "text-sm font-black",
-                                        log.quantity > 0 ? "text-indigo-500" : "text-rose-500"
+                                        "text-sm font-black italic",
+                                        log.quantity > 0 ? "text-primary dark:text-indigo-400" : "text-rose-600 dark:text-rose-400"
                                     )}>
-                                        {log.quantity > 0 ? "+" : ""}{log.quantity.toLocaleString()}<span className="text-xs font-black ml-1 text-slate-300 italic">/{log.ingredient?.purchase_unit}</span>
+                                        {log.quantity > 0 ? "+" : ""}{log.quantity.toLocaleString()}<span className="text-[10px] font-black ml-1 text-muted-foreground italic">/{log.ingredient?.purchase_unit}</span>
                                     </div>
                                 </div>
                             </div>

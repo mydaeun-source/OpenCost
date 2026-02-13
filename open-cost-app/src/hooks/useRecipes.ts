@@ -55,7 +55,7 @@ export function useRecipes() {
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [activeStore?.id])
 
     // Create Recipe (Transaction-like: Insert Recipe -> Insert Items)
     const createRecipe = async (
@@ -129,21 +129,31 @@ export function useRecipes() {
         for (let i = 0; i < retries; i++) {
             try {
                 // 1. Update Recipe Details
+                console.log("Updating recipe with data:", JSON.stringify(recipeData, null, 2))
                 const { error: recipeError } = await supabase
                     .from("recipes")
                     .update(recipeData)
                     .eq("id", recipeId)
 
-                if (recipeError) throw recipeError
+                if (recipeError) {
+                    console.error("Step 1 (Update Recipe) failed:", JSON.stringify(recipeError, null, 2))
+                    throw recipeError
+                }
+                console.log("Step 1 (Update Recipe) success")
 
                 // 2. Replace Ingredients (Delete All -> Insert New)
                 // A. Delete existing
+                console.log("Deleting existing ingredients for recipeId:", recipeId)
                 const { error: deleteError } = await supabase
                     .from("recipe_ingredients")
                     .delete()
                     .eq("recipe_id", recipeId)
 
-                if (deleteError) throw deleteError
+                if (deleteError) {
+                    console.error("Step 2A (Delete Ingredients) failed:", JSON.stringify(deleteError, null, 2))
+                    throw deleteError
+                }
+                console.log("Step 2A (Delete Ingredients) success")
 
                 // B. Insert new
                 if (ingredients.length > 0) {
@@ -153,12 +163,19 @@ export function useRecipes() {
                         item_type: item.item_type,
                         quantity: item.quantity
                     }))
+                    console.log("Inserting new ingredients:", JSON.stringify(recipeIngredients, null, 2))
 
                     const { error: insertError } = await supabase
                         .from("recipe_ingredients")
                         .insert(recipeIngredients)
 
-                    if (insertError) throw insertError
+                    if (insertError) {
+                        console.error("Step 2B (Insert Ingredients) failed:", JSON.stringify(insertError, null, 2))
+                        throw insertError
+                    }
+                    console.log("Step 2B (Insert Ingredients) success")
+                } else {
+                    console.log("No new ingredients to insert")
                 }
 
                 toast({
@@ -174,10 +191,17 @@ export function useRecipes() {
                 // If last retry, throw/toast
                 if (i === retries - 1) {
                     console.error("Error updating recipe (Final Attempt):", error)
+                    if (error) {
+                        console.error("Error details:", JSON.stringify(error, null, 2))
+                        console.error("Error message:", error.message)
+                        console.error("Error code:", error.code)
+                        console.error("Error hint:", error.hint)
+                    }
                     toast({
                         title: "수정 실패",
-                        description: `메뉴 수정 중 오류가 발생했습니다: ${error?.message || "알 수 없는 오류"}`,
+                        description: `메뉴 수정 중 오류가 발생했습니다. 개발자 도구의 콘솔을 확인해주세요. 상세: ${error?.message || "알 수 없는 오류"}`,
                         type: "destructive",
+                        duration: 10000,
                     })
                     // Don't throw to prevent unhandled promise rejection crashing UI if catch is missing upstream
                     // But we should probably let the caller know? 

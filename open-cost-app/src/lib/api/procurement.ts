@@ -49,7 +49,12 @@ export const getSuppliers = async (storeId?: string) => {
     const { data, error } = await query
 
     // Return unique supplier names
-    const uniqueSuppliers = Array.from(new Set(data.map(p => p.supplier_name)))
+    if (error) {
+        console.error("Error fetching suppliers:", error)
+        return []
+    }
+
+    const uniqueSuppliers = Array.from(new Set((data || []).map(p => p.supplier_name)))
     return uniqueSuppliers as string[]
 }
 

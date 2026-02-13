@@ -1,89 +1,90 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { NumericInput } from "@/components/ui/NumericInput"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/Card"
-import { Plus, Trash2, Search, Save, X, ShoppingCart, ChevronRight, User, Calendar, PlusCircle, Camera, Loader2 } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/Card"
+import { Search, Save, Camera, Loader2, Filter, ShoppingCart, User, Calendar } from "lucide-react"
 import { useIngredients } from "@/hooks/useIngredients"
-import { cn } from "@/lib/utils"
-
+import { cn, formatNumber } from "@/lib/utils"
 import { createPurchase, getSuppliers } from "@/lib/api/procurement"
 import { useToast } from "@/hooks/use-toast"
 import { processReceiptImage } from "@/lib/ocr-service"
-import { formatNumber } from "@/lib/utils"
+import { useStore } from "@/contexts/StoreContext"
 
 interface PurchaseFormProps {
     onSuccess?: () => void
     onCancel: () => void
 }
 
+type DraftItem = { quantity: number; price: number }
+
 export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
+    const { activeStore } = useStore()
     const { ingredients } = useIngredients()
     const { toast } = useToast()
+
+    // Form State
     const [supplierName, setSupplierName] = useState("")
     const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0])
-    const [selectedItems, setSelectedItems] = useState<{ ingredientId: string, quantity: number, price: number }[]>([])
+    const [draftItems, setDraftItems] = useState<Record<string, DraftItem>>({})
     const [searchQuery, setSearchQuery] = useState("")
     const [loading, setLoading] = useState(false)
     const [keepOpen, setKeepOpen] = useState(false)
+    const [onlySelected, setOnlySelected] = useState(false)
 
+    // Supplier Search State
     const [suppliers, setSuppliers] = useState<string[]>([])
-    const [supplierSearchQuery, setSupplierSearchQuery] = useState("")
     const [showSupplierSuggestions, setShowSupplierSuggestions] = useState(false)
-    const searchInputRef = useRef<HTMLInputElement>(null)
-    const [activeIndex, setActiveIndex] = useState(-1)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [ocrLoading, setOcrLoading] = useState(false)
 
+    // Fetch Suppliers
     useEffect(() => {
         const fetchSuppliers = async () => {
+            if (!activeStore?.id) return
             try {
-                const data = await getSuppliers()
+                const data = await getSuppliers(activeStore.id)
                 setSuppliers(data)
             } catch (err) {
                 console.error("Failed to fetch suppliers:", err)
             }
         }
         fetchSuppliers()
-    }, [])
+    }, [activeStore?.id])
 
-    const filteredSuppliers = suppliers.filter(s =>
-        s.toLowerCase().includes(supplierName.toLowerCase())
-    ).slice(0, 5)
+    const filteredSuppliers = useMemo(() =>
+        suppliers.filter(s => s.toLowerCase().includes(supplierName.toLowerCase())).slice(0, 5),
+        [suppliers, supplierName])
 
-    const addItem = (ing: any) => {
-        if (selectedItems.find(item => item.ingredientId === ing.id)) return
-        setSelectedItems(prev => [...prev, {
-            ingredientId: ing.id,
-            quantity: 1,
-            price: Number(ing.purchase_price) || 0
-        }])
-        setSearchQuery("")
-        setActiveIndex(-1)
-        setTimeout(() => searchInputRef.current?.focus(), 0)
-    }
+    // Filter Ingredients
+    const filteredIngredients = useMemo(() => {
+        let items = ingredients.filter(i => {
+            // Exclude 'prep' (semi-finished) items
+            if ((i.category as any)?.type === 'prep') return false
 
-    const filteredIngredients = ingredients.filter(i =>
-        i.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ).slice(0, 8)
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === "ArrowDown") {
-            setActiveIndex(prev => Math.min(prev + 1, filteredIngredients.length - 1))
-            e.preventDefault()
-        } else if (e.key === "ArrowUp") {
-            setActiveIndex(prev => Math.max(prev - 1, -1))
-            e.preventDefault()
-        } else if (e.key === "Enter" && activeIndex >= 0) {
-            addItem(filteredIngredients[activeIndex])
-            e.preventDefault()
+            return i.name.toLowerCase().includes(searchQuery.toLowerCase())
+        })
+        if (onlySelected) {
+            items = items.filter(i => draftItems[i.id]?.quantity > 0)
         }
-    }
+        return items
+    }, [ingredients, searchQuery, onlySelected, draftItems])
 
-    const removeItem = (id: string) => {
-        setSelectedItems(prev => prev.filter(item => item.ingredientId !== id))
+    // Handlers
+    const updateDraft = (id: string, field: keyof DraftItem, value: number) => {
+        setDraftItems(prev => {
+            const current = prev[id] || {
+                quantity: 0,
+                price: Number(ingredients.find(i => i.id === id)?.purchase_price) || 0
+            }
+            const updated = { ...current, [field]: value }
+
+            // If both 0, remove from draft to keep clean? 
+            // Better to keep it if user interacted, but remove if quantity is 0 for submission logic
+            return { ...prev, [id]: updated }
+        })
     }
 
     const handleReceiptScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,7 +100,8 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
 
             // Dynamic Ingredient Matching
             if (result.potentialItems.length > 0) {
-                const newItems: { ingredientId: string, quantity: number, price: number }[] = []
+                const newDraft = { ...draftItems }
+                let matchCount = 0
 
                 result.potentialItems.forEach(pItem => {
                     const match = ingredients.find(ing =>
@@ -108,311 +110,268 @@ export function PurchaseForm({ onSuccess, onCancel }: PurchaseFormProps) {
                     )
 
                     if (match) {
-                        // Check if already in selectedItems to avoid duplicates
-                        const isDuplicate = selectedItems.some(i => i.ingredientId === match.id)
-                        if (!isDuplicate) {
-                            newItems.push({
-                                ingredientId: match.id,
-                                quantity: pItem.quantity,
-                                price: pItem.price
-                            })
+                        newDraft[match.id] = {
+                            quantity: pItem.quantity,
+                            price: pItem.price
                         }
+                        matchCount++
                     }
                 })
 
-                if (newItems.length > 0) {
-                    setSelectedItems(prev => [...prev, ...newItems])
-                    toast({
-                        title: "영수증 품목 인식 성공",
-                        description: `${newItems.length}개의 재료가 자동으로 목록에 추가되었습니다.`,
-                        type: "success"
-                    })
-                } else {
-                    toast({
-                        title: "영수증 정보 추출 완료",
-                        description: "매입처와 일자가 입력되었습니다. 품목 매칭 결과는 없습니다.",
-                    })
-                }
-            } else {
+                setDraftItems(newDraft)
+                setOnlySelected(true) // Switch to view selected to show results
                 toast({
-                    title: "영수증 정보 추출 완료",
-                    description: "매입처와 일자가 자동으로 입력되었습니다.",
+                    title: "영수증 인식 완료",
+                    description: `${matchCount}개의 품목이 매칭되었습니다.`,
+                    type: "success"
                 })
+            } else {
+                toast({ title: "영수증 인식 완료", description: "날짜와 공급처가 입력되었습니다." })
             }
         } catch (err) {
             console.error("OCR Error:", err)
-            toast({
-                title: "영수증 인식 실패",
-                description: "이미지에서 텍스트를 추출하지 못했습니다.",
-                type: "destructive"
-            })
+            toast({ title: "인식 실패", description: "영수증을 읽을 수 없습니다.", type: "destructive" })
         } finally {
             setOcrLoading(false)
         }
     }
 
-    const updateItem = (id: string, field: 'quantity' | 'price', value: number) => {
-        setSelectedItems(prev => prev.map(item =>
-            item.ingredientId === id ? { ...item, [field]: value } : item
-        ))
-    }
+    const totalAmount = useMemo(() => {
+        return Object.values(draftItems).reduce((sum, item) => sum + (item.quantity * item.price), 0)
+    }, [draftItems])
 
-    const totalAmount = selectedItems.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+    const totalItems = useMemo(() => {
+        return Object.values(draftItems).filter(i => i.quantity > 0).length
+    }, [draftItems])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (selectedItems.length === 0) {
-            toast({ title: "품목 누락", description: "최소 하나 이상의 품목을 추가해주세요.", type: "destructive" })
+
+        const itemsToSubmit = Object.entries(draftItems)
+            .filter(([_, data]) => data.quantity > 0)
+            .map(([id, data]) => ({
+                ingredientId: id,
+                quantity: data.quantity,
+                price: data.price
+            }))
+
+        if (itemsToSubmit.length === 0) {
+            toast({ title: "품목 누락", description: "수량이 입력된 품목이 없습니다.", type: "destructive" })
+            return
+        }
+
+        if (!activeStore?.id) {
+            toast({ title: "오류", description: "선택된 매장이 없습니다.", type: "destructive" })
             return
         }
 
         try {
             setLoading(true)
-            await createPurchase({ supplier_name: supplierName, purchase_date: purchaseDate }, selectedItems)
+            await createPurchase(
+                { supplier_name: supplierName, purchase_date: purchaseDate },
+                itemsToSubmit,
+                activeStore.id
+            )
 
-            toast({ title: "매입 등록 완료", description: "재고 및 지출에 즉시 반영되었습니다.", type: "success" })
+            toast({ title: "매입 등록 완료", description: `${itemsToSubmit.length}개 품목이 입고되었습니다.`, type: "success" })
 
             if (keepOpen) {
-                // Reset items but keep supplier/date for continuous entry
-                setSelectedItems([])
+                setDraftItems({})
                 setSearchQuery("")
-                setTimeout(() => searchInputRef.current?.focus(), 100)
+                setOnlySelected(false)
             } else {
                 onSuccess?.()
             }
         } catch (err: any) {
             console.error(err)
-            toast({ title: "등록 실패", description: err.message || "매입 내역 저장 중 오류가 발생했습니다.", type: "destructive" })
+            toast({ title: "등록 실패", description: err.message, type: "destructive" })
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 pt-2 pb-4">
-            {/* Receipt Scan Header */}
-            <div className="flex items-center justify-between pb-2 mb-2 border-b-2 border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/20">
-                        <Camera className="h-4 w-4" />
+        <form onSubmit={handleSubmit} className="flex flex-col h-[80vh] max-h-[800px]">
+            {/* Header Section */}
+            <div className="flex-none space-y-4 pb-4 border-b border-border">
+                {/* Receipt OCR Button */}
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+                            <ShoppingCart className="h-4 w-4" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-black text-foreground uppercase tracking-tight">매입 일괄 등록</h2>
+                            <p className="text-[10px] text-muted-foreground font-bold">여러 품목을 한 번에 입력하세요</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">영수증 자동 등록</h2>
-                        <p className="text-[10px] font-bold text-slate-400">OCR 기술로 빠르고 정확하게</p>
-                    </div>
-                </div>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 rounded-lg border-2 border-amber-500/30 font-black text-[10px] text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/10 gap-2"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={ocrLoading}
-                >
-                    {ocrLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
-                    {ocrLoading ? "분석 중..." : "영수증 사진 올리기"}
-                </Button>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleReceiptScan}
-                />
-            </div>
-
-            {/* Header: Supplier & Date */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2 relative">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 ml-1">
-                        <User className="h-3 w-3" /> 공급처 (Supplier)
-                    </label>
-                    <div className="relative">
-                        <Input
-                            placeholder="공급처 입력 또는 선택..."
-                            value={supplierName}
-                            onChange={e => {
-                                setSupplierName(e.target.value)
-                                setShowSupplierSuggestions(true)
-                            }}
-                            onFocus={() => setShowSupplierSuggestions(true)}
-                            onBlur={() => setTimeout(() => setShowSupplierSuggestions(false), 200)}
-                            required
-                            className="border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl h-12 text-base font-bold transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
-                        />
-                        {showSupplierSuggestions && filteredSuppliers.length > 0 && (
-                            <div className="absolute left-0 right-0 top-14 z-[110] bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1">
-                                {filteredSuppliers.map((s, idx) => (
-                                    <div
-                                        key={idx}
-                                        className="p-3 text-sm font-bold cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 border-b last:border-0 border-slate-50 dark:border-slate-700 transition-colors"
-                                        onClick={() => {
-                                            setSupplierName(s)
-                                            setShowSupplierSuggestions(false)
-                                        }}
-                                    >
-                                        {s}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 ml-1">
-                        <Calendar className="h-3 w-3" /> 매입 일자
-                    </label>
-                    <Input
-                        type="date"
-                        value={purchaseDate}
-                        onChange={e => setPurchaseDate(e.target.value)}
-                        required
-                        className="border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-xl h-12 text-base font-bold transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
-                    />
-                </div>
-            </div>
-
-            {/* Main Item Selection Area */}
-            <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                    <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight flex items-center gap-2">
-                        <PlusCircle className="h-4 w-4 text-indigo-500" /> 매입 품목 추가
-                    </h3>
-                    <div className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-2.5 py-0.5 rounded-full text-[10px] font-black">{selectedItems.length} ITEMS</div>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-2 border-dashed border-amber-500/50 text-amber-600 hover:bg-amber-50"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={ocrLoading}
+                    >
+                        {ocrLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+                        <span className="text-xs font-bold">영수증 스캔</span>
+                    </Button>
+                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleReceiptScan} />
                 </div>
 
-                <div className="border-2 border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
-                    {/* Search Bar */}
-                    <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                {/* Info Inputs */}
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1 relative">
+                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">공급처</label>
                         <div className="relative">
-                            <Search className="absolute left-3.5 top-2.5 h-5 w-5 text-slate-400" />
                             <Input
-                                ref={searchInputRef}
-                                placeholder="재료 이름을 검색하세요..."
-                                value={searchQuery}
-                                onChange={e => { setSearchQuery(e.target.value); setActiveIndex(-1); }}
-                                onKeyDown={handleKeyDown}
-                                className="pl-11 h-10 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700/50 focus-visible:ring-indigo-500 rounded-lg text-sm font-bold"
+                                placeholder="공급처 입력..."
+                                value={supplierName}
+                                onChange={e => {
+                                    setSupplierName(e.target.value)
+                                    setShowSupplierSuggestions(true)
+                                }}
+                                onFocus={() => setShowSupplierSuggestions(true)}
+                                onBlur={() => setTimeout(() => setShowSupplierSuggestions(false), 200)}
+                                className="h-9 font-bold bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500/20"
                             />
-                            {searchQuery && (
-                                <div className="absolute left-0 right-0 top-11 z-[100] bg-white dark:bg-slate-800 border-2 border-indigo-100 dark:border-slate-700 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
-                                    {filteredIngredients.length === 0 ? (
-                                        <div className="p-8 text-sm font-bold text-slate-400 text-center italic">결과가 없습니다.</div>
-                                    ) : (
-                                        filteredIngredients.map((ing, idx) => (
-                                            <div
-                                                key={ing.id}
-                                                className={cn(
-                                                    "p-3 cursor-pointer flex justify-between items-center transition-all border-b border-slate-50 dark:border-slate-700 last:border-0",
-                                                    activeIndex === idx ? "bg-indigo-50 dark:bg-indigo-900/50 pl-5" : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
-                                                )}
-                                                onClick={() => addItem(ing)}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                                                        <Plus className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                                                    </div>
-                                                    <div>
-                                                        <span className="text-sm font-black block text-slate-900 dark:text-slate-100">{ing.name}</span>
-                                                        <span className="text-[10px] text-slate-400 font-bold uppercase">{ing.purchase_unit} 당 {formatNumber(ing.purchase_price)}원</span>
-                                                    </div>
-                                                </div>
-                                                <ChevronRight className="h-4 w-4 text-slate-300" />
-                                            </div>
-                                        ))
-                                    )}
+                            {showSupplierSuggestions && filteredSuppliers.length > 0 && (
+                                <div className="absolute left-0 right-0 top-10 z-50 bg-popover border rounded-md shadow-md">
+                                    {filteredSuppliers.map((s, idx) => (
+                                        <div key={idx} className="p-2 text-sm cursor-pointer hover:bg-accent" onClick={() => { setSupplierName(s); setShowSupplierSuggestions(false); }}>{s}</div>
+                                    ))}
                                 </div>
                             )}
                         </div>
                     </div>
-
-                    {/* Selected List */}
-                    <div className="divide-y dark:divide-slate-800 bg-white dark:bg-slate-900 overflow-y-auto max-h-[350px]">
-                        {selectedItems.length === 0 ? (
-                            <div className="p-12 text-center text-slate-400 flex flex-col items-center">
-                                <ShoppingCart className="h-10 w-10 mb-3 opacity-10" />
-                                <p className="text-xs font-bold leading-relaxed opacity-60">추가된 품목이 없습니다.<br />위 검색창에서 재료를 찾아 추가하세요.</p>
-                            </div>
-                        ) : (
-                            selectedItems.map(item => {
-                                const ing = ingredients.find(i => i.id === item.ingredientId)
-                                return (
-                                    <div key={item.ingredientId} className="p-3 flex items-center gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-black truncate text-slate-900 dark:text-slate-100">{ing?.name}</p>
-                                            <p className="text-[10px] text-slate-400 font-bold flex items-center gap-1 uppercase tracking-tight">
-                                                <span className="bg-slate-100 dark:bg-slate-800 px-1 rounded">{ing?.purchase_unit}</span> 단위
-                                            </p>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-20">
-                                                <label className="text-[9px] font-black text-slate-400 mb-1 block uppercase text-center">수량</label>
-                                                <NumericInput
-                                                    className="h-9 px-2 text-center text-sm font-black border-2 border-slate-100 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-indigo-500/10"
-                                                    value={item.quantity}
-                                                    onChange={(val: number) => updateItem(item.ingredientId, 'quantity', val)}
-                                                />
-                                            </div>
-                                            <div className="w-32">
-                                                <label className="text-[9px] font-black text-slate-400 mb-1 block uppercase text-center">단가 (원)</label>
-                                                <NumericInput
-                                                    className="h-9 px-2 text-center text-sm font-black border-2 border-slate-100 dark:border-slate-800 rounded-lg focus:ring-2 focus:ring-indigo-500/10"
-                                                    value={item.price}
-                                                    onChange={(val: number) => updateItem(item.ingredientId, 'price', val)}
-                                                />
-                                            </div>
-                                            <div className="w-24 text-right pr-1">
-                                                <label className="text-[9px] font-black text-slate-400 mb-1 block uppercase">합계</label>
-                                                <p className="text-sm font-black text-indigo-500">{formatNumber(item.quantity * item.price)}<span className="text-[10px] ml-0.5">원</span></p>
-                                            </div>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                onClick={() => removeItem(item.ingredientId)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                )
-                            })
-                        )}
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest pl-1">입고일자</label>
+                        <Input type="date" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)} className="h-9 font-bold bg-white dark:bg-slate-950 text-slate-900 dark:text-white" />
                     </div>
+                </div>
+
+                {/* Filter Bar */}
+                <div className="flex gap-2 bg-muted/30 p-1 rounded-lg">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="재료명 검색..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className="h-9 pl-9 border-none bg-white dark:bg-slate-950 focus-visible:ring-0 placeholder:text-muted-foreground/50 text-slate-900 dark:text-white font-bold"
+                        />
+                    </div>
+                    <Button
+                        type="button"
+                        variant={onlySelected ? "secondary" : "ghost"}
+                        size="sm"
+                        onClick={() => setOnlySelected(!onlySelected)}
+                        className={cn("h-9 gap-2", onlySelected && "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300")}
+                    >
+                        <Filter className="h-3.5 w-3.5" />
+                        <span className="text-xs font-bold">선택됨 ({totalItems})</span>
+                    </Button>
                 </div>
             </div>
 
-            {/* Sticky-like Footer with Total and Submit */}
-            <div className="pt-2 space-y-4">
-                <div className="flex items-center justify-between p-4 bg-indigo-600 dark:bg-indigo-700 rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-none border-b-4 border-indigo-800/30">
-                    <span className="font-black text-indigo-100 uppercase tracking-widest text-[10px]">Total Purchase Value</span>
-                    <span className="text-3xl font-black text-white italic tracking-tighter">
-                        {formatNumber(totalAmount)}<span className="text-lg font-normal ml-1 border-l border-white/20 pl-2">원</span>
-                    </span>
+            {/* Table Section (Scrollable) */}
+            <div className="flex-1 overflow-auto -mx-1 px-1 mt-2">
+                <div className="border rounded-md overflow-hidden bg-background shadow-sm">
+                    <table className="w-full text-sm">
+                        <thead className="bg-muted/50 sticky top-0 z-10 text-[10px] uppercase font-black text-muted-foreground">
+                            <tr>
+                                <th className="p-3 text-left w-[35%]">재료명 / 현재고</th>
+                                <th className="p-3 text-center w-[20%]">입고 수량</th>
+                                <th className="p-3 text-center w-[25%]">입고 단가</th>
+                                <th className="p-3 text-right w-[20%]">합계</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                            {filteredIngredients.map(ing => {
+                                const draft = draftItems[ing.id]
+                                const qty = draft?.quantity || 0
+                                const price = draft?.price ?? ing.purchase_price ?? 0
+                                const isActive = qty > 0
+
+                                return (
+                                    <tr key={ing.id} className={cn(
+                                        "group transition-colors hover:bg-muted/30",
+                                        isActive ? "bg-indigo-50/50 dark:bg-indigo-900/10" : ""
+                                    )}>
+                                        <td className="p-3">
+                                            <div className="font-bold text-foreground">{ing.name}</div>
+                                            <div className="text-[10px] text-muted-foreground flex gap-1 items-center">
+                                                <span className={cn(
+                                                    "px-1.5 py-0.5 rounded-sm bg-muted",
+                                                    (ing.current_stock || 0) <= (ing.safety_stock || 0) ? "text-rose-500 bg-rose-50" : ""
+                                                )}>
+                                                    재고: {formatNumber(ing.current_stock)} {ing.purchase_unit}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="p-2">
+                                            <div className="relative">
+                                                <NumericInput
+                                                    className={cn(
+                                                        "h-9 text-center font-bold transition-all bg-white dark:bg-slate-950 text-slate-900 dark:text-white",
+                                                        isActive ? "border-indigo-500 ring-1 ring-indigo-500/20" : "border-border opacity-70 group-hover:opacity-100"
+                                                    )}
+                                                    placeholder="0"
+                                                    value={qty}
+                                                    onChange={val => updateDraft(ing.id, 'quantity', val)}
+                                                />
+                                                <span className="absolute right-2 top-2.5 text-[10px] text-muted-foreground pointer-events-none">{ing.purchase_unit}</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-2">
+                                            <div className="relative">
+                                                <NumericInput
+                                                    className="h-9 text-right pr-6 font-medium bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:text-slate-900 dark:focus:text-white"
+                                                    placeholder="0"
+                                                    value={price}
+                                                    onChange={val => updateDraft(ing.id, 'price', val)}
+                                                />
+                                                <span className="absolute right-2 top-2.5 text-[10px] text-muted-foreground pointer-events-none">원</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-3 text-right">
+                                            <div className={cn("font-bold", isActive ? "text-indigo-600 dark:text-indigo-400" : "text-muted-foreground/30")}>
+                                                {formatNumber(qty * price)}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
+                    {filteredIngredients.length === 0 && (
+                        <div className="p-8 text-center text-muted-foreground text-sm italic">
+                            {onlySelected ? "선택된 재료가 없습니다." : "검색 결과가 없습니다."}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Sticky Footer */}
+            <div className="flex-none pt-4 border-t border-border bg-background z-20 mt-auto">
+                <div className="flex items-center justify-between mb-4 px-1">
+                    <div className="text-xs font-medium text-muted-foreground">
+                        총 <span className="font-bold text-foreground">{totalItems}</span>개 품목 선택됨
+                    </div>
+                    <div className="text-right">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estimate Total</div>
+                        <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
+                            {formatNumber(totalAmount)}<span className="text-sm text-foreground ml-1">원</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-2.5 px-2">
-                        <input
-                            type="checkbox"
-                            id="keepOpen"
-                            checked={keepOpen}
-                            onChange={e => setKeepOpen(e.target.checked)}
-                            className="h-4 w-4 rounded border-2 border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                        />
-                        <label htmlFor="keepOpen" className="text-[11px] font-bold text-slate-400 cursor-pointer select-none">
-                            저장 후 연속 입력 모드 유지
-                        </label>
-                    </div>
-
-                    <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1 h-11 rounded-xl font-black text-sm border-2 border-slate-200 hover:bg-slate-50 transition-all active:scale-95" onClick={onCancel} type="button">취소</Button>
-                        <Button className="flex-[2.5] bg-slate-900 border-b-4 border-slate-950 hover:bg-black text-white h-11 rounded-xl text-sm font-black transition-all active:scale-95 flex items-center justify-center gap-2" disabled={loading} type="submit">
-                            <Save className="h-4 w-4" />
-                            {loading ? "데이터 기록 중..." : "매입 내역 저장 및 재고 반영"}
-                        </Button>
-                    </div>
+                <div className="flex gap-2">
+                    <Button type="button" variant="outline" onClick={onCancel} className="flex-1">취소</Button>
+                    <Button type="submit" className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white font-bold" disabled={loading || totalItems === 0}>
+                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        {totalItems}개 품목 매입 확정
+                    </Button>
                 </div>
             </div>
         </form>

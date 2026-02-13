@@ -11,8 +11,10 @@ import { ko } from "date-fns/locale"
 import { ChevronRight, ChevronDown, Reply, Hash, Calendar, Banknote, AlertCircle, TrendingUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { useStore } from "@/contexts/StoreContext"
 
 export default function OrderHistoryPage() {
+    const { activeStore } = useStore()
     const [orders, setOrders] = useState<Order[]>([])
     const [loading, setLoading] = useState(true)
     const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
@@ -35,7 +37,14 @@ export default function OrderHistoryPage() {
                 default: start = startOfMonth(now); end = endOfMonth(now)
             }
 
-            const data = await getOrders(format(start, 'yyyy-MM-dd'), format(end, 'yyyy-MM-dd'), 100, true)
+            // Fixed: Pass storeId as 3rd argument
+            const data = await getOrders(
+                format(start, 'yyyy-MM-dd'),
+                format(end, 'yyyy-MM-dd'),
+                activeStore?.id,
+                100,
+                true
+            )
             setOrders(data || [])
         } catch (err) {
             console.error("Fetch orders failed", err)
@@ -45,8 +54,10 @@ export default function OrderHistoryPage() {
     }
 
     useEffect(() => {
-        fetchOrders()
-    }, [selectedPeriod])
+        if (activeStore) {
+            fetchOrders()
+        }
+    }, [selectedPeriod, activeStore])
 
     // Summary Calculations
     const totalAmount = orders.reduce((sum, o) => o.status !== 'cancelled' ? sum + Number(o.total_amount) : sum, 0)
@@ -87,15 +98,15 @@ export default function OrderHistoryPage() {
             <div className="space-y-6 pb-20">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">상세 주문 내역</h1>
-                        <p className="text-muted-foreground mt-1 font-medium">
-                            판매 내역을 품목별로 상세히 파악하고 관리합니다.
+                        <h1 className="text-3xl font-black tracking-tighter text-foreground italic uppercase">주문 내역 센터 (ORDER HISTORY)</h1>
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-1 ml-0.5">
+                            판매 내역 분석 및 주문 데이터 분석
                         </p>
                     </div>
                 </div>
 
                 {/* Period Selector */}
-                <div className="flex flex-wrap items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl w-fit border border-slate-200 dark:border-slate-700 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2 p-1 bg-muted/40 rounded-xl w-fit border border-border shadow-sm">
                     {(['day', 'week', 'month', 'quarter', 'year'] as const).map((p) => (
                         <Button
                             key={p}
@@ -103,46 +114,46 @@ export default function OrderHistoryPage() {
                             size="sm"
                             onClick={() => setSelectedPeriod(p)}
                             className={cn(
-                                "rounded-lg px-5 py-2.5 transition-all duration-200 text-xs font-black",
+                                "rounded-lg px-5 py-2 transition-all duration-200 text-[10px] font-black uppercase tracking-widest",
                                 selectedPeriod === p
-                                    ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-600"
-                                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                                    ? "bg-foreground text-background shadow-md"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                             )}
                         >
-                            {p === 'day' ? '오늘' : p === 'week' ? '이번주' : p === 'month' ? '이번달' : p === 'quarter' ? '이번 분기' : '올해'}
+                            {p === 'day' ? '오늘' : p === 'week' ? '이번 주' : p === 'month' ? '이번 달' : p === 'quarter' ? '분기' : '올해'}
                         </Button>
                     ))}
                 </div>
 
                 {/* Summary Cards */}
                 <div className="grid gap-4 md:grid-cols-3">
-                    <Card className="bg-white dark:bg-slate-900 shadow-sm border-l-4 border-l-indigo-500 overflow-hidden group hover:ring-2 hover:ring-indigo-100 dark:hover:ring-slate-800 transition-all">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest group-hover:text-indigo-500 transition-colors">기간 매출 총액</CardTitle>
-                            <Banknote className="h-4 w-4 text-indigo-500 opacity-50" />
+                    <Card className="glass-panel border border-border shadow-none group transition-all">
+                        <CardHeader className="flex flex-row items-center justify-between p-6 pb-2 space-y-0">
+                            <CardTitle className="text-[10px] font-black text-primary uppercase tracking-widest">기간 매출 총액</CardTitle>
+                            <Banknote className="h-4 w-4 text-primary opacity-50" />
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter">{totalAmount.toLocaleString()}<span className="text-xs font-normal ml-0.5 opacity-50">원</span></div>
+                        <CardContent className="p-6 pt-0">
+                            <div className="text-2xl font-black text-foreground italic tracking-tighter">{totalAmount.toLocaleString()}<span className="text-[10px] font-black ml-1 opacity-50 uppercase tracking-widest">원 (Won)</span></div>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-white dark:bg-slate-900 shadow-sm border-l-4 border-l-emerald-500 overflow-hidden group hover:ring-2 hover:ring-emerald-50 dark:hover:ring-slate-800 transition-all">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest group-hover:text-emerald-500 transition-colors">평균 주문 단가</CardTitle>
-                            <TrendingUp className="h-4 w-4 text-emerald-500 opacity-50" />
+                    <Card className="glass-panel border border-border shadow-none group transition-all">
+                        <CardHeader className="flex flex-row items-center justify-between p-6 pb-2 space-y-0">
+                            <CardTitle className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">평균 주문 단가</CardTitle>
+                            <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400 opacity-50" />
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 italic tracking-tighter">{Math.round(avgOrderValue).toLocaleString()}<span className="text-xs font-normal ml-0.5 opacity-50">원</span></div>
+                        <CardContent className="p-6 pt-0">
+                            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 italic tracking-tighter">{Math.round(avgOrderValue).toLocaleString()}<span className="text-[10px] font-black ml-1 opacity-50 uppercase tracking-widest">원 (Won)</span></div>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-white dark:bg-slate-900 shadow-sm border-l-4 border-l-amber-500 overflow-hidden group hover:ring-2 hover:ring-amber-50 dark:hover:ring-slate-800 transition-all">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-[10px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest group-hover:text-amber-500 transition-colors">총 주문 건수</CardTitle>
-                            <Hash className="h-4 w-4 text-amber-400 opacity-50" />
+                    <Card className="glass-panel border border-border shadow-none group transition-all">
+                        <CardHeader className="flex flex-row items-center justify-between p-6 pb-2 space-y-0">
+                            <CardTitle className="text-[10px] font-black text-amber-500 uppercase tracking-widest">총 주문 건수</CardTitle>
+                            <Hash className="h-4 w-4 text-amber-500 opacity-50" />
                         </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter">{activeOrders.length}건</div>
+                        <CardContent className="p-6 pt-0">
+                            <div className="text-2xl font-black text-foreground italic tracking-tighter">{activeOrders.length}건</div>
                         </CardContent>
                     </Card>
                 </div>
@@ -193,7 +204,7 @@ export default function OrderHistoryPage() {
                                                             {format(new Date(order.created_at), "HH:mm")}
                                                         </span>
                                                         {order.status === 'cancelled' && (
-                                                            <Badge variant="destructive" className="inline-flex scale-75 origin-left text-[8px] h-3.5 mt-1 font-black">CANCELED</Badge>
+                                                            <Badge variant="destructive" className="inline-flex scale-75 origin-left text-[8px] h-3.5 mt-1 font-black">취소됨 (CANCELLED)</Badge>
                                                         )}
                                                     </div>
 
@@ -220,7 +231,7 @@ export default function OrderHistoryPage() {
                                                         {/* Summary Row inside Order */}
                                                         <div className="pt-2 flex items-center justify-between text-xs border-t border-slate-50 dark:border-slate-800/50">
                                                             <div className="flex items-center gap-2">
-                                                                <span className="text-slate-300 font-black uppercase tracking-widest scale-90 origin-left">Order Total</span>
+                                                                <span className="text-slate-300 font-black uppercase tracking-widest scale-90 origin-left">주문 합계 (TOTAL)</span>
                                                                 <span className="font-black text-indigo-600 dark:text-indigo-400 text-sm ml-2">
                                                                     {Number(order.total_amount).toLocaleString()}원
                                                                 </span>

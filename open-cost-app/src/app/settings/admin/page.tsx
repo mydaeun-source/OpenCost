@@ -8,6 +8,7 @@ import { CollapsibleCard } from "@/components/dashboard/CollapsibleCard"
 import { Button } from "@/components/ui/Button"
 import { Users, Building2, CheckCircle2, XCircle, ShieldAlert, Database as DbIcon, Loader2 } from "lucide-react"
 import { format, subDays, subMonths, startOfMonth } from "date-fns"
+import { cn } from "@/lib/utils"
 
 interface OwnerProfile {
     id: string
@@ -495,69 +496,71 @@ export default function SuperAdminPage() {
     return (
         <AppLayout>
             <div className="max-w-6xl mx-auto space-y-8">
-                <div className="flex justify-between items-end">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
                     <div>
-                        <h1 className="text-4xl font-black italic text-white tracking-tighter uppercase">
-                            Developer Console
+                        <h1 className="text-4xl font-black italic text-foreground tracking-tighter uppercase">
+                            개발자 관리 콘솔 (DEVELOPER CONSOLE)
                         </h1>
-                        <p className="text-slate-400 mt-2">시스템 전체 사업주 및 매장 관리</p>
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-1 ml-0.5">시스템 전체 사업주 및 매장 관리</p>
                     </div>
-                    <Button
-                        onClick={generateSampleData}
-                        disabled={generating}
-                        className="bg-indigo-600 hover:bg-indigo-500 text-white font-black"
-                    >
-                        {generating ? (
-                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> 생성 중...</>
-                        ) : (
-                            <><DbIcon className="w-4 h-4 mr-2" /> 기존 지점 데이터 생성</>
-                        )}
-                    </Button>
-                    <Button
-                        onClick={generateFullDemo}
-                        disabled={generating}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-black"
-                    >
-                        {generating ? (
-                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> 구축 중...</>
-                        ) : (
-                            <><Building2 className="w-4 h-4 mr-2" /> 풀 샘플 환경 구축 (지점/직원/데이터)</>
-                        )}
-                    </Button>
+                    <div className="flex flex-wrap gap-3">
+                        <Button
+                            onClick={generateSampleData}
+                            disabled={generating}
+                            className="bg-primary/10 hover:bg-primary/20 text-primary font-black text-[10px] uppercase tracking-widest px-6 h-12 rounded-xl border border-primary/20 transition-all"
+                        >
+                            {generating ? (
+                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Process...</>
+                            ) : (
+                                <><DbIcon className="w-4 h-4 mr-2" /> 과거 데이터 동기화 (SYNC)</>
+                            )}
+                        </Button>
+                        <Button
+                            onClick={generateFullDemo}
+                            disabled={generating}
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest px-8 h-12 rounded-xl shadow-lg shadow-emerald-500/20 transition-all"
+                        >
+                            {generating ? (
+                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Deploying...</>
+                            ) : (
+                                <><Building2 className="w-4 h-4 mr-2" /> 울트라 데모 생성 (PROVISION)</>
+                            )}
+                        </Button>
+                    </div>
                 </div>
 
                 {generating && (
-                    <div className="bg-indigo-600/20 border border-indigo-500/30 rounded-xl p-6 flex flex-col items-center justify-center space-y-4 animate-in fade-in zoom-in duration-300">
-                        <Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
+                    <div className="bg-primary/5 border border-primary/20 rounded-[2rem] p-10 flex flex-col items-center justify-center space-y-6 animate-in fade-in zoom-in duration-300 glass-panel">
+                        <Loader2 className="w-12 h-12 text-primary animate-spin" />
                         <div className="text-center">
-                            <h3 className="text-lg font-black text-white italic uppercase tracking-wider mb-1">
+                            <h3 className="text-xl font-black text-foreground italic uppercase tracking-wider mb-2">
                                 Ultra-Rich Eco-System Generating...
                             </h3>
-                            <p className="text-indigo-300 font-bold animate-pulse">
+                            <p className="text-primary font-black uppercase tracking-[0.2em] text-[10px] animate-pulse">
                                 {status || "Starting database architecture..."}
                             </p>
                         </div>
-                        <div className="w-full max-w-md bg-white/5 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-indigo-500 h-full animate-progress-indeterminate" />
+                        <div className="w-full max-w-md bg-muted h-2 rounded-full overflow-hidden border border-border/50">
+                            <div className="bg-primary h-full animate-progress-indeterminate shadow-[0_0_15px_rgba(var(--primary),0.5)]" />
                         </div>
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <CollapsibleCard
                         title="전체 사업주 현황"
                         storageKey="admin-owners-summary"
-                        icon={<Users className="w-5 h-5 text-indigo-400" />}
+                        icon={<Users className="w-4 h-4 text-primary" />}
                     >
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <span className="text-slate-400">등록된 사업주</span>
-                                <span className="text-2xl font-black text-white">{owners.length}명</span>
+                        <div className="space-y-6 p-4">
+                            <div className="flex justify-between items-center bg-muted/30 p-4 rounded-2xl border border-border/50">
+                                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Registered Entities</span>
+                                <span className="text-3xl font-black text-foreground italic tracking-tighter">{owners.length} <span className="text-xs uppercase opacity-30">UNIT</span></span>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-slate-400">활성 지점 수</span>
-                                <span className="text-2xl font-black text-indigo-400">
-                                    {owners.reduce((sum, o) => sum + o.stores_count, 0)}개
+                            <div className="flex justify-between items-center bg-primary/5 p-4 rounded-2xl border border-primary/10">
+                                <span className="text-[10px] font-black text-primary uppercase tracking-widest">Active Store Nodes</span>
+                                <span className="text-3xl font-black text-primary italic tracking-tighter">
+                                    {owners.reduce((sum, o) => sum + o.stores_count, 0)} <span className="text-xs uppercase opacity-30">UNIT</span>
                                 </span>
                             </div>
                         </div>
@@ -566,16 +569,16 @@ export default function SuperAdminPage() {
                     <CollapsibleCard
                         title="시스템 상태"
                         storageKey="admin-system-status"
-                        icon={<CheckCircle2 className="w-5 h-5 text-emerald-400" />}
+                        icon={<CheckCircle2 className="w-4 h-4 text-emerald-500" />}
                     >
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                                <span className="text-slate-200 font-bold">인증 서버 운영 중</span>
+                        <div className="space-y-4 p-4">
+                            <div className="flex items-center gap-3 bg-muted/20 p-4 rounded-2xl border border-border/50">
+                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                                <span className="text-[10px] font-black text-foreground uppercase tracking-widest">AUTH ENGINE: STANDBY</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                <span className="text-slate-200 font-bold">데이터베이스 격리 정상</span>
+                            <div className="flex items-center gap-3 bg-muted/20 p-4 rounded-2xl border border-border/50">
+                                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                                <span className="text-[10px] font-black text-foreground uppercase tracking-widest">DB ISOLATION: INTEGRITY_OK</span>
                             </div>
                         </div>
                     </CollapsibleCard>
@@ -584,135 +587,138 @@ export default function SuperAdminPage() {
                 <CollapsibleCard
                     title="사업주 관리 리스트"
                     storageKey="admin-owners-list"
-                    icon={<Building2 className="w-5 h-5 text-amber-400" />}
+                    icon={<Building2 className="w-4 h-4 text-primary" />}
                 >
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto pb-4">
                         <table className="w-full text-left">
                             <thead>
-                                <tr className="border-b border-white/10 text-slate-400 text-xs uppercase tracking-wider">
-                                    <th className="px-4 py-3 font-black">사업주 성함</th>
-                                    <th className="px-4 py-3 font-black">신청 사업장</th>
-                                    <th className="px-4 py-3 font-black text-center">운영 지점 수</th>
-                                    <th className="px-4 py-3 font-black">권한 (Role)</th>
-                                    <th className="px-4 py-3 font-black">상태 (Status)</th>
-                                    <th className="px-4 py-3 font-black text-right">관리 (Manage)</th>
+                                <tr className="border-b border-border text-muted-foreground text-[9px] font-black uppercase tracking-[0.2em]">
+                                    <th className="px-6 py-5">Entity Operator</th>
+                                    <th className="px-6 py-5">Corporate Request</th>
+                                    <th className="px-6 py-5 text-center">Nodes</th>
+                                    <th className="px-6 py-5 text-center">Privilege</th>
+                                    <th className="px-6 py-5">Integrity</th>
+                                    <th className="px-6 py-5 text-right">Administrative Action</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-white/5">
+                            <tbody className="divide-y divide-border/50">
                                 {owners.map(owner => (
-                                    <tr key={owner.id} className="hover:bg-white/[0.02] transition-colors">
-                                        <td className="px-4 py-4">
-                                            <div className="font-bold text-white">{owner.full_name || "미설정"}</div>
-                                            <div className="text-xs text-indigo-300 font-medium">{owner.email || "이메일 없음"}</div>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <div className="text-[10px] text-slate-500 font-mono">{owner.id}</div>
+                                    <tr key={owner.id} className="hover:bg-muted/30 transition-colors group">
+                                        <td className="px-6 py-6 border-l-2 border-transparent group-hover:border-primary/50">
+                                            <div className="font-black text-foreground italic tracking-tight">{owner.full_name || "NOT SPECIFIED"}</div>
+                                            <div className="text-[10px] text-primary font-black uppercase tracking-wider mt-0.5">{owner.email || "NO_AUTH_EMAIL"}</div>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <div className="text-[9px] text-muted-foreground font-mono opacity-40 uppercase tracking-tighter">ID: {owner.id.substring(0, 13)}...</div>
                                                 {owner.is_approved ? (
-                                                    <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold uppercase">Approved</span>
+                                                    <span className="text-[8px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full border border-emerald-500/20 font-black uppercase tracking-widest">CORE_APPROVED</span>
                                                 ) : (
-                                                    <span className="text-[10px] bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded border border-rose-500/20 font-bold uppercase">Pending</span>
+                                                    <span className="text-[8px] bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20 font-black uppercase tracking-widest">PENDING_REVIEW</span>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-4 py-4">
-                                            <div className="text-sm font-bold text-white">
+                                        <td className="px-6 py-6">
+                                            <div className="text-xs font-black text-foreground uppercase tracking-tight">
                                                 {owner.requested_business_name || "-"}
                                             </div>
                                             {!owner.is_approved && (
-                                                <div className="mt-1 space-y-0.5 border-t border-white/5 pt-1">
-                                                    <div className="text-[10px] text-slate-400"><span className="text-indigo-400">대표:</span> {owner.requested_representative || "-"}</div>
-                                                    <div className="text-[10px] text-slate-400"><span className="text-indigo-400">번호:</span> {owner.requested_registration_number || "-"}</div>
-                                                    <div className="text-[10px] text-slate-400"><span className="text-indigo-400">주소:</span> {owner.requested_address || "-"}</div>
-                                                    <div className="text-[10px] text-slate-400"><span className="text-indigo-400">업종/태:</span> {owner.requested_category}/{owner.requested_type}</div>
+                                                <div className="mt-2 space-y-1 p-3 bg-muted/30 rounded-xl border border-border/50">
+                                                    <div className="text-[9px] text-muted-foreground uppercase tracking-widest"><span className="text-primary opacity-60">REP_NM:</span> {owner.requested_representative || "-"}</div>
+                                                    <div className="text-[9px] text-muted-foreground uppercase tracking-widest"><span className="text-primary opacity-60">REG_NO:</span> {owner.requested_registration_number || "-"}</div>
+                                                    <div className="text-[9px] text-muted-foreground uppercase tracking-widest italic line-clamp-1"><span className="text-primary opacity-60">ADDR:</span> {owner.requested_address || "-"}</div>
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-4 py-4 text-center">
-                                            <span className="px-2 py-1 bg-indigo-500/20 text-indigo-400 rounded-lg text-xs font-black">
-                                                {owner.stores_count}개 지점
+                                        <td className="px-6 py-6 text-center">
+                                            <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[9px] font-black uppercase tracking-widest border border-primary/20">
+                                                {owner.stores_count} NODES
                                             </span>
                                         </td>
-                                        <td className="px-4 py-4">
-                                            <div className="flex justify-center">
-                                                <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase ${owner.role === 'super_admin' ? 'bg-purple-500/20 text-purple-400' :
-                                                    owner.role === 'owner' ? 'bg-indigo-500/20 text-indigo-400' :
-                                                        'bg-slate-700 text-slate-300'
-                                                    }`}>
-                                                    {owner.role || 'User'}
-                                                </span>
-                                            </div>
+                                        <td className="px-6 py-6 text-center">
+                                            <span className={cn(
+                                                "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-inner",
+                                                owner.role === 'super_admin' ? 'bg-purple-500/10 border-purple-500/20 text-purple-500' :
+                                                    owner.role === 'owner' ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-500' :
+                                                        'bg-muted border-border text-muted-foreground'
+                                            )}>
+                                                {owner.role || 'USER'}
+                                            </span>
                                         </td>
-                                        <td className="px-4 py-4">
-                                            <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold">
+                                        <td className="px-6 py-6">
+                                            <div className="flex items-center gap-2 text-emerald-500 text-[9px] font-black uppercase tracking-widest">
                                                 <CheckCircle2 className="w-3.5 h-3.5" />
-                                                인증됨
+                                                SECURE
                                             </div>
                                         </td>
-                                        <td className="px-4 py-4 text-right flex items-center justify-end gap-2">
-                                            <select
-                                                value={owner.role}
-                                                onChange={async (e) => {
-                                                    const newRole = e.target.value
-                                                    if (!confirm(`${owner.full_name}님의 역할을 ${newRole}(으)로 변경하시겠습니까?`)) return
-                                                    const { error } = await supabase
-                                                        .from('profiles')
-                                                        .update({ role: newRole })
-                                                        .eq('id', owner.id)
-                                                    if (error) {
-                                                        alert("변경 실패: " + error.message)
-                                                    } else {
-                                                        fetchAllUsers()
-                                                    }
-                                                }}
-                                                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white outline-none focus:ring-1 focus:ring-indigo-500"
-                                            >
-                                                <option value="owner" className="bg-slate-900">Owner</option>
-                                                <option value="super_admin" className="bg-slate-900">Super Admin</option>
-                                                <option value="manager" className="bg-slate-900">Manager</option>
-                                                <option value="staff" className="bg-slate-900">Staff</option>
-                                            </select>
-
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className={owner.is_approved ? "text-rose-400 hover:text-rose-300" : "text-emerald-400 hover:text-emerald-300"}
-                                                onClick={async () => {
-                                                    const newStatus = !owner.is_approved
-                                                    const action = newStatus ? "승인" : "승인 취소"
-                                                    if (!confirm(`${owner.full_name || owner.email}님의 가입을 ${action}하시겠습니까?\n${newStatus ? '(승인 시 사업장 및 지점 데이터가 자동 생성됩니다)' : ''}`)) return
-
-                                                    let error;
-                                                    if (newStatus) {
-                                                        // Use Auto-Provisioning RPC for approving new users
-                                                        const { error: rpcError } = await supabase.rpc('approve_owner_and_create_store', { t_owner_id: owner.id })
-                                                        error = rpcError
-                                                    } else {
-                                                        const { error: updateError } = await supabase
+                                        <td className="px-6 py-6 text-right">
+                                            <div className="flex items-center justify-end gap-3">
+                                                <select
+                                                    value={owner.role}
+                                                    onChange={async (e) => {
+                                                        const newRole = e.target.value
+                                                        if (!confirm(`${owner.full_name}님의 역할을 ${newRole}(으)로 변경하시겠습니까?`)) return
+                                                        const { error } = await supabase
                                                             .from('profiles')
-                                                            .update({ is_approved: newStatus })
+                                                            .update({ role: newRole })
                                                             .eq('id', owner.id)
-                                                        error = updateError
-                                                    }
+                                                        if (error) {
+                                                            alert("변경 실패: " + error.message)
+                                                        } else {
+                                                            fetchAllUsers()
+                                                        }
+                                                    }}
+                                                    className="bg-muted border border-border rounded-xl px-4 py-2 text-[9px] font-black uppercase tracking-widest text-foreground outline-none focus:ring-1 focus:ring-primary/50 cursor-pointer appearance-none min-w-[120px]"
+                                                >
+                                                    <option value="owner" className="bg-card">Owner</option>
+                                                    <option value="super_admin" className="bg-card">Super Admin</option>
+                                                    <option value="manager" className="bg-card">Manager</option>
+                                                    <option value="staff" className="bg-card">Staff</option>
+                                                </select>
 
-                                                    if (error) {
-                                                        alert("작업 실패: " + error.message)
-                                                    } else {
-                                                        fetchAllUsers()
-                                                    }
-                                                }}
-                                            >
-                                                {owner.is_approved ? (
-                                                    <><XCircle className="w-4 h-4 mr-1" /> 승인 취소</>
-                                                ) : (
-                                                    <><CheckCircle2 className="w-4 h-4 mr-1" /> 승인하기</>
-                                                )}
-                                            </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className={cn(
+                                                        "text-[9px] font-black uppercase tracking-widest h-9 px-4 rounded-xl border transition-all",
+                                                        owner.is_approved ? "text-rose-500 border-rose-500/20 hover:bg-rose-500/10" : "text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/10"
+                                                    )}
+                                                    onClick={async () => {
+                                                        const newStatus = !owner.is_approved
+                                                        const action = newStatus ? "승인" : "승인 취소"
+                                                        if (!confirm(`${owner.full_name || owner.email}님의 가입을 ${action}하시겠습니까?\n${newStatus ? '(승인 시 사업장 및 지점 데이터가 자동 생성됩니다)' : ''}`)) return
+
+                                                        let error;
+                                                        if (newStatus) {
+                                                            const { error: rpcError } = await supabase.rpc('approve_owner_and_create_store', { t_owner_id: owner.id })
+                                                            error = rpcError
+                                                        } else {
+                                                            const { error: updateError } = await supabase
+                                                                .from('profiles')
+                                                                .update({ is_approved: newStatus })
+                                                                .eq('id', owner.id)
+                                                            error = updateError
+                                                        }
+
+                                                        if (error) {
+                                                            alert("작업 실패: " + error.message)
+                                                        } else {
+                                                            fetchAllUsers()
+                                                        }
+                                                    }}
+                                                >
+                                                    {owner.is_approved ? (
+                                                        <><XCircle className="w-3.5 h-3.5 mr-1" /> Revoke</>
+                                                    ) : (
+                                                        <><CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Authorize</>
+                                                    )}
+                                                </Button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
                                 {owners.length === 0 && !loading && (
                                     <tr>
-                                        <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
-                                            등록된 사업주가 없습니다.
+                                        <td colSpan={6} className="px-6 py-16 text-center text-muted-foreground font-black uppercase tracking-widest text-xs opacity-50 italic">
+                                            No entity operators identified in system database.
                                         </td>
                                     </tr>
                                 )}

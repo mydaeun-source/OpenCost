@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/Toaster";
 import { StoreProvider } from "@/contexts/StoreContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -23,15 +24,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="dark" suppressHydrationWarning>
+    <html lang="ko" suppressHydrationWarning>
       <body
         className={`${outfit.variable} antialiased`}
         suppressHydrationWarning={true}
       >
-        <StoreProvider>
-          {children}
-          <Toaster />
-        </StoreProvider>
+        <ThemeProvider>
+          <StoreProvider>
+            {children}
+            <Toaster />
+          </StoreProvider>
+        </ThemeProvider>
         <script
           dangerouslySetInnerHTML={{
             __html: `

@@ -99,11 +99,11 @@ export default function MenuEngineeringPage() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h1 className="text-3xl font-black tracking-tight text-white italic">MENU ENGINEERING MATRIX</h1>
-                        <p className="text-slate-500 font-medium mt-1">최근 30일 데이터를 기준으로 메뉴의 수익성과 인기를 분석합니다.</p>
+                        <h1 className="text-3xl font-black tracking-tighter text-foreground italic uppercase">메뉴 공학 매트릭스 (MENU ENGINEERING)</h1>
+                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-1 ml-0.5">최근 30일 데이터를 기준으로 메뉴의 수익성과 인기를 분석합니다.</p>
                     </div>
-                    <Button onClick={loadData} variant="outline" size="sm" className="font-black text-[10px] uppercase tracking-widest px-6 h-10 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10">
-                        기반 데이터 새로고침
+                    <Button onClick={loadData} variant="ghost" size="sm" className="font-black text-[10px] uppercase tracking-widest px-8 h-12 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all rounded-xl">
+                        분석 새로고침
                     </Button>
                 </div>
 
@@ -111,10 +111,10 @@ export default function MenuEngineeringPage() {
                 <CollapsibleCard
                     title="메뉴 공학 매트릭스 (Menu Engineering Matrix)"
                     description="수익성과 인기(판매량)를 기준으로 분류된 4사분면 요약입니다."
-                    icon={<Target className="h-4 w-4" />}
+                    icon={<Target className="h-4 w-4 text-primary" />}
                     storageKey="menu-matrix"
                 >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {(Object.keys(quadrants) as Array<keyof typeof quadrants>).map((key) => {
                             const q = quadrants[key]
                             const count = performance.filter(p => p.quadrant === key).length
@@ -124,39 +124,39 @@ export default function MenuEngineeringPage() {
                                 <Card
                                     key={key}
                                     className={cn(
-                                        "relative overflow-hidden cursor-pointer transition-all border-none bg-white/5",
-                                        selectedQuadrant === key ? "ring-1 ring-white/20 bg-white/10" : "hover:bg-white/10"
+                                        "relative overflow-hidden cursor-pointer transition-all border border-border/50 rounded-3xl group glass-panel",
+                                        selectedQuadrant === key ? "ring-2 ring-primary bg-primary/5" : "hover:bg-muted/30"
                                     )}
                                     onClick={() => setSelectedQuadrant(selectedQuadrant === key ? 'all' : key)}
                                 >
-                                    <CardHeader className="pb-2">
-                                        <div className="flex items-center justify-between">
-                                            <div className={cn("flex items-center gap-2 font-black italic", q.color)}>
+                                    <CardHeader className="p-6 pb-2">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className={cn("flex items-center gap-3 font-black italic text-lg uppercase tracking-tighter", q.color)}>
                                                 {q.icon}
                                                 {q.title}
                                             </div>
-                                            <Badge className={cn("font-black", q.bg, q.color, "border-0")}>{count}개</Badge>
+                                            <Badge className={cn("font-black px-4 py-1 rounded-full uppercase tracking-widest border-none", q.bg, q.color)}>{count}개 품목</Badge>
                                         </div>
-                                        <CardDescription className="text-slate-500 font-medium">{q.description}</CardDescription>
+                                        <CardDescription className="text-muted-foreground font-black text-[10px] uppercase tracking-widest opacity-70 italic">{q.description}</CardDescription>
                                     </CardHeader>
-                                    <CardContent>
-                                        <div className="flex justify-between items-end mt-2">
+                                    <CardContent className="p-6 pt-2">
+                                        <div className="flex justify-between items-end mt-4">
                                             <div>
-                                                <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Expectation</p>
-                                                <p className="text-lg font-black text-white italic">
-                                                    +{Math.round(profitShare / 10000).toLocaleString()}만원 <span className="text-[10px] font-normal opacity-50">수익 기여</span>
+                                                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-50 mb-1">이익 기여도 (PROFIT CONTRIBUTION)</p>
+                                                <p className="text-2xl font-black text-foreground italic tracking-tighter">
+                                                    +{Math.round(profitShare / 10000).toLocaleString()}만원 <span className="text-[10px] font-black opacity-30 uppercase tracking-widest ml-1">추정</span>
                                                 </p>
                                             </div>
-                                            <ChevronRight className={cn("h-5 w-5 opacity-30", selectedQuadrant === key && "rotate-90 opacity-100")} />
+                                            <ChevronRight className={cn("h-6 w-6 text-muted-foreground opacity-20 transition-transform group-hover:translate-x-1", selectedQuadrant === key && "rotate-90 opacity-100 text-primary")} />
                                         </div>
                                     </CardContent>
                                     {selectedQuadrant === key && (
                                         <div className="px-6 pb-6 animate-in slide-in-from-top-2">
-                                            <div className="p-4 bg-white/[0.03] rounded-xl border border-white/10">
-                                                <p className="text-[10px] font-black text-indigo-400 uppercase mb-2 flex items-center gap-2">
-                                                    <Target className="h-3 w-3" /> STRATEGIC ACTION
+                                            <div className="p-4 bg-muted/50 rounded-2xl border border-border/50 shadow-inner">
+                                                <p className="text-[10px] font-black text-primary uppercase mb-2 flex items-center gap-2 tracking-[0.2em]">
+                                                    <Rocket className="h-3 w-3" /> 전략적 지침 (STRATEGIC DIRECTIVE)
                                                 </p>
-                                                <p className="text-xs font-bold text-slate-300 leading-relaxed italic">"{q.strategy}"</p>
+                                                <p className="text-xs font-black text-foreground leading-relaxed italic opacity-80">"{q.strategy}"</p>
                                             </div>
                                         </div>
                                     )}
@@ -173,59 +173,59 @@ export default function MenuEngineeringPage() {
                     icon={<BarChart3 className="h-4 w-4" />}
                     storageKey="menu-details"
                 >
-                    <div className="bg-slate-950/20 rounded-xl overflow-hidden border border-white/5 relative">
-                        <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-                            <BarChart3 className="h-64 w-64 text-white" />
+                    <div className="glass-panel rounded-3xl overflow-hidden border-none bg-card shadow-none relative">
+                        <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
+                            <BarChart3 className="h-48 w-48 text-primary" />
                         </div>
-                        <div className="p-6 border-b border-white/5 bg-white/[0.02]">
-                            <p className="text-slate-400 text-sm font-medium">
-                                임계값: 평균 판매 {Math.round(metrics?.avgVolume || 0)}개, 평균 마진 {Math.round(metrics?.avgMargin || 0).toLocaleString()}원
+                        <div className="p-8 border-b border-border bg-muted/20">
+                            <p className="text-muted-foreground text-[10px] font-black uppercase tracking-[0.2em] italic">
+                                분석 기준점 (Analysis Threshold): <span className="text-foreground border-b border-primary/30 pb-0.5">평균 판매량 {Math.round(metrics?.avgVolume || 0)}</span> | <span className="text-foreground border-b border-primary/30 pb-0.5">평균 마진 {Math.round(metrics?.avgMargin || 0).toLocaleString()}원</span>
                             </p>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
-                                <thead className="bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                <thead className="bg-muted/30 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                                     <tr>
-                                        <th className="px-6 py-4">Status</th>
-                                        <th className="px-6 py-4">Menu Name</th>
-                                        <th className="px-6 py-4 text-right">Selling Price</th>
-                                        <th className="px-6 py-4 text-right">Unit Margin</th>
-                                        <th className="px-6 py-4 text-right">Sales Qty</th>
-                                        <th className="px-6 py-4 text-right">Total Profit</th>
+                                        <th className="px-8 py-4">구분</th>
+                                        <th className="px-8 py-4">메뉴 정보</th>
+                                        <th className="px-8 py-4 text-right">판매가</th>
+                                        <th className="px-8 py-4 text-right">단위 마진</th>
+                                        <th className="px-8 py-4 text-right">판매량</th>
+                                        <th className="px-8 py-4 text-right">총 기여 이익</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-white/5">
+                                <tbody className="divide-y divide-border/10">
                                     {filteredData.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="px-6 py-20 text-center text-slate-600 font-bold italic">데이터가 충분하지 않거나 해당 필터의 메뉴가 없습니다.</td>
+                                            <td colSpan={6} className="px-8 py-20 text-center text-muted-foreground font-black uppercase tracking-widest italic opacity-40">분석 데이터가 없거나 필터 조건에 맞는 메뉴가 없습니다.</td>
                                         </tr>
                                     ) : (
                                         filteredData.map((item) => {
                                             const q = quadrants[item.quadrant as keyof typeof quadrants]
                                             return (
-                                                <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group">
-                                                    <td className="px-6 py-4">
-                                                        <div className={cn("px-2 py-1 rounded text-[10px] font-black uppercase inline-flex items-center gap-1", q.bg, q.color)}>
+                                                <tr key={item.id} className="hover:bg-muted/30 transition-colors group">
+                                                    <td className="px-8 py-5">
+                                                        <div className={cn("px-3 py-1 rounded-full text-[9px] font-black uppercase inline-flex items-center gap-1.5 border border-current", q.bg, q.color)}>
                                                             {q.icon}
                                                             {item.quadrant}
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="font-bold text-slate-200">{item.name}</div>
-                                                        <div className="text-[10px] text-slate-500 font-medium">{item.category}</div>
+                                                    <td className="px-8 py-5">
+                                                        <div className="font-black text-foreground italic tracking-tight">{item.name}</div>
+                                                        <div className="text-[10px] text-muted-foreground font-black uppercase tracking-widest opacity-50">{item.category}</div>
                                                     </td>
-                                                    <td className="px-6 py-4 text-right font-mono text-xs text-slate-400">
+                                                    <td className="px-8 py-5 text-right font-mono text-xs text-muted-foreground">
                                                         {item.sellingPrice.toLocaleString()}원
                                                     </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <div className="font-bold text-slate-200">{item.margin.toLocaleString()}원</div>
-                                                        <div className="text-[9px] text-indigo-400 font-black">{Math.round(item.marginRate)}% MARGIN</div>
+                                                    <td className="px-8 py-5 text-right">
+                                                        <div className="font-black text-foreground italic">{item.margin.toLocaleString()}원</div>
+                                                        <div className="text-[9px] text-primary font-black uppercase italic">{Math.round(item.marginRate)}% 마진율</div>
                                                     </td>
-                                                    <td className="px-6 py-4 text-right font-black text-white italic">
-                                                        {item.salesVolume}개
+                                                    <td className="px-8 py-5 text-right font-black text-foreground italic tracking-tighter text-lg">
+                                                        {item.salesVolume}
                                                     </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <div className="text-lg font-black text-white italic tracking-tighter">
+                                                    <td className="px-8 py-5 text-right">
+                                                        <div className="text-xl font-black text-foreground italic tracking-tighter">
                                                             {Math.round(item.totalProfit).toLocaleString()}원
                                                         </div>
                                                     </td>
@@ -247,7 +247,7 @@ export default function MenuEngineeringPage() {
                             <p className="text-[10px] font-black text-white/50 uppercase tracking-[0.2em]">Strategy Final Insight</p>
                             <h3 className="text-xl font-bold text-white flex items-center gap-2">
                                 <Info className="h-5 w-5" />
-                                현재 매장의 핵심 무기는 <span className="underline decoration-emerald-400 decoration-4 underline-offset-4">스타 메뉴</span>입니다.
+                                현재 매장의 핵심 전략 품목은 <span className="underline decoration-emerald-400 decoration-4 underline-offset-4">스타 메뉴</span>입니다.
                             </h3>
                             <p className="text-sm text-indigo-100">분석 결과, 상위 20%의 메뉴가 전체 수익의 {Math.round(performance.slice(0, Math.ceil(performance.length * 0.2)).reduce((sum, p) => sum + p.totalProfit, 0) / (performance.reduce((sum, p) => sum + p.totalProfit, 0) || 1) * 100)}%를 담당하고 있습니다.</p>
                         </div>

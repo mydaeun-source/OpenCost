@@ -91,6 +91,10 @@ export interface Database {
                     selling_price: number | null
                     target_cost_rate: number | null
                     description: string | null
+                    batch_size: number
+                    batch_unit: string
+                    portion_size: number | null
+                    portion_unit: string | null
                     created_at: string
                     user_id: string | null
                     store_id: string | null
@@ -103,6 +107,10 @@ export interface Database {
                     selling_price?: number | null
                     target_cost_rate?: number | null
                     description?: string | null
+                    batch_size?: number
+                    batch_unit?: string
+                    portion_size?: number | null
+                    portion_unit?: string | null
                     created_at?: string
                     user_id?: string | null
                     store_id?: string | null
@@ -115,6 +123,10 @@ export interface Database {
                     selling_price?: number | null
                     target_cost_rate?: number | null
                     description?: string | null
+                    batch_size?: number
+                    batch_unit?: string
+                    portion_size?: number | null
+                    portion_unit?: string | null
                     created_at?: string
                     user_id?: string | null
                     store_id?: string | null
